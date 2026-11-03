@@ -1,0 +1,51 @@
+import { useMemo, useState } from "react";
+import { BookOpenCheck, Bot, BriefcaseBusiness, Calculator, FileSearch, History, MessageCircle, Send, ShieldCheck, Sparkles, Stethoscope, UserRound } from "lucide-react";
+import { DemoNotice, ModuleLayout, StatusBadge, StatCard } from "@/components/modules";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { assistantAnswersDemo, assistantQuestionsDemo, type AssistantDemoCategory } from "@/data/services-demo";
+
+const categories: { title: AssistantDemoCategory; icon: typeof BriefcaseBusiness; color: string; helper: string }[] = [
+  { title: "Administrativa", icon: BriefcaseBusiness, color: "bg-sky-50 text-sky-700", helper: "Informes y organización" },
+  { title: "Pastoral", icon: Sparkles, color: "bg-amber-50 text-amber-700", helper: "Actividades y comunidades" },
+  { title: "Contable", icon: Calculator, color: "bg-emerald-50 text-emerald-700", helper: "Presupuestos de ejemplo" },
+  { title: "Documental", icon: FileSearch, color: "bg-violet-50 text-violet-700", helper: "Libros y documentos" },
+  { title: "Uso del sistema", icon: BookOpenCheck, color: "bg-slate-100 text-slate-700", helper: "Ayuda para navegar A&O ERP" },
+];
+
+type ConversationEntry = { question: string; category: AssistantDemoCategory; answer: string; context: string };
+
+export function AiAssistantScreen() {
+  const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<AssistantDemoCategory | "Todas">("Todas");
+  const [conversation, setConversation] = useState<ConversationEntry[]>([
+    { question: assistantQuestionsDemo[1]!, ...assistantAnswersDemo[assistantQuestionsDemo[1]!]! },
+    { question: assistantQuestionsDemo[4]!, ...assistantAnswersDemo[assistantQuestionsDemo[4]!]! },
+  ]);
+  const current = conversation[0];
+  const prompts = useMemo(() => assistantQuestionsDemo.filter((question) => activeCategory === "Todas" || assistantAnswersDemo[question]?.category === activeCategory), [activeCategory]);
+  const sendQuestion = (question: string) => {
+    const normalized = question.trim();
+    if (!normalized) return;
+    const preset = assistantAnswersDemo[normalized];
+    const fallback: ConversationEntry = { question: normalized, category: activeCategory === "Todas" ? "Uso del sistema" : activeCategory, answer: "Esta interfaz muestra respuestas previamente preparadas para ilustrar la experiencia. Para esta consulta libre no hay una respuesta configurada. Explora una de las preguntas sugeridas para ver un ejemplo contextual.", context: "Respuesta genérica de demostración · no se consultaron módulos ni datos reales." };
+    setConversation((entries) => [{ question: normalized, ...(preset ?? fallback) }, ...entries]);
+    setQuery("");
+  };
+  return <ModuleLayout breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Servicios" }, { label: "Inteligencia artificial" }]} title="Asistente A&O" description="Ayuda demostrativa para orientarse en módulos y consultar ejemplos de información institucional." stats={<><StatCard label="Categorías de ayuda" value="5" icon={Sparkles} caption="Asistencia temática" /><StatCard label="Preguntas de ejemplo" value={String(assistantQuestionsDemo.length)} icon={MessageCircle} caption="Respuestas predefinidas" /><StatCard label="Historial de muestra" value={String(conversation.length)} icon={History} caption="Solo en esta sesión" /><StatCard label="Conexiones externas" value="Ninguna" icon={ShieldCheck} caption="Sin proveedor de IA" /></>}>
+    <DemoNotice>Este asistente es una simulación visual con respuestas ficticias preparadas. No se conecta a un proveedor de IA, no consulta información actual de A&O ERP y no conserva conversaciones.</DemoNotice>
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_290px]">
+      <Card className="flex min-h-[680px] flex-col overflow-hidden shadow-none"><CardHeader className="border-b bg-[#12304A] px-5 py-4 text-white"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-xl bg-white/10"><Bot className="size-5" /></div><div><CardTitle className="text-base text-white">Conversación de muestra</CardTitle><p className="mt-1 text-xs text-white/65">Asistente A&O · respuestas preparadas</p></div></div><StatusBadge status="draft" label="Modo demostración" /></div></CardHeader>
+        <CardContent className="flex flex-1 flex-col p-0"><div className="flex-1 space-y-6 overflow-y-auto bg-slate-50/70 p-4 sm:p-6">{current ? <><div className="flex items-start justify-end gap-2.5"><div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[#244766] px-4 py-3 text-sm text-white">{current.question}</div><Avatar className="size-8 border bg-white"><AvatarFallback className="bg-secondary/40 text-xs text-primary">LM</AvatarFallback></Avatar></div><div className="flex items-start gap-2.5"><Avatar className="size-8 bg-[#12304A] text-white"><AvatarFallback className="bg-[#12304A] text-white"><Sparkles className="size-4" /></AvatarFallback></Avatar><div className="max-w-[90%] space-y-3"><div className="rounded-2xl rounded-tl-sm border bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 shadow-sm">{current.answer}<p className="mt-3 border-t pt-2 text-[10px] text-muted-foreground">{current.context}</p></div><div className="flex items-center gap-2"><span className="rounded-full bg-secondary/50 px-2.5 py-1 text-[10px] font-medium text-primary">{current.category}</span><span className="text-[10px] text-muted-foreground">Respuesta ficticia</span></div></div></div>{conversation.slice(1).map((entry, index) => <button key={`${entry.question}-${index}`} onClick={() => setConversation((items) => [entry, ...items.filter((item) => item !== entry)])} className="flex w-full items-center gap-2 rounded-lg border border-dashed bg-white/70 p-3 text-left text-xs text-muted-foreground hover:border-primary/30"><History className="size-3.5" />Consulta previa · {entry.question}</button>)}</> : <div className="flex h-full min-h-64 flex-col items-center justify-center text-center"><div className="flex size-14 items-center justify-center rounded-2xl bg-primary/5 text-primary"><Bot className="size-7" /></div><h2 className="mt-4 font-semibold">¿En qué te puedo orientar?</h2><p className="mt-1 max-w-sm text-sm text-muted-foreground">Prueba una pregunta de ejemplo o elige una categoría de asistencia.</p></div>}</div>
+          <div className="border-t bg-white p-4"><div className="mb-3 flex flex-wrap gap-2">{prompts.slice(0, 3).map((prompt) => <button key={prompt} onClick={() => sendQuestion(prompt)} className="rounded-full border px-3 py-1.5 text-left text-[11px] text-slate-600 transition hover:border-primary/40 hover:bg-primary/[0.03]">{prompt}</button>)}</div><div className="flex items-end gap-2 rounded-xl border bg-slate-50 p-2 focus-within:border-primary/40"><Textarea value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(query); } }} placeholder="Escribe una consulta de ejemplo…" className="min-h-10 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0" rows={2} /><Button size="icon" aria-label="Enviar consulta de demostración" onClick={() => sendQuestion(query)} disabled={!query.trim()} className="shrink-0"><Send className="size-4" /></Button></div><p className="mt-2 text-[10px] text-muted-foreground">Enter para mostrar una respuesta ficticia · Shift + Enter para nueva línea</p></div>
+        </CardContent>
+      </Card>
+      <aside className="space-y-4"><Card className="shadow-none"><CardHeader className="pb-3"><CardTitle className="text-sm">Categorías de asistencia</CardTitle></CardHeader><CardContent className="space-y-2"><button onClick={() => setActiveCategory("Todas")} className={`w-full rounded-lg border p-3 text-left text-xs font-medium ${activeCategory === "Todas" ? "border-primary/30 bg-primary/[0.04] text-primary" : "text-slate-600"}`}>Todas las sugerencias</button>{categories.map((category) => { const Icon = category.icon; return <button key={category.title} onClick={() => setActiveCategory(category.title)} className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition ${activeCategory === category.title ? "border-primary/30 bg-primary/[0.04]" : "hover:bg-muted/30"}`}><span className={`flex size-8 items-center justify-center rounded-lg ${category.color}`}><Icon className="size-4" /></span><span><span className="block text-xs font-semibold">{category.title}</span><span className="mt-0.5 block text-[10px] text-muted-foreground">{category.helper}</span></span></button>; })}</CardContent></Card>
+        <Card className="shadow-none"><CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-sm"><History className="size-4 text-primary" />Historial de esta vista</CardTitle></CardHeader><CardContent className="space-y-2">{conversation.slice(0, 4).map((entry, index) => <button key={`${entry.question}-${index}`} onClick={() => setConversation((items) => [entry, ...items.filter((item) => item !== entry)])} className={`w-full rounded-lg p-3 text-left ${index === 0 ? "bg-primary/[0.05]" : "hover:bg-muted/40"}`}><p className="line-clamp-2 text-xs font-medium">{entry.question}</p><p className="mt-1 text-[10px] text-muted-foreground">{entry.category} · sesión local</p></button>)}</CardContent></Card>
+        <Card className="border-primary/10 bg-primary/[0.03] shadow-none"><CardContent className="p-4"><div className="flex items-center gap-2 text-primary"><Stethoscope className="size-4" /><p className="text-xs font-semibold">Contexto de consulta</p></div><p className="mt-2 text-xs leading-relaxed text-muted-foreground">{current?.context ?? "Elige una consulta para ver el contexto demostrativo."}</p><div className="mt-3 flex items-center gap-1.5 text-[10px] text-muted-foreground"><UserRound className="size-3" />No se consultan datos personales.</div></CardContent></Card>
+      </aside>
+    </div>
+  </ModuleLayout>;
+}

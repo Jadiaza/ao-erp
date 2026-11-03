@@ -1,0 +1,59 @@
+import { parishDemo, parishDemoPeople } from "@/data/parish-demo";
+
+export type EcclesialEntity = { id: string; name: string; kind: string; tradition: string; parentId?: string; region: string; status: "Vinculada" | "Independiente" | "En revisión"; lead: string; note: string };
+export const ecclesialEntities: EcclesialEntity[] = [
+  { id: "PROV-DEMO-01", name: "Provincia eclesiástica de San Gabriel", kind: "Provincia eclesiástica", tradition: "Iglesia latina · ejemplo ficticio", region: "Región Centro", status: "Vinculada", lead: "Metropolitano de muestra", note: "Agrupación jurisdiccional de referencia; no establece una jerarquía obligatoria para otras configuraciones." },
+  { id: "ARCH-DEMO-01", name: "Arquidiócesis de San Rafael", kind: "Arquidiócesis", tradition: "Iglesia latina · ejemplo ficticio", parentId: "PROV-DEMO-01", region: "Región Centro", status: "Vinculada", lead: "Arzobispo de muestra", note: "Circunscripción de ejemplo dentro de una provincia ilustrativa." },
+  { id: "JUR-DEMO-01", name: "Diócesis de San Gabriel", kind: "Diócesis", tradition: "Iglesia latina · ejemplo ficticio", parentId: "PROV-DEMO-01", region: "Región Centro", status: "Vinculada", lead: "Obispo de muestra", note: "Entidad jurisdiccional ficticia para representar una estructura territorial." },
+  { id: "VIC-DEMO-02", name: "Vicaría Centro", kind: "Vicaría", tradition: "Configuración local", parentId: "JUR-DEMO-01", region: "Sector Centro", status: "Vinculada", lead: "Vicario de zona de muestra", note: "Estructura equivalente configurable de acuerdo con la jurisdicción." },
+  { id: parishDemo.id, name: parishDemo.officialName, kind: "Parroquia", tradition: "Tradición eclesial · dato de demostración", parentId: "VIC-DEMO-02", region: parishDemo.region, status: "Vinculada", lead: parishDemoPeople.pastor.name, note: "Entidad ficticia con identificador propio. El vínculo ilustrativo no concede acceso a sus registros." },
+  { id: "COM-DEMO-031", name: "Comunidad La Esperanza", kind: "Comunidad", tradition: "Comunidad local", parentId: "PAR-DEMO-014", region: "Sector La Esperanza", status: "Vinculada", lead: "Coordinación comunitaria", note: "Comunidad vinculada a la parroquia de referencia." },
+  { id: "PAR-DEMO-022", name: "Parroquia San José Obrero", kind: "Parroquia", tradition: "Iglesia latina · ejemplo ficticio", parentId: "JUR-DEMO-01", region: "Sector Norte", status: "En revisión", lead: "P. Mateo Ríos", note: "Relación institucional de ejemplo en estado de revisión." },
+  { id: "PAR-DEMO-099", name: "Parroquia Santa Clara del Valle", kind: "Parroquia", tradition: "Configuración independiente", region: "Región Oriente", status: "Independiente", lead: "Administración local de muestra", note: "Entidad independiente; puede iniciar una solicitud de vínculo autorizado sin perder sus registros." },
+  { id: "EOR-DEMO-003", name: "Exarcado de Santa Irene", kind: "Exarcado", tradition: "Iglesia oriental · ejemplo ficticio", region: "Región Oriente", status: "Independiente", lead: "Responsable de muestra", note: "Ejemplo de circunscripción oriental; la jerarquía depende de su propia configuración canónica." },
+];
+
+export type InstitutionalContactDemo = { id: string; name: string; role: string; area: string; email: string; phone: string; status: "Activo" | "Pendiente" | "Inactivo" };
+export const institutionalContactsDemo: InstitutionalContactDemo[] = [
+  { id: parishDemoPeople.pastor.id, name: parishDemoPeople.pastor.name, role: parishDemoPeople.pastor.role, area: "Dirección institucional · referencia", email: parishDemoPeople.pastor.email, phone: "+57 601 555 0141 · dato ficticio", status: "Activo" },
+  { id: parishDemoPeople.secretary.id, name: parishDemoPeople.secretary.name, role: parishDemoPeople.secretary.role, area: "Secretaría", email: parishDemoPeople.secretary.email, phone: "+57 601 555 0142 · dato ficticio", status: "Activo" },
+  { id: parishDemoPeople.administratorContact.id, name: parishDemoPeople.administratorContact.name, role: parishDemoPeople.administratorContact.role, area: "Administración", email: parishDemoPeople.administratorContact.email, phone: "+57 601 555 0143 · dato ficticio", status: "Activo" },
+  { id: parishDemoPeople.pastoral.id, name: parishDemoPeople.pastoral.name, role: parishDemoPeople.pastoral.role, area: "Pastoral", email: parishDemoPeople.pastoral.email, phone: "+57 601 555 0144 · dato ficticio", status: "Pendiente" },
+  { id: parishDemoPeople.administrator.id, name: parishDemoPeople.administrator.name, role: parishDemoPeople.administrator.role, area: "Administración institucional", email: parishDemoPeople.administrator.email, phone: "+57 601 555 0145 · dato ficticio", status: "Activo" },
+  { id: parishDemoPeople.inventoryCustodian.id, name: parishDemoPeople.inventoryCustodian.name, role: parishDemoPeople.inventoryCustodian.role, area: "Inventarios y patrimonio", email: parishDemoPeople.inventoryCustodian.email, phone: "+57 601 555 0146 · dato ficticio", status: "Activo" },
+];
+
+export const institutionalHistoryDemo = [
+  { date: "02 nov. 2026 · 09:40", title: "Directorio de contactos revisado", actor: "Secretaría parroquial", detail: "Revisión administrativa demostrativa." },
+  { date: "28 oct. 2026 · 11:15", title: "Canal de atención actualizado", actor: "Administración", detail: "Cambio local ilustrativo en los datos operativos." },
+  { date: "18 oct. 2026 · 15:30", title: "Documento administrativo agregado", actor: "Secretaría parroquial", detail: "Referencia a procedimiento de muestra." },
+];
+
+export type NormativeRecordDemo = { id: string; title: string; kind: string; authority: string; date: string; status: "Referencia" | "En revisión" | "Archivo de muestra"; area: string; description: string; sourceKind: "Referencia general" | "Registro ficticio" };
+export const normativeRecordsDemo: NormativeRecordDemo[] = [
+  { id: "NOR-DEMO-01", title: "Directorio de referencia: Derecho Canónico latino", kind: "Referencia general", authority: "Fuente eclesial externa · consulta oficial requerida", date: "Referencia permanente", status: "Referencia", area: "Gobierno eclesial", description: "Acceso orientativo a la familia normativa del derecho canónico latino. Esta ficha no reproduce artículos, interpretaciones ni disposiciones.", sourceKind: "Referencia general" },
+  { id: "NOR-DEMO-02", title: "Directorio de referencia: Cánones de las Iglesias Orientales", kind: "Referencia general", authority: "Fuente eclesial externa · consulta oficial requerida", date: "Referencia permanente", status: "Referencia", area: "Gobierno eclesial", description: "Entrada de navegación para localizar la fuente oficial correspondiente. No contiene texto normativo ni presupone una estructura jurisdiccional única.", sourceKind: "Referencia general" },
+  { id: "NOR-DEMO-03", title: "Índice orientativo de documentos del Magisterio", kind: "Directorio", authority: "Magisterio · índice de consulta", date: "Sin fecha de emisión", status: "Referencia", area: "Formación y enseñanza", description: "Categoría de consulta documental, sin atribuir contenido a documentos oficiales específicos.", sourceKind: "Referencia general" },
+  { id: "NOR-DEMO-04", title: "Plantilla de disposición particular · muestra", kind: "Plantilla ficticia", authority: "Entidad de ejemplo", date: "02 nov. 2026", status: "Archivo de muestra", area: "Administración institucional", description: "Plantilla sin valor normativo. No es un decreto, estatuto ni disposición vigente.", sourceKind: "Registro ficticio" },
+  { id: "NOR-DEMO-05", title: "Registro demostrativo de reglamento interno", kind: "Registro ficticio", authority: "Institución ficticia", date: "15 sep. 2026", status: "En revisión", area: "Gobierno institucional", description: "Metadatos de ejemplo para mostrar clasificación y revisión. No cita artículos ni crea obligaciones.", sourceKind: "Registro ficticio" },
+  { id: "NOR-DEMO-06", title: "Ficha de referencia de norma particular", kind: "Registro ficticio", authority: "Jurisdicción de muestra", date: "10 jun. 2026", status: "Archivo de muestra", area: "Estructura jurisdiccional", description: "Ficha ficticia sin texto oficial. Confirmar vigencia y alcance en la fuente competente antes de cualquier uso.", sourceKind: "Registro ficticio" },
+];
+
+export type UserProfileDemo = { id: string; name: string; email: string; role: string; organization: string; scope: string; modules: string[]; status: "Activo" | "Invitación pendiente" | "Inactivo"; lastActivity: string };
+export const usersDemo: UserProfileDemo[] = [
+  { id: parishDemoPeople.administrator.id, name: parishDemoPeople.administrator.name, email: parishDemoPeople.administrator.email, role: parishDemoPeople.administrator.role, organization: `${parishDemo.shortName} · ${parishDemo.id}`, scope: `Entidad ${parishDemo.id}`, modules: ["Administración institucional", "Gestión documental", "Informe anual", "Agenda"], status: "Activo", lastActivity: "Muestra · 09:42" },
+  { id: parishDemoPeople.pastor.id, name: parishDemoPeople.pastor.name, email: parishDemoPeople.pastor.email, role: "Responsable eclesiástico · referencia", organization: `${parishDemo.shortName} · ${parishDemo.id}`, scope: `Entidad ${parishDemo.id}`, modules: ["Institución", "Gobierno y normativa", "Informe anual", "Planificación pastoral"], status: "Activo", lastActivity: "Muestra · 09:16" },
+  { id: parishDemoPeople.treasurer.id, name: parishDemoPeople.treasurer.name, email: parishDemoPeople.treasurer.email, role: "Usuario operativo · Tesorería de muestra", organization: `${parishDemo.shortName} · ${parishDemo.id}`, scope: `Finanzas de ${parishDemo.id}`, modules: ["Finanzas y tesorería", "Contabilidad", "Presupuestos"], status: "Activo", lastActivity: "Muestra · 16:55" },
+  { id: parishDemoPeople.pastoral.id, name: parishDemoPeople.pastoral.name, email: parishDemoPeople.pastoral.email, role: "Usuario operativo · Pastoral de muestra", organization: `${parishDemo.shortName} · ${parishDemo.id}`, scope: `Ámbito pastoral de ${parishDemo.id}`, modules: ["Grupos y ministerios", "Acción pastoral", "Planificación pastoral"], status: "Invitación pendiente", lastActivity: "Sin actividad · demo" },
+  { id: parishDemoPeople.inventoryCustodian.id, name: parishDemoPeople.inventoryCustodian.name, email: parishDemoPeople.inventoryCustodian.email, role: "Usuario operativo · custodia de muestra", organization: `${parishDemo.shortName} · ${parishDemo.id}`, scope: `Inventario físico de ${parishDemo.id}`, modules: ["Inventarios y patrimonio"], status: "Activo", lastActivity: "Muestra · 10:12" },
+  { id: "USR-DEMO-005", name: "Administración global de muestra", email: "plataforma@ejemplo.org", role: "Administrador de plataforma", organization: "Entorno A&O ERP · demostración", scope: "Servicios y organizaciones · no eclesiástico", modules: ["Administración de plataforma", "Estado de servicios"], status: "Activo", lastActivity: "Hoy · 08:37" },
+];
+
+export const permissionMatrixDemo = [
+  { module: "Institución", platform: "Metadatos de servicio", institutional: "Editar perfil", operational: "Sin acceso" },
+  { module: "Administración institucional", platform: "Estado de organización", institutional: "Administrar", operational: "Consultar asignación" },
+  { module: "Finanzas y tesorería", platform: "Sin acceso a movimientos", institutional: "Consultar entidad", operational: "Según función contable" },
+  { module: "Libros sacramentales", platform: "Sin acceso", institutional: "Acceso específico requerido", operational: "Restringido por autorización" },
+  { module: "Feligreses y familias", platform: "Sin acceso", institutional: "Según autorización institucional", operational: "Acceso mínimo asignado" },
+  { module: "Auditoría y trazabilidad", platform: "Eventos técnicos de plataforma", institutional: "Actividad de la entidad", operational: "Alcance limitado" },
+];
