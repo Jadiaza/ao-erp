@@ -1,4 +1,4 @@
-import { CheckCircle2, Database, FileText, Package, Receipt, RefreshCw, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { CheckCircle2, Database, Package, Receipt, RefreshCw, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { resetIntegratedPurchaseDemo, useIntegratedDemo, type DemoModule } from "@/demo/erp-demo-store";
