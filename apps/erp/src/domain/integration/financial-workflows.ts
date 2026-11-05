@@ -9,15 +9,17 @@ import type { CashMovement } from "../finance/treasury";\nimport { createCashMov
 import type { PurchaseRequest } from "../procurement/procurement";
 import type { StockMovement } from "../inventory/inventory";
 import { isIsoCalendarDate } from "../shared/primitives";
-import { purchaseTotal, receivePurchaseItems } from "../procurement/procurement";
+import { cancelPurchaseRequest, purchaseLineTotal, purchaseTotal, receivePurchaseItems } from "../procurement/procurement";
 
 export function reservePurchaseAgainstBudget(lines: readonly BudgetLine[], request: PurchaseRequest): { budgetLines: BudgetLine[]; committedAmountMinor: number } {
   if (request.status !== "approved") throw new Error("PURCHASE_REQUEST_NOT_APPROVED_FOR_BUDGET");
   const updated = [...lines];
+  if (new Set(request.lines.map((line) => line.id)).size !== request.lines.length) throw new Error("PURCHASE_LINE_IDS_DUPLICATE");
   for (const purchaseLine of request.lines) {
-    const budgetIndex = updated.findIndex((line) => line.accountCode === purchaseLine.expenseAccountCode && line.costCenterId === purchaseLine.costCenterId && line.direction === "expense");
-    if (budgetIndex < 0) throw new Error(`PURCHASE_BUDGET_LINE_NOT_FOUND:${purchaseLine.expenseAccountCode}:${purchaseLine.costCenterId}`);
-    updated[budgetIndex] = commitBudgetAmount(updated[budgetIndex], purchaseLine.quantity * purchaseLine.unitPriceMinor);
+    const matches = updated.map((line, index) => ({ line, index })).filter(({ line }) => line.accountCode === purchaseLine.expenseAccountCode && line.costCenterId === purchaseLine.costCenterId && line.direction === "expense");
+    if (matches.length !== 1) throw new Error(`PURCHASE_BUDGET_LINE_MAPPING_INVALID:${purchaseLine.expenseAccountCode}:${purchaseLine.costCenterId}`);
+    const budgetIndex = matches[0].index;
+    updated[budgetIndex] = commitBudgetAmount(updated[budgetIndex], purchaseLineTotal(purchaseLine));
   }
   return { budgetLines: updated, committedAmountMinor: purchaseTotal(request) };
 }
@@ -180,4 +182,27 @@ export function settleSupplierInvoicePayment(
 
 export function proposeCashReversal(movement: CashMovement, reversalId: string, reversalDate: string, reason: string): CashMovement {
   return createCashMovementReversal(movement, reversalId, reversalDate, reason);
+}
+
+
+/** Cancels the unreceived part of an order and releases only that outstanding commitment. */
+export function cancelPurchaseAndReleaseUnreceivedBudget(
+  request: PurchaseRequest,
+  budgetLines: readonly BudgetLine[],
+): { request: PurchaseRequest; budgetLines: BudgetLine[]; releasedAmountMinor: number } {
+  const cancelled = cancelPurchaseRequest(request);
+  const updated = [...budgetLines];
+  let releasedAmountMinor = 0;
+  for (const purchaseLine of request.lines) {
+    const remainingQuantity = purchaseLine.quantity - purchaseLine.receivedQuantity;
+    if (remainingQuantity <= 0) continue;
+    const amountMinor = remainingQuantity * purchaseLine.unitPriceMinor;
+    if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) throw new Error("PURCHASE_RELEASE_AMOUNT_INVALID");
+    const matches = updated.map((line, index) => ({ line, index })).filter(({ line }) => line.accountCode === purchaseLine.expenseAccountCode && line.costCenterId === purchaseLine.costCenterId && line.direction === "expense");
+    if (matches.length !== 1) throw new Error("PURCHASE_RELEASE_BUDGET_MAPPING_INVALID");
+    updated[matches[0].index] = releaseBudgetCommitment(matches[0].line, amountMinor);
+    releasedAmountMinor += amountMinor;
+    if (!Number.isSafeInteger(releasedAmountMinor)) throw new Error("PURCHASE_RELEASE_TOTAL_OUT_OF_RANGE");
+  }
+  return { request: cancelled, budgetLines: updated, releasedAmountMinor };
 }
