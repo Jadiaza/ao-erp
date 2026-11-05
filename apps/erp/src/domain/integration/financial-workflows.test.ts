@@ -15,7 +15,7 @@ describe("flujos financieros intermodulares", () => {
   it("exige una línea presupuestal por cuenta y centro de costos", () => {
     const budget: BudgetLine = { id: "b1", accountCode: "51", costCenterId: "cc2", direction: "expense", approvedAmountMinor: 100000, committedAmountMinor: 0, accruedAmountMinor: 0, paidAmountMinor: 0 };
     const request: PurchaseRequest = { id: "po2", requesterId: "u1", status: "approved", lines: [{ id: "item2", description: "Material", quantity: 1, unitPriceMinor: 1000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };
-    expect(() => reservePurchaseAgainstBudget([budget], request)).toThrow("PURCHASE_BUDGET_LINE_NOT_FOUND");
+    expect(() => reservePurchaseAgainstBudget([budget], request)).toThrow("PURCHASE_BUDGET_LINE_MAPPING_INVALID");
   });
   it("convierte recepción de compra en movimientos de inventario trazables", () => {
     const request: PurchaseRequest = { id: "po1", requesterId: "u1", supplierId: "s1", status: "ordered", lines: [{ id: "line1", inventoryItemId: "item1", description: "Material", quantity: 3, unitPriceMinor: 5000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };
@@ -54,7 +54,7 @@ describe("ciclo de compra, factura, pago y presupuesto", () => {
   it("convierte compromiso en causación y registra pago parcial sin duplicar el gasto", () => {
     const request: PurchaseRequest = { id: "po-erp-1", requesterId: "u1", supplierId: "sup1", status: "received", lines: [{ id: "l1", description: "Papelería", quantity: 2, unitPriceMinor: 10000, receivedQuantity: 2, expenseAccountCode: "5105", costCenterId: "cc-admin" }] };
     const budget: BudgetLine = { id: "bl1", accountCode: "5105", costCenterId: "cc-admin", direction: "expense", approvedAmountMinor: 50000, committedAmountMinor: 20000, accruedAmountMinor: 0, paidAmountMinor: 0 };
-    const invoice = registerPurchaseSupplierInvoice(request, { payableId: "ap-1", invoiceNumber: "FE-100", issueDate: "2026-11-05", dueDate: "2026-12-05", currency: "COP", allocations: [{ purchaseLineId: "l1", amountMinor: 20000 }] }, [budget]);
+    const invoice = registerPurchaseSupplierInvoice(request, { payableId: "ap-1", invoiceNumber: "FE-100", issueDate: "2026-11-05", dueDate: "2026-12-05", currency: "COP", allocations: [{ purchaseLineId: "l1", amountMinor: 20000 }] }, [budget], []);
     expect(invoice.payable.status).toBe("approved");
     expect(invoice.budgetLines[0]).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 0 });
     const movement: CashMovement = { id: "cash-ap-1", direction: "outflow", amountMinor: 10000, currency: "COP", accountId: "bank1", date: "2026-11-06", status: "posted", sourceType: "purchase", sourceId: "ap-1" };
