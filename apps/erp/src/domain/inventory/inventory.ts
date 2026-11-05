@@ -15,8 +15,11 @@ export function validateStockMovement(item: InventoryItem, movement: StockMoveme
   if (!movement.warehouseId.trim() || !movement.sourceType.trim() || !movement.sourceId.trim()) errors.push("INVENTORY_MOVEMENT_REFERENCE_REQUIRED");
   return errors;
 }
-export function applyStockMovement(balance: StockBalance, movement: StockMovement): StockBalance {
+export function applyStockMovement(balance: StockBalance, movement: StockMovement, item: InventoryItem): StockBalance {
+  const validation = validateStockMovement(item, movement);
+  if (validation.length) throw new Error(`STOCK_MOVEMENT_INVALID:${validation.join(",")}`);
   if (balance.itemId !== movement.itemId || balance.warehouseId !== movement.warehouseId) throw new Error("STOCK_BALANCE_SCOPE_MISMATCH");
+  if (!Number.isSafeInteger(balance.quantity) || balance.quantity < 0 || !Number.isSafeInteger(balance.averageCostMinor) || balance.averageCostMinor < 0) throw new Error("STOCK_BALANCE_INVALID");
   const sign = movement.kind === "receipt" || movement.kind === "transfer_in" || movement.kind === "adjustment_in" ? 1 : -1;
   const nextQuantity = balance.quantity + sign * movement.quantity;
   if (nextQuantity < 0) throw new Error("INVENTORY_INSUFFICIENT_STOCK");
@@ -33,7 +36,7 @@ export type AssetStatus = "active" | "under_maintenance" | "disposed" | "lost";
 export type AssetRecord = { id: string; description: string; acquisitionCostMinor: number; residualValueMinor: number; usefulLifeMonths: number; accumulatedDepreciationMinor: number; status: AssetStatus };
 export function monthlyStraightLineDepreciation(asset: AssetRecord): number {
   if (asset.status === "disposed" || asset.status === "lost") return 0;
-  if (!Number.isSafeInteger(asset.acquisitionCostMinor) || !Number.isSafeInteger(asset.residualValueMinor) || asset.residualValueMinor > asset.acquisitionCostMinor || asset.usefulLifeMonths <= 0) throw new Error("ASSET_DEPRECIATION_PARAMETERS_INVALID");
+  if (!Number.isSafeInteger(asset.acquisitionCostMinor) || asset.acquisitionCostMinor < 0 || !Number.isSafeInteger(asset.residualValueMinor) || asset.residualValueMinor < 0 || asset.residualValueMinor > asset.acquisitionCostMinor || !Number.isSafeInteger(asset.usefulLifeMonths) || asset.usefulLifeMonths <= 0 || !Number.isSafeInteger(asset.accumulatedDepreciationMinor) || asset.accumulatedDepreciationMinor < 0 || asset.accumulatedDepreciationMinor > asset.acquisitionCostMinor - asset.residualValueMinor) throw new Error("ASSET_DEPRECIATION_PARAMETERS_INVALID");
   const depreciable = asset.acquisitionCostMinor - asset.residualValueMinor;
   const remaining = depreciable - asset.accumulatedDepreciationMinor;
   return Math.max(0, Math.min(Math.round(depreciable / asset.usefulLifeMonths), remaining));
