@@ -65,7 +65,6 @@ export const appModules: AppModule[] = [
   { id: "inteligencia-artificial", label: "Inteligencia artificial", path: "/app/inteligencia-artificial", group: "Servicios", icon: Sparkles },
   { id: "gestion-documental", label: "Gestión documental", path: "/app/gestion-documental", group: "Gestión y control", icon: FolderOpen },
   { id: "auditoria-trazabilidad", label: "Auditoría y trazabilidad", path: "/app/auditoria-trazabilidad", group: "Gestión y control", icon: FileClock },
-  { id: "configuracion", label: "Configuración", path: "/app/configuracion", group: "Sistema", icon: Settings },
 ];
 
 export const moduleGroups = [...new Set(appModules.map((module) => module.group))].filter((group) => group !== "General");
