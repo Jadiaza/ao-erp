@@ -1,4 +1,4 @@
-import { CheckCircle2, RefreshCw, Workflow } from "lucide-react";
+import { CheckCircle2, Workflow } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { runIntegratedPurchaseDemo, useIntegratedDemo, type DemoWorkflowEvent } from "@/demo/erp-demo-store";
