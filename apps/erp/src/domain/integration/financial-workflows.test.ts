@@ -11,8 +11,8 @@ describe("flujos financieros intermodulares", () => {
     expect(reservePurchaseAgainstBudget(budget, request).budgetLine.committedAmountMinor).toBe(20000);
   });
   it("convierte recepción de compra en movimientos de inventario trazables", () => {
-    const request: PurchaseRequest = { id: "po1", requesterId: "u1", supplierId: "s1", status: "ordered", lines: [{ id: "item1", description: "Material", quantity: 3, unitPriceMinor: 5000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };
-    const result = receivePurchaseIntoInventory(request, { item1: 2 }, "warehouse1", "2026-11-05");
+    const request: PurchaseRequest = { id: "po1", requesterId: "u1", supplierId: "s1", status: "ordered", lines: [{ id: "line1", inventoryItemId: "item1", description: "Material", quantity: 3, unitPriceMinor: 5000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };
+    const result = receivePurchaseIntoInventory(request, { line1: 2 }, "warehouse1", "2026-11-05");
     expect(result.request.status).toBe("partially_received");
     expect(result.movements[0]).toMatchObject({ itemId: "item1", quantity: 2, sourceId: "po1" });
   });
