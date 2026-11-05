@@ -15,7 +15,7 @@ const areas = [
   { title: "Instrumentos archivísticos", description: "Administra CCD, TRD, TVD e inventarios documentales.", href: "/app/archivo-instrumentos", icon: ClipboardList, detail: "Instrumentos y versiones" },
   { title: "Transferencias documentales", description: "Prepara inventarios, actas y procesos de entrega y recepción.", href: "/app/archivo-transferencias", icon: Boxes, detail: "Ciclo de vida documental" },
   { title: "Conservación y preservación", description: "Controla integridad, originales, derivados y medidas de preservación.", href: "/app/archivo-conservacion", icon: ShieldCheck, detail: "Integridad y conservación digital" },
-];
+] as const;
 
 export function ArchiveManagementScreen() {
   return (
