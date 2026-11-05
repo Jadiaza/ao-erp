@@ -16,6 +16,6 @@ export function assertAuditChain(records: readonly AuditRecord[]): void {
     ids.add(record.id);
   }
   for (let index = 1; index < records.length; index++) {
-    if (records[index].occurredAt < records[index - 1].occurredAt) throw new Error("AUDIT_CHAIN_ORDER_INVALID");
+    if (records[index]!.occurredAt < records[index - 1]!.occurredAt) throw new Error("AUDIT_CHAIN_ORDER_INVALID");
   }
 }
