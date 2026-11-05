@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cashMovementToLedgerVoucher, collectReceivableIntoTreasury, paySupplierFromTreasury, receivePurchaseIntoInventory, reservePurchaseAgainstBudget } from "./financial-workflows";
+import { cashMovementToLedgerVoucher, collectReceivableIntoTreasury, paySupplierFromTreasury, receivePurchaseIntoInventory, reservePurchaseAgainstBudget, registerPurchaseSupplierInvoice, settleSupplierInvoicePayment, proposeCashReversal } from "./financial-workflows";
 import type { Payable } from "../finance/payables";
 import type { Receivable } from "../finance/receivables";
 import type { BudgetLine } from "../finance/budget";
@@ -46,5 +46,33 @@ describe("tesorería con cuentas por pagar y cobrar", () => {
     const result = collectReceivableIntoTreasury(receivable, { id: "col1", receivableId: "ar1", amountMinor: 20000, collectedOn: "2026-11-05", cashMovementId: "cash-in", reference: "Recaudo" }, movement);
     expect(result.status).toBe("collected");
     expect(() => collectReceivableIntoTreasury(receivable, { id: "col2", receivableId: "ar1", amountMinor: 20000, collectedOn: "2026-11-05", cashMovementId: "cash-in", reference: "Recaudo" }, { ...movement, amountMinor: 10000 })).toThrow("RECEIVABLE_CASH_MOVEMENT_MISMATCH");
+  });
+});
+
+
+describe("ciclo de compra, factura, pago y presupuesto", () => {
+  it("convierte compromiso en causación y registra pago parcial sin duplicar el gasto", () => {
+    const request: PurchaseRequest = { id: "po-erp-1", requesterId: "u1", supplierId: "sup1", status: "received", lines: [{ id: "l1", description: "Papelería", quantity: 2, unitPriceMinor: 10000, receivedQuantity: 2, expenseAccountCode: "5105", costCenterId: "cc-admin" }] };
+    const budget: BudgetLine = { id: "bl1", accountCode: "5105", costCenterId: "cc-admin", direction: "expense", approvedAmountMinor: 50000, committedAmountMinor: 20000, accruedAmountMinor: 0, paidAmountMinor: 0 };
+    const invoice = registerPurchaseSupplierInvoice(request, { payableId: "ap-1", invoiceNumber: "FE-100", issueDate: "2026-11-05", dueDate: "2026-12-05", currency: "COP", allocations: [{ purchaseLineId: "l1", amountMinor: 20000 }] }, [budget]);
+    expect(invoice.payable.status).toBe("approved");
+    expect(invoice.budgetLines[0]).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 0 });
+    const movement: CashMovement = { id: "cash-ap-1", direction: "outflow", amountMinor: 10000, currency: "COP", accountId: "bank1", date: "2026-11-06", status: "posted", sourceType: "purchase", sourceId: "ap-1" };
+    const paid = settleSupplierInvoicePayment(invoice.payable, { id: "payment-1", payableId: "ap-1", amountMinor: 10000, paidOn: "2026-11-06", cashMovementId: "cash-ap-1", reference: "Abono factura" }, movement, invoice.budgetLines, invoice.allocations, { voucherId: "v-ap-1", accountingEntityId: "entity-1", organizationId: "org-1", accountsPayableAccountId: "2205" });
+    expect(paid.payable).toMatchObject({ paidMinor: 10000, status: "partially_paid" });
+    expect(paid.budgetLines[0]).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 10000 });
+    expect(paid.ledgerProposal.lines.reduce((sum, line) => sum + line.debitMinor, 0)).toBe(10000);
+    expect(paid.ledgerProposal.lines.reduce((sum, line) => sum + line.creditMinor, 0)).toBe(10000);
+  });
+  it("rechaza facturas por encima de lo recibido", () => {
+    const request: PurchaseRequest = { id: "po-erp-2", requesterId: "u1", supplierId: "sup1", status: "partially_received", lines: [{ id: "l1", description: "Sillas", quantity: 4, unitPriceMinor: 10000, receivedQuantity: 1, expenseAccountCode: "5105", costCenterId: "cc-admin" }] };
+    const budget: BudgetLine = { id: "bl1", accountCode: "5105", costCenterId: "cc-admin", direction: "expense", approvedAmountMinor: 50000, committedAmountMinor: 40000, accruedAmountMinor: 0, paidAmountMinor: 0 };
+    expect(() => registerPurchaseSupplierInvoice(request, { payableId: "ap-2", invoiceNumber: "FE-101", issueDate: "2026-11-05", dueDate: "2026-12-05", currency: "COP", allocations: [{ purchaseLineId: "l1", amountMinor: 20000 }] }, [budget])).toThrow("PURCHASE_INVOICE_EXCEEDS_RECEIVED_VALUE");
+  });
+  it("propone reverso sin modificar el movimiento original", () => {
+    const original: CashMovement = { id: "cash-original", direction: "outflow", amountMinor: 5000, currency: "COP", accountId: "bank1", date: "2026-11-05", status: "posted", sourceType: "purchase" };
+    const reversal = proposeCashReversal(original, "cash-reversal", "2026-11-06", "Anulación de pago");
+    expect(reversal).toMatchObject({ direction: "inflow", status: "draft", reversalOfId: "cash-original", amountMinor: 5000 });
+    expect(original.status).toBe("posted");
   });
 });
