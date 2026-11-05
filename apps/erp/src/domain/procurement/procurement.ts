@@ -4,7 +4,7 @@ export type PurchaseRequest = { id: string; requesterId: string; supplierId?: st
 
 export function purchaseLineTotal(line: PurchaseLine): number {
   if (!Number.isSafeInteger(line.quantity) || line.quantity <= 0 || !Number.isSafeInteger(line.unitPriceMinor) || line.unitPriceMinor < 0) throw new Error("PURCHASE_LINE_AMOUNT_INVALID");
-  return line.quantity * line.unitPriceMinor;
+  const total = line.quantity * line.unitPriceMinor;\n  if (!Number.isSafeInteger(total)) throw new Error("PURCHASE_LINE_TOTAL_OUT_OF_RANGE");\n  return total;
 }
 export function purchaseTotal(request: PurchaseRequest): number {
   return request.lines.reduce((sum, line) => sum + purchaseLineTotal(line), 0);
