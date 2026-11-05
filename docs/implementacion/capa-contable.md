@@ -1,34 +1,31 @@
-# Capa funcional contable A&O
+# Capa funcional contable de A&O ERP
 
-## Primera unidad de dominio: libro mayor
+## Ubicación dentro del sistema
 
-Se incorpora `@ao/ledger-core` como módulo TypeScript independiente de la interfaz. La pantalla actual de Contabilidad no se rediseña ni se reemplaza; esta capa prepara reglas de negocio que podrán consumir los servicios del ERP.
+La lógica contable pertenece a la aplicación única A&O ERP. Su código de dominio está en `apps/erp/src/modules/accounting/domain/`; no se distribuye como paquete ni producto independiente. La interfaz existente de Contabilidad se conserva.
 
-## Reglas incluidas
+## Reglas de dominio incorporadas
 
 - Partida doble: suma de débitos igual a suma de créditos.
 - Importes expresados en unidades menores enteras para evitar errores de coma flotante.
 - Mínimo dos movimientos por comprobante.
-- Una línea no puede tener débito y crédito al mismo tiempo.
-- Una línea no puede tener ambos importes en cero.
+- Una línea no puede tener débito y crédito al mismo tiempo ni ambos importes en cero.
 - La cuenta debe existir, estar activa y aceptar movimientos.
 - Solo se permite contabilizar en periodos abiertos y dentro de sus fechas.
 - La reversión produce líneas inversas y conserva intacto el comprobante original.
-- Validación previa a la contabilización con códigos de error estables.
+- Validación previa con códigos de error estables.
 
-## Decisiones de dominio pendientes de configuración
+## Decisiones pendientes
 
 - Plan de cuentas por marco técnico normativo y entidad contable.
-- Moneda funcional y política de redondeo por entidad.
-- Catálogo de tipos de comprobante y numeración.
-- Reglas de causación, impuestos, retenciones y documentos soporte.
+- Moneda funcional y política de redondeo.
+- Tipos de comprobante, numeración y consecutivos.
+- Causación, impuestos, retenciones y documentos soporte.
 - Centros de costos, fondos, proyectos y dimensiones analíticas.
-- Apertura/cierre, bloqueo y reapertura de periodos con permisos y auditoría.
+- Apertura, cierre, bloqueo y reapertura de periodos con permisos y auditoría.
 
-## Lo que aún no hace
+## Estado y límites
 
-Esta capa no persiste datos, no genera asientos automáticos, no autoriza usuarios, no calcula impuestos ni sustituye la contabilidad colombiana configurada para cada entidad. Debe conectarse a repositorios PostgreSQL y servicios de aplicación antes de usarse en producción.
+La lógica de dominio está incorporada y cuenta con pruebas Vitest. La migración PostgreSQL inicial está en `apps/erp/database/migrations/0001_accounting_foundation.sql`, pero aún no se ha ejecutado contra una base real. No hay todavía repositorio conectado ni endpoint de producción, y la pantalla sigue usando datos de demostración. Por tanto, esta capa todavía no debe considerarse contabilidad productiva.
 
-## Pruebas
-
-Las pruebas del paquete usan `bun:test`. Deben ejecutarse desde el workspace con `bun test packages/ledger-core/src/index.test.ts` en un entorno que tenga Bun instalado.
+La siguiente etapa es integrar un repositorio PostgreSQL transaccional con contexto de organización obtenido de la sesión autenticada en servidor; nunca desde un identificador enviado por el navegador. Después se conectará a la pantalla actual sin modificar su presentación.
