@@ -1,4 +1,4 @@
-export type InventoryMovementKind = "receipt" | "issue" | "transfer_in" | "transfer_out" | "adjustment_in" | "adjustment_out";
+import { isIsoCalendarDate } from "../shared/primitives";\n\nexport type InventoryMovementKind = "receipt" | "issue" | "transfer_in" | "transfer_out" | "adjustment_in" | "adjustment_out";
 export type InventoryItem = { id: string; sku: string; name: string; unit: string; trackQuantity: boolean; reorderPoint: number; active: boolean };
 export type StockMovement = { id: string; itemId: string; warehouseId: string; kind: InventoryMovementKind; quantity: number; unitCostMinor: number; occurredOn: string; sourceType: string; sourceId: string };
 export type StockBalance = { itemId: string; warehouseId: string; quantity: number; averageCostMinor: number };
@@ -9,7 +9,7 @@ export function validateStockMovement(item: InventoryItem, movement: StockMoveme
   if (item.id !== movement.itemId) errors.push("INVENTORY_ITEM_MISMATCH");
   if (!Number.isSafeInteger(movement.quantity) || movement.quantity <= 0) errors.push("INVENTORY_QUANTITY_INVALID");
   if (!Number.isSafeInteger(movement.unitCostMinor) || movement.unitCostMinor < 0) errors.push("INVENTORY_UNIT_COST_INVALID");
-  if (!movement.warehouseId.trim() || !movement.sourceType.trim() || !movement.sourceId.trim()) errors.push("INVENTORY_MOVEMENT_REFERENCE_REQUIRED");
+  if (!isIsoCalendarDate(movement.occurredOn)) errors.push("INVENTORY_MOVEMENT_DATE_INVALID");\n  if (!movement.warehouseId.trim() || !movement.sourceType.trim() || !movement.sourceId.trim()) errors.push("INVENTORY_MOVEMENT_REFERENCE_REQUIRED");
   return errors;
 }
 export function applyStockMovement(balance: StockBalance, movement: StockMovement): StockBalance {
