@@ -19,7 +19,7 @@ Archivo y Gestión Documental es un módulo interno de `apps/erp`, dentro de Ges
 
 El módulo se integra con Libros sacramentales, Documentos y certificados y Auditoría y trazabilidad. Los servicios intensivos de digitalización, OCR, almacenamiento y procesamiento pueden desplegarse por separado, manteniendo la experiencia y el dominio funcional dentro de ERP.
 
-La carpeta `apps/archivo-eclesiastico` de esta rama contiene un scaffold de interfaz creado antes de confirmar esta decisión de producto. Es material de transición/prototipo y **no debe incorporarse como cuarta aplicación ni desplegarse de forma independiente**. Sus pantallas y componentes deberán trasladarse/adaptarse a `apps/erp` en una fase posterior, verificando primero las rutas, navegación, componentes y convenciones existentes de ERP.
+La interfaz del módulo está integrada en `apps/erp`: su acceso principal se encuentra en `/app/gestion-documental` y sus áreas especializadas usan rutas `/app/archivo-*`. La aplicación autónoma provisional fue retirada del workspace y no se despliega como producto separado.
 
 ## Gestor de paquetes
 
