@@ -12,11 +12,11 @@ describe("flujos financieros intermodulares", () => {
     const request: PurchaseRequest = { id: "po1", requesterId: "u1", status: "approved", lines: [{ id: "item1", description: "Material", quantity: 2, unitPriceMinor: 10000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };
     expect(reservePurchaseAgainstBudget([budget], request).budgetLines[0].committedAmountMinor).toBe(20000);
   });
-  it("convierte recepción de compra en movimientos de inventario trazables", () => {
+  it("exige una línea presupuestal por cuenta y centro de costos", () => {\n    const budget: BudgetLine = { id: "b1", accountCode: "51", costCenterId: "cc2", direction: "expense", approvedAmountMinor: 100000, committedAmountMinor: 0, accruedAmountMinor: 0, paidAmountMinor: 0 };\n    const request: PurchaseRequest = { id: "po2", requesterId: "u1", status: "approved", lines: [{ id: "item2", description: "Material", quantity: 1, unitPriceMinor: 1000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };\n    expect(() => reservePurchaseAgainstBudget([budget], request)).toThrow("PURCHASE_BUDGET_LINE_NOT_FOUND");\n  });\n  it("convierte recepción de compra en movimientos de inventario trazables", () => {
     const request: PurchaseRequest = { id: "po1", requesterId: "u1", supplierId: "s1", status: "ordered", lines: [{ id: "line1", inventoryItemId: "item1", description: "Material", quantity: 3, unitPriceMinor: 5000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };
     const result = receivePurchaseIntoInventory(request, { line1: 2 }, "warehouse1", "2026-11-05", "receipt-001");
     expect(result.request.status).toBe("partially_received");
-    expect(result.movements[0]).toMatchObject({ itemId: "item1", quantity: 2, sourceId: "po1" });
+    expect(result.movements[0]).toMatchObject({ itemId: "item1", quantity: 2, sourceId: "receipt-001" });
   });
   it("genera un comprobante balanceado desde un movimiento contabilizado", () => {
     const movement: CashMovement = { id: "cash1", direction: "inflow", amountMinor: 25000, currency: "COP", accountId: "bank1", date: "2026-11-05", status: "posted", sourceType: "offering" };
