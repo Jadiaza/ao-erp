@@ -10,7 +10,7 @@ describe("flujos financieros intermodulares", () => {
   it("reserva presupuesto al aprobar el compromiso de compra", () => {
     const budget: BudgetLine = { id: "b1", accountCode: "51", costCenterId: "cc1", direction: "expense", approvedAmountMinor: 100000, committedAmountMinor: 0, accruedAmountMinor: 0, paidAmountMinor: 0 };
     const request: PurchaseRequest = { id: "po1", requesterId: "u1", status: "approved", lines: [{ id: "item1", description: "Material", quantity: 2, unitPriceMinor: 10000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };
-    expect(reservePurchaseAgainstBudget([budget], request).budgetLines[0].committedAmountMinor).toBe(20000);
+    expect(reservePurchaseAgainstBudget([budget], request).budgetLines[0]!.committedAmountMinor).toBe(20000);
   });
   it("exige una línea presupuestal por cuenta y centro de costos", () => {
     const budget: BudgetLine = { id: "b1", accountCode: "51", costCenterId: "cc2", direction: "expense", approvedAmountMinor: 100000, committedAmountMinor: 0, accruedAmountMinor: 0, paidAmountMinor: 0 };
@@ -21,7 +21,7 @@ describe("flujos financieros intermodulares", () => {
     const request: PurchaseRequest = { id: "po1", requesterId: "u1", supplierId: "s1", status: "ordered", lines: [{ id: "line1", inventoryItemId: "item1", description: "Material", quantity: 3, unitPriceMinor: 5000, receivedQuantity: 0, expenseAccountCode: "51", costCenterId: "cc1" }] };
     const result = receivePurchaseIntoInventory(request, { line1: 2 }, "warehouse1", "2026-11-05", "receipt-001");
     expect(result.request.status).toBe("partially_received");
-    expect(result.movements[0]).toMatchObject({ itemId: "item1", quantity: 2, sourceId: "receipt-001" });
+    expect(result.movements[0]!).toMatchObject({ itemId: "item1", quantity: 2, sourceId: "receipt-001" });
   });
   it("genera un comprobante balanceado desde un movimiento contabilizado", () => {
     const movement: CashMovement = { id: "cash1", direction: "inflow", amountMinor: 25000, currency: "COP", accountId: "bank1", date: "2026-11-05", status: "posted", sourceType: "offering" };
@@ -56,11 +56,11 @@ describe("ciclo de compra, factura, pago y presupuesto", () => {
     const budget: BudgetLine = { id: "bl1", accountCode: "5105", costCenterId: "cc-admin", direction: "expense", approvedAmountMinor: 50000, committedAmountMinor: 20000, accruedAmountMinor: 0, paidAmountMinor: 0 };
     const invoice = registerPurchaseSupplierInvoice(request, { payableId: "ap-1", invoiceNumber: "FE-100", issueDate: "2026-11-05", dueDate: "2026-12-05", currency: "COP", allocations: [{ purchaseLineId: "l1", amountMinor: 20000 }] }, [budget], []);
     expect(invoice.payable.status).toBe("approved");
-    expect(invoice.budgetLines[0]).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 0 });
+    expect(invoice.budgetLines[0]!).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 0 });
     const movement: CashMovement = { id: "cash-ap-1", direction: "outflow", amountMinor: 10000, currency: "COP", accountId: "bank1", date: "2026-11-06", status: "posted", sourceType: "purchase", sourceId: "ap-1" };
     const paid = settleSupplierInvoicePayment(invoice.payable, { id: "payment-1", payableId: "ap-1", amountMinor: 10000, paidOn: "2026-11-06", cashMovementId: "cash-ap-1", reference: "Abono factura" }, movement, invoice.budgetLines, invoice.allocations, [], { voucherId: "v-ap-1", accountingEntityId: "entity-1", organizationId: "org-1", accountsPayableAccountId: "2205" });
     expect(paid.payable).toMatchObject({ paidMinor: 10000, status: "partially_paid" });
-    expect(paid.budgetLines[0]).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 10000 });
+    expect(paid.budgetLines[0]!).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 10000 });
     expect(paid.ledgerProposal.lines.reduce((sum, line) => sum + line.debitMinor, 0)).toBe(10000);
     expect(paid.ledgerProposal.lines.reduce((sum, line) => sum + line.creditMinor, 0)).toBe(10000);
   });
@@ -85,6 +85,6 @@ describe("cancelación de compras y liberación presupuestal", () => {
     const result = cancelPurchaseAndReleaseUnreceivedBudget(request, [budget]);
     expect(result.request.status).toBe("cancelled");
     expect(result.releasedAmountMinor).toBe(30000);
-    expect(result.budgetLines[0].committedAmountMinor).toBe(20000);
+    expect(result.budgetLines[0]!.committedAmountMinor).toBe(20000);
   });
 });
