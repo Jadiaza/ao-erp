@@ -24,13 +24,7 @@
     "typecheck:diocesano": "bun run --filter @ao/diocesano typecheck",
     "lint:diocesano": "bun run --filter @ao/diocesano lint",
     "test:diocesano": "bun run --filter @ao/diocesano test",
-    "preview:diocesano": "bun run --filter @ao/diocesano preview",
-    "dev:archivo": "bun run --filter @ao/archivo-eclesiastico dev",
-    "build:archivo": "bun run --filter @ao/archivo-eclesiastico build",
-    "typecheck:archivo": "bun run --filter @ao/archivo-eclesiastico typecheck",
-    "lint:archivo": "bun run --filter @ao/archivo-eclesiastico lint",
-    "test:archivo": "bun run --filter @ao/archivo-eclesiastico test",
-    "preview:archivo": "bun run --filter @ao/archivo-eclesiastico preview"
+    "preview:diocesano": "bun run --filter @ao/diocesano preview"
   },
   "overrides": { "rolldown": "1.2.1" }
 }
