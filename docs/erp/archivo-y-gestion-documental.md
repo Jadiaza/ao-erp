@@ -133,4 +133,9 @@ El diseño debe considerar la Ley 1581 de 2012 y el marco archivístico aplicabl
 
 ## 9. Alcance de la implementación actual
 
-La definición organiza el módulo y sus límites. No declara implementados PostgreSQL, autenticación productiva, almacenamiento S3, OCR, HTR, colas, escáneres ni procesos archivísticos reales. Las pantallas existentes del prototipo deben integrarse en las rutas de ERP y no desplegarse como una aplicación autónoma.
+La pantalla principal `/app/gestion-documental` integra en una sola experiencia dos bloques complementarios:
+
+- **Repositorio documental:** conserva el explorador anterior, las carpetas y categorías, búsqueda, filtro por clasificación, tabla de documentos, ficha de detalle, responsables, versiones, niveles de acceso y estados.
+- **Procesos de Archivo Eclesiástico:** incorpora accesos a recepción documental, digitalización y OCR, repositorio, clasificación archivística, expedientes/libros/folios, instrumentos archivísticos, transferencias y conservación/preservación.
+
+La integración mantiene los enlaces a Libros sacramentales y Documentos y certificados, sin duplicar sus responsabilidades. Los datos del repositorio siguen siendo demostrativos. No declara implementados PostgreSQL, autenticación productiva, almacenamiento S3, OCR, HTR, colas, escáneres ni procesos archivísticos reales.
