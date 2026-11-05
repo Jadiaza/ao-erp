@@ -42,6 +42,7 @@ export const appModules: AppModule[] = [
   { id: "institucion", label: "Institución", path: "/app/institucion", group: "Gobierno e institución", icon: Landmark },
   { id: "estructura-eclesiastica", label: "Estructura eclesiástica", path: "/app/estructura-eclesiastica", group: "Gobierno e institución", icon: Church },
   { id: "administracion-institucional", label: "Administración institucional", path: "/app/administracion-institucional", group: "Gobierno e institución", icon: Building2 },
+  { id: "gestion-diocesana", label: "Gestión diocesana", path: "/app/gestion-diocesana", group: "Gobierno e institución", icon: Church },
   { id: "gobierno-normativa", label: "Gobierno y normativa", path: "/app/gobierno-normativa", group: "Gobierno e institución", icon: ScrollText },
   { id: "usuarios-permisos", label: "Usuarios y permisos", path: "/app/usuarios-permisos", group: "Gobierno e institución", icon: ShieldCheck },
   { id: "feligreses-familias", label: "Feligreses y familias", path: "/app/feligreses-familias", group: "Comunidad y pastoral", icon: Users },
@@ -66,6 +67,7 @@ export const appModules: AppModule[] = [
   { id: "gestion-documental", label: "Gestión documental", path: "/app/gestion-documental", group: "Gestión y control", icon: FolderOpen },
   { id: "auditoria-trazabilidad", label: "Auditoría y trazabilidad", path: "/app/auditoria-trazabilidad", group: "Gestión y control", icon: FileClock },
   { id: "configuracion", label: "Configuración", path: "/app/configuracion", group: "Sistema", icon: Settings },
+  { id: "administracion-plataforma", label: "Administración de plataforma", path: "/app/administracion-plataforma", group: "Sistema", icon: ShieldCheck },
 ];
 
 export const moduleGroups = [...new Set(appModules.map((module) => module.group))].filter((group) => group !== "General");
