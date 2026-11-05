@@ -58,7 +58,7 @@ describe("ciclo de compra, factura, pago y presupuesto", () => {
     expect(invoice.payable.status).toBe("approved");
     expect(invoice.budgetLines[0]).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 0 });
     const movement: CashMovement = { id: "cash-ap-1", direction: "outflow", amountMinor: 10000, currency: "COP", accountId: "bank1", date: "2026-11-06", status: "posted", sourceType: "purchase", sourceId: "ap-1" };
-    const paid = settleSupplierInvoicePayment(invoice.payable, { id: "payment-1", payableId: "ap-1", amountMinor: 10000, paidOn: "2026-11-06", cashMovementId: "cash-ap-1", reference: "Abono factura" }, movement, invoice.budgetLines, invoice.allocations, { voucherId: "v-ap-1", accountingEntityId: "entity-1", organizationId: "org-1", accountsPayableAccountId: "2205" });
+    const paid = settleSupplierInvoicePayment(invoice.payable, { id: "payment-1", payableId: "ap-1", amountMinor: 10000, paidOn: "2026-11-06", cashMovementId: "cash-ap-1", reference: "Abono factura" }, movement, invoice.budgetLines, invoice.allocations, [], { voucherId: "v-ap-1", accountingEntityId: "entity-1", organizationId: "org-1", accountsPayableAccountId: "2205" });
     expect(paid.payable).toMatchObject({ paidMinor: 10000, status: "partially_paid" });
     expect(paid.budgetLines[0]).toMatchObject({ committedAmountMinor: 0, accruedAmountMinor: 20000, paidAmountMinor: 10000 });
     expect(paid.ledgerProposal.lines.reduce((sum, line) => sum + line.debitMinor, 0)).toBe(10000);
