@@ -13,7 +13,7 @@ describe("tesorería", () => {
   });
   it("genera dos lados de una transferencia y no permite sobregiro", () => {
     const destination: CashAccount = { ...account, id: "C2", movements: [] };
-    expect(transferCash(account, destination, 1000).incoming.direction).toBe("inflow");
-    expect(() => transferCash(account, destination, 999999).toThrow("TRANSFER_INSUFFICIENT_FUNDS"));
+    expect(transferCash(account, destination, 1000, "2026-11-05").incoming.direction).toBe("inflow");
+    expect(() => transferCash(account, destination, 999999, "2026-11-05")).toThrow("TRANSFER_INSUFFICIENT_FUNDS");
   });
 });
