@@ -63,7 +63,7 @@ export const appModules: AppModule[] = [
   { id: "portal-feligres", label: "Portal del feligrés", path: "/app/portal-feligres", group: "Servicios", icon: Users },
   { id: "comunicaciones", label: "Comunicaciones", path: "/app/comunicaciones", group: "Servicios", icon: Mail },
   { id: "inteligencia-artificial", label: "Inteligencia artificial", path: "/app/inteligencia-artificial", group: "Servicios", icon: Sparkles },
-  { id: "gestion-documental", label: "Gestión documental", path: "/app/gestion-documental", group: "Gestión y control", icon: FolderOpen },
+  { id: "archivo-gestion-documental", label: "Archivo y Gestión Documental", path: "/app/gestion-documental", group: "Gestión y control", icon: Archive },
   { id: "auditoria-trazabilidad", label: "Auditoría y trazabilidad", path: "/app/auditoria-trazabilidad", group: "Gestión y control", icon: FileClock },
   { id: "configuracion", label: "Configuración", path: "/app/configuracion", group: "Sistema", icon: Settings },
 ];
