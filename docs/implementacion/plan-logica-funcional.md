@@ -86,3 +86,12 @@ Se incorporaron primeras reglas ejecutables y pruebas para los siguientes domini
 ### Pendiente para cerrar la etapa funcional
 
 Esta entrega es una primera implementación de dominio, no la integración completa de todos los módulos. Falta ampliar reglas específicas, cubrir casos límite con pruebas, conectar las pantallas existentes a los casos de uso, completar flujos de compras/cuentas por pagar/tesorería/contabilidad, cubrir fondos y proyectos, completar procesos sacramentales y documentales, y validar todo mediante ejecución de typecheck, lint, build y Vitest. La persistencia permanece deliberadamente aplazada.
+
+
+## Segunda ampliación funcional
+
+Se añadieron dominios de fondos con restricciones y trazabilidad de movimientos; cuentas por pagar y por cobrar con saldos y pagos/recaudos parciales; y auditoría con validaciones de contexto, correlación y orden temporal.
+
+También se reforzó la integración entre módulos: un pago a proveedor solo se aplica a la obligación cuando se presenta un movimiento de tesorería contabilizado, de egreso, con moneda e importe coincidentes. Un recaudo solo se aplica a la cuenta por cobrar cuando existe un movimiento contabilizado de ingreso con los mismos datos. Se añadieron pruebas de estos recorridos.
+
+Se corrigieron referencias de tipos entre compras e inventario y validaciones de fecha. La compilación y las pruebas siguen pendientes de ejecución local; no se debe interpretar el código incorporado como validado por CI.
