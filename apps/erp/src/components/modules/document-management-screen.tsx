@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { IntegratedWorkflowPanel } from "@/components/modules/integrated-workflow-panel";
 import { Archive, FileArchive, FileClock, FileLock2, FileText, Folder, FolderOpen, History, ShieldCheck } from "lucide-react";
 import { DataTable, type DataTableColumn, DemoNotice, DetailDrawer, InfoItem, ModuleLayout, SearchInput, StatCard, StatusBadge } from "@/components/modules";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,5 +32,6 @@ export function DocumentManagementScreen() {
         <div className="grid grid-cols-2 gap-4"><InfoItem label="Clasificación">{selected.category}</InfoItem><InfoItem label="Tipo documental">{selected.type}</InfoItem><InfoItem label="Responsable">{selected.owner}</InfoItem><InfoItem label="Estado"><StatusBadge status={selected.status === "Vigente" ? "approved" : selected.status === "En revisión" ? "pending" : "inactive"} label={selected.status} /></InfoItem><InfoItem label="Creación">{selected.created}</InfoItem><InfoItem label="Última actualización">{selected.updated}</InfoItem><InfoItem label="Acceso"><StatusBadge status={selected.access === "Restringido" ? "overdue" : selected.access === "Interno" ? "pending" : "active"} label={selected.access} /></InfoItem><InfoItem label="Versión actual">{selected.version}</InfoItem></div>
         <div><h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><History className="size-4 text-primary" />Historial de versiones</h3><div className="space-y-2">{selected.versions.map((version) => <div key={version.version} className="rounded-lg border p-3"><div className="flex justify-between gap-3"><p className="text-sm font-semibold">{version.version}</p><p className="text-xs text-muted-foreground">{version.date}</p></div><p className="mt-1 text-xs text-muted-foreground">{version.note}</p><p className="mt-2 text-[10px] text-muted-foreground">Responsable: {version.author}</p></div>)}</div></div>
       </div>}</DetailDrawer>
+    <IntegratedWorkflowPanel module="document" />
   </ModuleLayout>;
 }
