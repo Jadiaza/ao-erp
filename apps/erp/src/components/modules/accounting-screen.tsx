@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { IntegratedWorkflowPanel } from "@/components/modules/integrated-workflow-panel";
 import { BookCheck, BookOpen, Calculator, FileSpreadsheet, Landmark, Scale } from "lucide-react";
 import { DataTable, type DataTableColumn, DemoNotice, DetailDrawer, InfoItem, ModuleLayout, StatCard, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/modules";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,5 +55,6 @@ export function AccountingScreen() {
       <TabsContent value="statements" className="grid gap-4 lg:grid-cols-2"><Card className="shadow-none"><CardHeader><CardTitle className="text-base">Estado de situación financiera</CardTitle><p className="text-xs text-muted-foreground">Corte de muestra · {currentEntity.name}</p></CardHeader><CardContent className="space-y-3">{financialPosition.map((row) => <div key={row.label} className="flex justify-between border-b py-2 text-sm"><span>{row.label}</span><span className="font-mono font-semibold">{money(row.value)}</span></div>)}</CardContent></Card><Card className="shadow-none"><CardHeader><CardTitle className="text-base">Estado de actividades</CardTitle><p className="text-xs text-muted-foreground">Presentación de referencia configurable por entidad</p></CardHeader><CardContent className="space-y-3">{activityStatement.map((row) => <div key={row.label} className="flex justify-between border-b py-2 text-sm"><span>{row.label}</span><span className="font-mono font-semibold">{money(row.value)}</span></div>)}<p className="pt-2 text-xs text-muted-foreground">La forma de presentación depende del marco configurado y la naturaleza de la entidad.</p></CardContent></Card></TabsContent>
     </Tabs>
     <DetailDrawer open={!!selected} onOpenChange={(open) => !open && setSelected(null)} title={selected?.id ?? "Detalle del comprobante"} description={selected ? `${selected.date} · ${currentEntity.name}` : undefined}><div>{selected && <div className="grid grid-cols-2 gap-4"><InfoItem label="Periodo">{selected.period}</InfoItem><InfoItem label="Descripción">{selected.description}</InfoItem><InfoItem label="Cuenta">{selected.account}</InfoItem><InfoItem label="Dimensión">{selected.dimension}</InfoItem><InfoItem label="Débito">{money(selected.debit)}</InfoItem><InfoItem label="Crédito">{money(selected.credit)}</InfoItem></div>}</div></DetailDrawer>
+    <IntegratedWorkflowPanel module="accounting" />
   </ModuleLayout>;
 }
