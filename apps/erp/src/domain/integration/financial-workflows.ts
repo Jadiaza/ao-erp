@@ -2,7 +2,9 @@ import type { LedgerLineInput, LedgerVoucherInput } from "../../modules/accounti
 import type { BudgetLine } from "../finance/budget";
 import { commitBudgetAmount } from "../finance/budget";
 import type { CashMovement } from "../finance/treasury";
-import type { PurchaseRequest, StockMovement } from "../procurement/procurement";
+import type { PurchaseRequest } from "../procurement/procurement";
+import type { StockMovement } from "../inventory/inventory";
+import { isIsoCalendarDate } from "../shared/primitives";
 import { receivePurchaseItems } from "../procurement/procurement";
 
 export function reservePurchaseAgainstBudget(line: BudgetLine, request: PurchaseRequest): { budgetLine: BudgetLine; committedAmountMinor: number } {
