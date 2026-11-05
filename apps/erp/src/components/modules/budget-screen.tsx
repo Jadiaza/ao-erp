@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { IntegratedWorkflowPanel } from "@/components/modules/integrated-workflow-panel";
 import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, CalendarRange, ChartColumnIncreasing, CircleDollarSign } from "lucide-react";
 import { ChartCard, DataTable, type DataTableColumn, DemoNotice, FilterBar, ModuleLayout, StatCard, StatusBadge, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/modules";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,5 +29,6 @@ export function BudgetScreen() {
     <Tabs value={tab} onValueChange={setTab}><TabsList><TabsTrigger value="overview">Ejecución presupuestal</TabsTrigger><TabsTrigger value="income">Ingresos proyectados</TabsTrigger><TabsTrigger value="expenses">Gastos previstos</TabsTrigger></TabsList>
       <TabsContent value={tab} className="space-y-4"><FilterBar label="Presupuesto"><Select value={area} onValueChange={setArea}><SelectTrigger className="w-48"><SelectValue placeholder="Área" /></SelectTrigger><SelectContent><SelectItem value="all">Todas las áreas</SelectItem>{areas.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select><Select value={kind} onValueChange={setKind}><SelectTrigger className="w-44"><SelectValue placeholder="Tipo de rubro" /></SelectTrigger><SelectContent><SelectItem value="all">Ingresos y gastos</SelectItem><SelectItem value="Ingreso">Ingresos</SelectItem><SelectItem value="Gasto">Gastos</SelectItem></SelectContent></Select><span className="inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-xs text-muted-foreground"><CircleDollarSign className="size-3.5" />COP · cifras demostrativas</span></FilterBar><DataTable rows={lines.filter((line) => tab === "income" ? line.type === "Ingreso" : tab === "expenses" ? line.type === "Gasto" : true)} columns={columns} getRowId={(line) => line.id} emptyTitle="No hay rubros para los filtros seleccionados" /></TabsContent>
     </Tabs>
+    <IntegratedWorkflowPanel module="budget" />
   </ModuleLayout>;
 }

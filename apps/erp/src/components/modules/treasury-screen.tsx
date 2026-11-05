@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { IntegratedWorkflowPanel } from "@/components/modules/integrated-workflow-panel";
 import { ArrowDownLeft, ArrowUpRight, Banknote, Building2, Landmark, Wallet } from "lucide-react";
 import { ChartCard, DataTable, type DataTableColumn, DemoNotice, DetailDrawer, FilterBar, InfoItem, ModuleLayout, SearchInput, StatCard, StatusBadge, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/modules";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,5 +38,6 @@ export function TreasuryScreen() {
       <TabsContent value="reconciliation" className="space-y-4"><div className="grid gap-4 md:grid-cols-3"><StatCard label="Saldo extracto demo" value={currency(18518500)} /><StatCard label="Saldo registro demo" value={currency(18450000)} /><StatCard label="Diferencia por revisar" value={currency(68500)} /></div><DataTable rows={reconciliationLines} columns={[{ id: "date", header: "Fecha", cell: (item) => item.date }, { id: "bank", header: "Descripción bancaria", cell: (item) => item.bankDescription }, { id: "ledger", header: "Registro relacionado", cell: (item) => item.ledgerDescription }, { id: "amount", header: "Importe", cell: (item) => currency(item.amount) }, { id: "status", header: "Conciliación", cell: (item) => <StatusBadge status={item.status === "Conciliado" ? "approved" : "pending"} label={item.status} /> }]} getRowId={(item) => item.id} /><p className="text-xs text-muted-foreground">La comparación no modifica saldos ni genera asientos contables.</p></TabsContent>
     </Tabs>
     <DetailDrawer open={!!selected} onOpenChange={(open) => !open && setSelected(null)} title={selected?.concept ?? "Detalle de movimiento"} description={selected?.reference}><div>{selected && <div className="grid grid-cols-2 gap-4"><InfoItem label="Fecha">{selected.date}</InfoItem><InfoItem label="Dirección">{selected.direction}</InfoItem><InfoItem label="Fuente">{selected.source}</InfoItem><InfoItem label="Categoría">{selected.category}</InfoItem><InfoItem label="Cuenta">{selected.account}</InfoItem><InfoItem label="Valor">{currency(selected.amount)}</InfoItem><InfoItem label="Estado"><StatusBadge status={selected.status} /></InfoItem><InfoItem label="Referencia">{selected.reference}</InfoItem></div>}</div></DetailDrawer>
+    <IntegratedWorkflowPanel module="treasury" />
   </ModuleLayout>;
 }

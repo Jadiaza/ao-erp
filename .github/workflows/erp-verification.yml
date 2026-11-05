@@ -1,0 +1,44 @@
+name: A&O ERP verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - integration/ao-ecosystem-foundation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ao-erp-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, tests and production build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.22
+
+      - name: Install dependencies
+        run: bun install --no-save
+
+      - name: Typecheck
+        run: bun run typecheck:erp
+
+      - name: Lint
+        run: bun run lint:erp
+
+      - name: Unit and integration tests
+        run: bun run test:erp
+
+      - name: Production build
+        run: bun run build:erp
