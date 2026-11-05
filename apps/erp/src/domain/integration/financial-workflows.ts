@@ -9,11 +9,11 @@ import type { CashMovement } from "../finance/treasury";
 import type { PurchaseRequest } from "../procurement/procurement";
 import type { StockMovement } from "../inventory/inventory";
 import { isIsoCalendarDate } from "../shared/primitives";
-import { receivePurchaseItems } from "../procurement/procurement";
+import { purchaseTotal, receivePurchaseItems } from "../procurement/procurement";
 
 export function reservePurchaseAgainstBudget(line: BudgetLine, request: PurchaseRequest): { budgetLine: BudgetLine; committedAmountMinor: number } {
   if (request.status !== "approved") throw new Error("PURCHASE_REQUEST_NOT_APPROVED_FOR_BUDGET");
-  const amount = request.lines.reduce((total, item) => total + item.quantity * item.unitPriceMinor, 0);
+  const amount = purchaseTotal(request);
   return { budgetLine: commitBudgetAmount(line, amount), committedAmountMinor: amount };
 }
 
