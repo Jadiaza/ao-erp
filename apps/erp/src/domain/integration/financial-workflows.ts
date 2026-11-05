@@ -105,6 +105,7 @@ export function registerPurchaseSupplierInvoice(
   budgetLines: readonly BudgetLine[],
 ): { payable: Payable; budgetLines: BudgetLine[]; allocations: SupplierInvoiceAllocation[] } {
   if (request.status !== "partially_received" && request.status !== "received") throw new Error("PURCHASE_INVOICE_REQUIRES_RECEIPT");
+  if (!request.supplierId?.trim()) throw new Error("PURCHASE_INVOICE_SUPPLIER_REQUIRED");
   if (!input.payableId.trim() || !input.invoiceNumber.trim() || !isIsoCalendarDate(input.issueDate) || !isIsoCalendarDate(input.dueDate) || input.dueDate < input.issueDate || !/^[A-Z]{3}$/.test(input.currency)) throw new Error("PURCHASE_INVOICE_HEADER_INVALID");
   if (!input.allocations.length || new Set(input.allocations.map((item) => item.purchaseLineId)).size !== input.allocations.length) throw new Error("PURCHASE_INVOICE_ALLOCATIONS_INVALID");
   const purchaseLines = new Map(request.lines.map((line) => [line.id, line]));
@@ -146,6 +147,7 @@ export function settleSupplierInvoicePayment(
   movement: CashMovement,
   budgetLines: readonly BudgetLine[],
   allocations: readonly SupplierInvoiceAllocation[],
+  ledgerContext: { voucherId: string; accountingEntityId: string; organizationId: string; accountsPayableAccountId: string },
 ): { payable: Payable; payment: PayablePayment; budgetLines: BudgetLine[]; allocations: SupplierInvoiceAllocation[]; ledgerProposal: LedgerVoucherInput } {
   const settled = paySupplierFromTreasury(payable, payment, movement);
   const nextAllocations = allocations.map((allocation) => ({ ...allocation }));
@@ -163,14 +165,15 @@ export function settleSupplierInvoicePayment(
     if (remaining === 0) break;
   }
   if (remaining !== 0) throw new Error("PURCHASE_PAYMENT_EXCEEDS_INVOICE_ALLOCATIONS");
+  if (!ledgerContext.voucherId.trim() || !ledgerContext.accountingEntityId.trim() || !ledgerContext.organizationId.trim() || !ledgerContext.accountsPayableAccountId.trim()) throw new Error("PURCHASE_PAYMENT_LEDGER_CONTEXT_REQUIRED");
   const ledgerProposal = cashMovementToLedgerVoucher(
     movement,
-    `VCH-${payment.id}`,
+    ledgerContext.voucherId,
     movement.date.slice(0, 7),
-    "REQUIRES_ACCOUNTING_ENTITY_MAPPING",
-    "REQUIRES_ORGANIZATION_MAPPING",
+    ledgerContext.accountingEntityId,
+    ledgerContext.organizationId,
     movement.accountId,
-    "REQUIRES_ACCOUNTS_PAYABLE_MAPPING",
+    ledgerContext.accountsPayableAccountId,
   );
   return { ...settled, budgetLines: nextBudget, allocations: nextAllocations, ledgerProposal };
 }
