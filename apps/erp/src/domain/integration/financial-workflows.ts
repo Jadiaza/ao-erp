@@ -4,8 +4,8 @@ import type { Payable, PayablePayment } from "../finance/payables";
 import { registerPayablePayment } from "../finance/payables";
 import type { Receivable, Collection } from "../finance/receivables";
 import { registerCollection } from "../finance/receivables";
-import { commitBudgetAmount } from "../finance/budget";
-import type { CashMovement } from "../finance/treasury";
+import { accrueBudgetAmount, commitBudgetAmount, registerBudgetPayment } from "../finance/budget";
+import type { CashMovement } from "../finance/treasury";\nimport { createCashMovementReversal } from "../finance/treasury";
 import type { PurchaseRequest } from "../procurement/procurement";
 import type { StockMovement } from "../inventory/inventory";
 import { isIsoCalendarDate } from "../shared/primitives";
@@ -86,4 +86,95 @@ export function collectReceivableIntoTreasury(receivable: Receivable, collection
   if (movement.direction !== "inflow" || movement.amountMinor !== collection.amountMinor || movement.currency !== receivable.currency) throw new Error("RECEIVABLE_CASH_MOVEMENT_MISMATCH");
   if (movement.id !== collection.cashMovementId || movement.date !== collection.collectedOn) throw new Error("RECEIVABLE_CASH_MOVEMENT_REFERENCE_MISMATCH");
   return registerCollection(receivable, collection);
+}
+
+export type SupplierInvoiceAllocation = { purchaseLineId: string; accountCode: string; costCenterId: string; accruedAmountMinor: number; paidAmountMinor: number };
+export type SupplierInvoiceInput = {
+  payableId: string;
+  invoiceNumber: string;
+  issueDate: string;
+  dueDate: string;
+  currency: string;
+  allocations: readonly { purchaseLineId: string; amountMinor: number }[];
+};
+
+/** Registers the supplier invoice against quantities actually received and converts commitments into accruals. */
+export function registerPurchaseSupplierInvoice(
+  request: PurchaseRequest,
+  input: SupplierInvoiceInput,
+  budgetLines: readonly BudgetLine[],
+): { payable: Payable; budgetLines: BudgetLine[]; allocations: SupplierInvoiceAllocation[] } {
+  if (request.status !== "partially_received" && request.status !== "received") throw new Error("PURCHASE_INVOICE_REQUIRES_RECEIPT");
+  if (!input.payableId.trim() || !input.invoiceNumber.trim() || !isIsoCalendarDate(input.issueDate) || !isIsoCalendarDate(input.dueDate) || input.dueDate < input.issueDate || !/^[A-Z]{3}$/.test(input.currency)) throw new Error("PURCHASE_INVOICE_HEADER_INVALID");
+  if (!input.allocations.length || new Set(input.allocations.map((item) => item.purchaseLineId)).size !== input.allocations.length) throw new Error("PURCHASE_INVOICE_ALLOCATIONS_INVALID");
+  const purchaseLines = new Map(request.lines.map((line) => [line.id, line]));
+  const updatedBudget = [...budgetLines];
+  const allocations: SupplierInvoiceAllocation[] = [];
+  let totalMinor = 0;
+  for (const allocation of input.allocations) {
+    const purchaseLine = purchaseLines.get(allocation.purchaseLineId);
+    if (!purchaseLine || !Number.isSafeInteger(allocation.amountMinor) || allocation.amountMinor <= 0) throw new Error("PURCHASE_INVOICE_LINE_INVALID");
+    const receivedValue = purchaseLine.receivedQuantity * purchaseLine.unitPriceMinor;
+    if (allocation.amountMinor > receivedValue) throw new Error(`PURCHASE_INVOICE_EXCEEDS_RECEIVED_VALUE:${purchaseLine.id}`);
+    const budgetIndex = updatedBudget.findIndex((line) => line.accountCode === purchaseLine.expenseAccountCode && line.costCenterId === purchaseLine.costCenterId && line.direction === "expense");
+    if (budgetIndex < 0) throw new Error(`PURCHASE_BUDGET_LINE_NOT_FOUND:${purchaseLine.expenseAccountCode}:${purchaseLine.costCenterId}`);
+    updatedBudget[budgetIndex] = accrueBudgetAmount(updatedBudget[budgetIndex], allocation.amountMinor);
+    allocations.push({ purchaseLineId: purchaseLine.id, accountCode: purchaseLine.expenseAccountCode, costCenterId: purchaseLine.costCenterId, accruedAmountMinor: allocation.amountMinor, paidAmountMinor: 0 });
+    totalMinor += allocation.amountMinor;
+    if (!Number.isSafeInteger(totalMinor)) throw new Error("PURCHASE_INVOICE_TOTAL_OUT_OF_RANGE");
+  }
+  if (totalMinor <= 0) throw new Error("PURCHASE_INVOICE_TOTAL_INVALID");
+  const payable: Payable = {
+    id: input.payableId,
+    supplierId: request.supplierId ?? "",
+    invoiceNumber: input.invoiceNumber,
+    issueDate: input.issueDate,
+    dueDate: input.dueDate,
+    currency: input.currency,
+    totalMinor,
+    paidMinor: 0,
+    status: "approved",
+    purchaseOrderId: request.id,
+  };
+  return { payable, budgetLines: updatedBudget, allocations };
+}
+
+/** Applies a posted treasury payment to the payable and its originating budget accruals. */
+export function settleSupplierInvoicePayment(
+  payable: Payable,
+  payment: PayablePayment,
+  movement: CashMovement,
+  budgetLines: readonly BudgetLine[],
+  allocations: readonly SupplierInvoiceAllocation[],
+): { payable: Payable; payment: PayablePayment; budgetLines: BudgetLine[]; allocations: SupplierInvoiceAllocation[]; ledgerProposal: LedgerVoucherInput } {
+  const settled = paySupplierFromTreasury(payable, payment, movement);
+  const nextAllocations = allocations.map((allocation) => ({ ...allocation }));
+  const nextBudget = [...budgetLines];
+  let remaining = payment.amountMinor;
+  for (const allocation of nextAllocations) {
+    const outstanding = allocation.accruedAmountMinor - allocation.paidAmountMinor;
+    const applied = Math.min(outstanding, remaining);
+    if (applied <= 0) continue;
+    const index = nextBudget.findIndex((line) => line.accountCode === allocation.accountCode && line.costCenterId === allocation.costCenterId && line.direction === "expense");
+    if (index < 0) throw new Error("PURCHASE_PAYMENT_BUDGET_LINE_NOT_FOUND");
+    nextBudget[index] = registerBudgetPayment(nextBudget[index], applied);
+    allocation.paidAmountMinor += applied;
+    remaining -= applied;
+    if (remaining === 0) break;
+  }
+  if (remaining !== 0) throw new Error("PURCHASE_PAYMENT_EXCEEDS_INVOICE_ALLOCATIONS");
+  const ledgerProposal = cashMovementToLedgerVoucher(
+    movement,
+    `VCH-${payment.id}`,
+    movement.date.slice(0, 7),
+    "REQUIRES_ACCOUNTING_ENTITY_MAPPING",
+    "REQUIRES_ORGANIZATION_MAPPING",
+    movement.accountId,
+    "REQUIRES_ACCOUNTS_PAYABLE_MAPPING",
+  );
+  return { ...settled, budgetLines: nextBudget, allocations: nextAllocations, ledgerProposal };
+}
+
+export function proposeCashReversal(movement: CashMovement, reversalId: string, reversalDate: string, reason: string): CashMovement {
+  return createCashMovementReversal(movement, reversalId, reversalDate, reason);
 }
