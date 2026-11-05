@@ -11,7 +11,12 @@ describe("tesorería", () => {
     expect(reconcileCashMovement(movement, 10000).status).toBe("reconciled");
     expect(() => reconcileCashMovement(movement, 9000)).toThrow("BANK_AMOUNT_MISMATCH");
   });
-  it("genera reverso draft sin alterar el original contabilizado", () => {\n    const reversal = createCashMovementReversal(movement, "REV-1", "2026-11-06", "Corrección");\n    expect(reversal).toMatchObject({ direction: "outflow", status: "draft", reversalOfId: "M1", amountMinor: 10000 });\n    expect(movement.status).toBe("posted");\n  });\n  it("genera dos lados de una transferencia y no permite sobregiro", () => {
+  it("genera reverso draft sin alterar el original contabilizado", () => {
+    const reversal = createCashMovementReversal(movement, "REV-1", "2026-11-06", "Corrección");
+    expect(reversal).toMatchObject({ direction: "outflow", status: "draft", reversalOfId: "M1", amountMinor: 10000 });
+    expect(movement.status).toBe("posted");
+  });
+  it("genera dos lados de una transferencia y no permite sobregiro", () => {
     const destination: CashAccount = { ...account, id: "C2", movements: [] };
     expect(transferCash(account, destination, 1000, "2026-11-05", "tr-001").incoming.direction).toBe("inflow");
     expect(() => transferCash(account, destination, 999999, "2026-11-05", "tr-002")).toThrow("TRANSFER_INSUFFICIENT_FUNDS");
