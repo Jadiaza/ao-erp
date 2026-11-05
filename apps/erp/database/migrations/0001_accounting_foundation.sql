@@ -235,6 +235,14 @@ ALTER TABLE ao_accounting.cost_centers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ao_accounting.accounting_vouchers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ao_accounting.accounting_voucher_lines ENABLE ROW LEVEL SECURITY;
 
+-- FORCE also subjects table owners to RLS. The runtime role must still not have BYPASSRLS.
+ALTER TABLE ao_accounting.accounting_entities FORCE ROW LEVEL SECURITY;
+ALTER TABLE ao_accounting.accounting_periods FORCE ROW LEVEL SECURITY;
+ALTER TABLE ao_accounting.accounting_accounts FORCE ROW LEVEL SECURITY;
+ALTER TABLE ao_accounting.cost_centers FORCE ROW LEVEL SECURITY;
+ALTER TABLE ao_accounting.accounting_vouchers FORCE ROW LEVEL SECURITY;
+ALTER TABLE ao_accounting.accounting_voucher_lines FORCE ROW LEVEL SECURITY;
+
 DO $$
 DECLARE
   table_name text;
@@ -259,3 +267,52 @@ BEGIN
   END LOOP;
 END;
 $$;
+
+
+-- Database-level guard: a voucher cannot transition from draft to posted
+-- unless it contains at least two valid, balanced lines in an open period.
+CREATE OR REPLACE FUNCTION ao_accounting.validate_voucher_before_posting()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  line_count integer;
+  debit_total numeric(20, 0);
+  credit_total numeric(20, 0);
+  period_status text;
+  period_start date;
+  period_end date;
+BEGIN
+  IF OLD.status = 'draft' AND NEW.status = 'posted' THEN
+    SELECT status, starts_on, ends_on
+      INTO period_status, period_start, period_end
+    FROM ao_accounting.accounting_periods
+    WHERE organization_id = NEW.organization_id
+      AND id = NEW.accounting_period_id
+      AND accounting_entity_id = NEW.accounting_entity_id;
+
+    IF period_status IS DISTINCT FROM 'open'
+      OR NEW.voucher_date < period_start
+      OR NEW.voucher_date > period_end THEN
+      RAISE EXCEPTION 'AO_VOUCHER_PERIOD_INVALID';
+    END IF;
+
+    SELECT count(*), COALESCE(sum(debit_minor), 0), COALESCE(sum(credit_minor), 0)
+      INTO line_count, debit_total, credit_total
+    FROM ao_accounting.accounting_voucher_lines
+    WHERE organization_id = NEW.organization_id
+      AND voucher_id = NEW.id;
+
+    IF line_count < 2 OR debit_total <> credit_total OR debit_total <= 0 THEN
+      RAISE EXCEPTION 'AO_VOUCHER_NOT_BALANCED';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS accounting_voucher_validate_posting
+  ON ao_accounting.accounting_vouchers;
+CREATE TRIGGER accounting_voucher_validate_posting
+  BEFORE UPDATE OF status ON ao_accounting.accounting_vouchers
+  FOR EACH ROW EXECUTE FUNCTION ao_accounting.validate_voucher_before_posting();
