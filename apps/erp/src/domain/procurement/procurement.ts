@@ -43,3 +43,10 @@ export function receivePurchaseItems(request: PurchaseRequest, received: Readonl
   const any = lines.some((line) => line.receivedQuantity > 0);
   return { ...request, lines, status: complete ? "received" : any ? "partially_received" : request.status };
 }
+
+
+/** Cancellation is allowed only before full receipt; received quantities remain traceable. */
+export function cancelPurchaseRequest(request: PurchaseRequest): PurchaseRequest {
+  if (request.status === "received" || request.status === "cancelled") throw new Error("PURCHASE_REQUEST_CANNOT_BE_CANCELLED");
+  return { ...request, status: "cancelled" };
+}
