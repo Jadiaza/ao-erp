@@ -1,4 +1,6 @@
-import { isIsoCalendarDate } from "../shared/primitives";\n\nexport type LiturgicalCelebrationStatus = "planned" | "confirmed" | "celebrated" | "cancelled";
+import { isIsoCalendarDate } from "../shared/primitives";
+
+export type LiturgicalCelebrationStatus = "planned" | "confirmed" | "celebrated" | "cancelled";
 export type LiturgicalCelebration = { id: string; date: string; startTime: string; endTime: string; celebrationType: string; locationId: string; presiderId?: string; status: LiturgicalCelebrationStatus; ministers: { personId: string; ministry: string }[] };
 export function validateLiturgicalCelebration(item: LiturgicalCelebration, existing: readonly LiturgicalCelebration[]): string[] {
   const errors: string[] = [];
