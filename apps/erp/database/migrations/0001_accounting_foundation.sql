@@ -181,9 +181,10 @@ BEGIN
   IF OLD.status <> 'draft' THEN
     RAISE EXCEPTION 'AO_POSTED_VOUCHER_IMMUTABLE';
   END IF;
+  IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
   RETURN NEW;
 END;
-$$;
+$;
 
 DROP TRIGGER IF EXISTS accounting_voucher_immutable_update
   ON ao_accounting.accounting_vouchers;
@@ -199,11 +200,15 @@ DECLARE
   target_voucher_id uuid;
   target_status text;
 BEGIN
-  target_voucher_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.voucher_id ELSE NEW.voucher_id END;
+  IF TG_OP = 'DELETE' THEN
+    target_voucher_id := OLD.voucher_id;
+  ELSE
+    target_voucher_id := NEW.voucher_id;
+  END IF;
 
   SELECT status INTO target_status
   FROM ao_accounting.accounting_vouchers
-  WHERE organization_id = COALESCE(NEW.organization_id, OLD.organization_id)
+  WHERE organization_id = CASE WHEN TG_OP = 'DELETE' THEN OLD.organization_id ELSE NEW.organization_id END
     AND id = target_voucher_id;
 
   IF target_status IS DISTINCT FROM 'draft' THEN
