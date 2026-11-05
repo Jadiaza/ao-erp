@@ -19,7 +19,7 @@ const archiveAreas = [
   { title: "Conservación y preservación", description: "Controla integridad, originales, derivados y preservación.", href: "/app/archivo-conservacion", icon: ShieldCheck },
 ] as const;
 
-export function DocumentManagementScreen() {
+export function ArchiveManagementScreen() {
   const [folder, setFolder] = useState("Todos los documentos");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todas");
