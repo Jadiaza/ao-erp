@@ -43,8 +43,12 @@ export interface LedgerPeriod {
   readonly endsOn: string;
   readonly status: LedgerPeriodStatus;
 }
-const positiveInteger = (value: number) => Number.isSafeInteger(value) && value > 0;
 const nonNegativeInteger = (value: number) => Number.isSafeInteger(value) && value >= 0;
+const isValidIsoDate = (value: string) => {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  const parsed = new Date(value);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+};
 const issue = (code: LedgerValidationIssue["code"], message: string, lineIndex?: number): LedgerValidationIssue => ({ code, message, ...(lineIndex === undefined ? {} : { lineIndex }) });
 
 export function validateVoucher(voucher: LedgerVoucherInput, accounts: readonly LedgerAccount[], period: LedgerPeriod): LedgerValidationResult {
