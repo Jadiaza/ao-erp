@@ -22,6 +22,10 @@ describe("A&O ERP · contabilidad · partida doble", () => {
     expect(result.issues.some(issue => issue.code === "ACCOUNT_NOT_POSTABLE")).toBe(true);
     expect(result.issues.some(issue => issue.code === "PERIOD_NOT_OPEN")).toBe(true);
   });
+  it("rechaza fechas inexistentes del calendario", () => {
+    const result = validateVoucher({ ...voucher, date: "2026-02-31" }, accounts, period);
+    expect(result.issues.some(issue => issue.code === "INVALID_DATE")).toBe(true);
+  });
   it("rechaza importes fraccionarios", () => {
     const result = validateVoucher({ ...voucher, lines: [{ ...voucher.lines[0]!, debitMinor: 100.5 }, voucher.lines[1]!] }, accounts, period);
     expect(result.issues.some(issue => issue.code === "INVALID_AMOUNT")).toBe(true);
