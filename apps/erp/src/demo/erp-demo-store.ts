@@ -62,7 +62,7 @@ function createInitialState(): DemoState {
     ["inventory", "Recepción completa registrada", "REC-DEMO-001", purchase.total, "100 unidades recibidas"],
     ["payable", "Factura de proveedor reconocida", payable.id, payable.total, "Pagada · saldo cero"],
     ["treasury", "Egreso de tesorería registrado", cash.id, cash.amount, "Contabilizado · demo"],
-    ["accounting", "Comprobante contable propuesto", voucher.id, voucher.lines[0].debit, "Borrador para revisión"],
+    ["accounting", "Comprobante contable propuesto", voucher.id, voucher.lines[0]!.debit, "Borrador para revisión"],
     ["budget", "Ejecución presupuestal actualizada", "PRE-DEMO-02", purchase.total, "Comprometido, causado y pagado"],
     ["document", "Factura y recepción vinculadas", "DOC-DEMO-INT-001", purchase.total, "Disponibles · demo"],
     ["audit", "Ciclo financiero trazado", "AUD-DEMO-INT-001", purchase.total, "Registrado"],
@@ -127,6 +127,7 @@ function hydrate() {
 }
 function subscribe(listener: () => void) { listeners.add(listener); return () => listeners.delete(listener); }
 function getSnapshot() { return state; }
+function commit() { persist(); emit(); }
 
 export function useIntegratedDemo() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, () => initialState);
