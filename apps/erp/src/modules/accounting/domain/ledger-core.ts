@@ -57,7 +57,7 @@ export function validateVoucher(voucher: LedgerVoucherInput, accounts: readonly 
   if (!voucher.organizationId.trim()) issues.push(issue("ORGANIZATION_REQUIRED", "Falta la organización."));
   if (!voucher.accountingEntityId.trim()) issues.push(issue("ACCOUNTING_ENTITY_REQUIRED", "Falta la entidad contable."));
   if (!voucher.periodId.trim() || voucher.periodId !== period.id) issues.push(issue("PERIOD_REQUIRED", "El periodo contable no corresponde al comprobante."));
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(voucher.date) || Number.isNaN(Date.parse(voucher.date))) issues.push(issue("INVALID_DATE", "La fecha del comprobante no es válida."));
+  if (!isValidIsoDate(voucher.date)) issues.push(issue("INVALID_DATE", "La fecha del comprobante no es válida."));
   if (!voucher.description.trim()) issues.push(issue("DESCRIPTION_REQUIRED", "El concepto del comprobante es obligatorio."));
   if (voucher.lines.length < 2) issues.push(issue("INSUFFICIENT_LINES", "El comprobante debe contener al menos dos movimientos."));
   if (period.status !== "open") issues.push(issue("PERIOD_NOT_OPEN", "Solo se pueden registrar comprobantes en periodos abiertos."));
