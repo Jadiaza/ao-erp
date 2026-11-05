@@ -67,7 +67,7 @@ describe("ciclo de compra, factura, pago y presupuesto", () => {
   it("rechaza facturas por encima de lo recibido", () => {
     const request: PurchaseRequest = { id: "po-erp-2", requesterId: "u1", supplierId: "sup1", status: "partially_received", lines: [{ id: "l1", description: "Sillas", quantity: 4, unitPriceMinor: 10000, receivedQuantity: 1, expenseAccountCode: "5105", costCenterId: "cc-admin" }] };
     const budget: BudgetLine = { id: "bl1", accountCode: "5105", costCenterId: "cc-admin", direction: "expense", approvedAmountMinor: 50000, committedAmountMinor: 40000, accruedAmountMinor: 0, paidAmountMinor: 0 };
-    expect(() => registerPurchaseSupplierInvoice(request, { payableId: "ap-2", invoiceNumber: "FE-101", issueDate: "2026-11-05", dueDate: "2026-12-05", currency: "COP", allocations: [{ purchaseLineId: "l1", amountMinor: 20000 }] }, [budget])).toThrow("PURCHASE_INVOICE_EXCEEDS_RECEIVED_VALUE");
+    expect(() => registerPurchaseSupplierInvoice(request, { payableId: "ap-2", invoiceNumber: "FE-101", issueDate: "2026-11-05", dueDate: "2026-12-05", currency: "COP", allocations: [{ purchaseLineId: "l1", amountMinor: 20000 }] }, [budget], [])).toThrow("PURCHASE_INVOICE_EXCEEDS_RECEIVED_VALUE");
   });
   it("propone reverso sin modificar el movimiento original", () => {
     const original: CashMovement = { id: "cash-original", direction: "outflow", amountMinor: 5000, currency: "COP", accountId: "bank1", date: "2026-11-05", status: "posted", sourceType: "purchase" };
