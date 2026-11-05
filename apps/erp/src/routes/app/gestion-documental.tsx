@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { DocumentManagementScreen } from "@/components/modules/document-management-screen";
+import { ArchiveManagementScreen } from "@/components/modules/archive-management-screen";
 
 export const Route = createFileRoute("/app/gestion-documental")({
-  component: DocumentManagementScreen,
+  component: ArchiveManagementScreen,
 });
