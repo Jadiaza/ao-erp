@@ -1,5 +1,5 @@
 export type PurchaseRequestStatus = "draft" | "submitted" | "approved" | "ordered" | "partially_received" | "received" | "cancelled";
-export type PurchaseLine = { id: string; description: string; quantity: number; unitPriceMinor: number; receivedQuantity: number; expenseAccountCode: string; costCenterId: string };
+export type PurchaseLine = { id: string; inventoryItemId?: string; description: string; quantity: number; unitPriceMinor: number; receivedQuantity: number; expenseAccountCode: string; costCenterId: string };
 export type PurchaseRequest = { id: string; requesterId: string; supplierId?: string; status: PurchaseRequestStatus; lines: PurchaseLine[]; approvedBy?: string; purchaseOrderReference?: string };
 
 export function purchaseLineTotal(line: PurchaseLine): number {
