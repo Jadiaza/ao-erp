@@ -43,7 +43,8 @@ export function reconcileCashMovement(movement: CashMovement, bankAmountMinor: n
 export function transferCash(from: CashAccount, to: CashAccount, amountMinor: number, transferDate: string): { outgoing: CashMovement; incoming: CashMovement } {
   if (from.id === to.id) throw new Error("TRANSFER_ACCOUNTS_MUST_DIFFER");
   if (from.currency !== to.currency) throw new Error("TRANSFER_CURRENCY_MISMATCH");
-  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) throw new Error("TRANSFER_AMOUNT_INVALID");\n  if (!isIsoCalendarDate(transferDate)) throw new Error("TRANSFER_DATE_INVALID");
+  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) throw new Error("TRANSFER_AMOUNT_INVALID");
+  if (!isIsoCalendarDate(transferDate)) throw new Error("TRANSFER_DATE_INVALID");
   if (calculateCashBalance(from).amountMinor < amountMinor) throw new Error("TRANSFER_INSUFFICIENT_FUNDS");
   const common = { date: transferDate, amountMinor, currency: from.currency, status: "draft" as const, sourceType: "transfer" as const };
   return {
