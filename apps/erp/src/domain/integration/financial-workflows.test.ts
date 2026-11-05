@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cashMovementToLedgerVoucher, collectReceivableIntoTreasury, paySupplierFromTreasury, receivePurchaseIntoInventory, reservePurchaseAgainstBudget, registerPurchaseSupplierInvoice, settleSupplierInvoicePayment, proposeCashReversal } from "./financial-workflows";
+import { cashMovementToLedgerVoucher, collectReceivableIntoTreasury, paySupplierFromTreasury, receivePurchaseIntoInventory, reservePurchaseAgainstBudget, registerPurchaseSupplierInvoice, settleSupplierInvoicePayment, proposeCashReversal, cancelPurchaseAndReleaseUnreceivedBudget } from "./financial-workflows";
 import type { Payable } from "../finance/payables";
 import type { Receivable } from "../finance/receivables";
 import type { BudgetLine } from "../finance/budget";
@@ -74,5 +74,17 @@ describe("ciclo de compra, factura, pago y presupuesto", () => {
     const reversal = proposeCashReversal(original, "cash-reversal", "2026-11-06", "Anulación de pago");
     expect(reversal).toMatchObject({ direction: "inflow", status: "draft", reversalOfId: "cash-original", amountMinor: 5000 });
     expect(original.status).toBe("posted");
+  });
+});
+
+
+describe("cancelación de compras y liberación presupuestal", () => {
+  it("libera únicamente las cantidades no recibidas", () => {
+    const request: PurchaseRequest = { id: "po-cancel", requesterId: "u1", supplierId: "sup1", status: "partially_received", lines: [{ id: "l1", description: "Tóner", quantity: 5, unitPriceMinor: 10000, receivedQuantity: 2, expenseAccountCode: "5105", costCenterId: "cc-admin" }] };
+    const budget: BudgetLine = { id: "bl1", accountCode: "5105", costCenterId: "cc-admin", direction: "expense", approvedAmountMinor: 100000, committedAmountMinor: 50000, accruedAmountMinor: 0, paidAmountMinor: 0 };
+    const result = cancelPurchaseAndReleaseUnreceivedBudget(request, [budget]);
+    expect(result.request.status).toBe("cancelled");
+    expect(result.releasedAmountMinor).toBe(30000);
+    expect(result.budgetLines[0].committedAmountMinor).toBe(20000);
   });
 });
