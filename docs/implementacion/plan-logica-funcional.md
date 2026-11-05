@@ -107,3 +107,26 @@ Se corrigieron referencias de tipos entre compras e inventario y validaciones de
 - Espacio de trabajo: los scripts y workspaces raíz quedan orientados a una única aplicación ejecutable, `apps/erp`; los paquetes compartidos permanecen como librerías internas.
 
 Estas reglas siguen siendo lógica de dominio sin persistencia. La unicidad de identificadores de recepción/pago/recaudo, la idempotencia transaccional, la atomicidad entre módulos y la ejecución de pruebas/build deben verificarse al incorporar el backend y el entorno de CI. No se declara esta entrega compilada ni probada localmente.
+
+
+## Cuarta ampliación: ciclo de compras, factura, tesorería y presupuesto
+
+Se extendió el flujo económico de compras para cubrir los hitos siguientes:
+
+1. La solicitud aprobada compromete presupuesto por cuenta de gasto y centro de costos. La reserva valida que exista una única apropiación coincidente y que el valor sea seguro.
+2. La recepción parcial o completa genera movimientos de inventario trazables por identificador de recepción.
+3. La factura del proveedor solo puede registrarse contra cantidades efectivamente recibidas. Cada asignación de factura convierte el compromiso presupuestal correspondiente en causación y genera la cuenta por pagar.
+4. Los pagos parciales o totales requieren un movimiento de tesorería contabilizado, coincidente en valor, moneda, fecha y referencia. El importe se distribuye entre las asignaciones de la factura y actualiza la ejecución pagada del presupuesto.
+5. Se genera una propuesta de comprobante contable para el pago, con mapeo explícito de entidad, organización y cuenta por pagar. No se inventan cuentas contables ni se contabiliza automáticamente desde esta capa.
+6. La cancelación de una compra no recibida por completo libera únicamente el compromiso correspondiente a las cantidades pendientes de recibir. Lo recibido permanece trazable y puede facturarse posteriormente.
+7. Los reversos de tesorería se proponen como movimientos nuevos en borrador; nunca se modifica el movimiento original contabilizado. Las transferencias tienen identificador común estable para sus dos lados.
+
+### Reglas de presupuesto utilizadas
+
+La disponibilidad se calcula descontando los compromisos pendientes y las obligaciones causadas de la apropiación. Al registrar una factura, el importe pasa de compromiso a causación; el pago aumenta el valor pagado sin reducir la causación. Así se evita contar dos veces el mismo importe como compromiso y obligación.
+
+### Controles adicionales
+
+Se añadieron validaciones de duplicidad para identificadores de factura y pago cuando el llamador aporta el historial existente, correspondencia de asignaciones con el saldo de la factura, fechas, valores recibidos y mapeos presupuestales. La idempotencia definitiva requiere persistir esas claves y aplicar restricciones únicas/transacciones en la siguiente etapa.
+
+No se declara ejecución satisfactoria de Vitest, typecheck, lint o build: esta rama se ha actualizado mediante GitHub y todavía no presenta ejecuciones de CI asociadas al commit consultado.
