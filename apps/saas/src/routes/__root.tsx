@@ -48,8 +48,11 @@ function RootComponent() {
           <span>SaaS</span>
         </div>
         <nav aria-label="Navegación principal">
-          <Link to="/" aria-current={pathname === "/" ? "page" : undefined} className="nav-link">
+          <Link to="/" aria-current={pathname === "/" ? "page" : undefined} className={pathname === "/" ? "nav-link active" : "nav-link"}>
             Dashboard
+          </Link>
+          <Link to="/configuracion" aria-current={pathname === "/configuracion" ? "page" : undefined} className={pathname === "/configuracion" ? "nav-link active" : "nav-link"}>
+            Configuración
           </Link>
         </nav>
         <p className="sidebar-note">Administración del ecosistema</p>
