@@ -1,5 +1,9 @@
 import type { LedgerLineInput, LedgerVoucherInput } from "../../modules/accounting/domain/ledger-core";
 import type { BudgetLine } from "../finance/budget";
+import type { Payable, PayablePayment } from "../finance/payables";
+import { registerPayablePayment } from "../finance/payables";
+import type { Receivable, Collection } from "../finance/receivables";
+import { registerCollection } from "../finance/receivables";
 import { commitBudgetAmount } from "../finance/budget";
 import type { CashMovement } from "../finance/treasury";
 import type { PurchaseRequest } from "../procurement/procurement";
@@ -67,4 +71,19 @@ export function cashMovementToLedgerVoucher(
     description: `Tesorería · ${movement.sourceType} · ${movement.reference ?? movement.id}`,
     lines: [cashLine, counterLine],
   };
+}
+
+
+export function paySupplierFromTreasury(payable: Payable, payment: PayablePayment, movement: CashMovement): { payable: Payable; payment: PayablePayment } {
+  if (movement.status !== "posted" && movement.status !== "reconciled") throw new Error("PAYABLE_REQUIRES_POSTED_CASH_MOVEMENT");
+  if (movement.direction !== "outflow" || movement.amountMinor !== payment.amountMinor || movement.currency !== payable.currency) throw new Error("PAYABLE_CASH_MOVEMENT_MISMATCH");
+  if (movement.id !== payment.cashMovementId) throw new Error("PAYABLE_CASH_MOVEMENT_REFERENCE_MISMATCH");
+  return registerPayablePayment(payable, payment);
+}
+
+export function collectReceivableIntoTreasury(receivable: Receivable, collection: Collection, movement: CashMovement): Receivable {
+  if (movement.status !== "posted" && movement.status !== "reconciled") throw new Error("RECEIVABLE_REQUIRES_POSTED_CASH_MOVEMENT");
+  if (movement.direction !== "inflow" || movement.amountMinor !== collection.amountMinor || movement.currency !== receivable.currency) throw new Error("RECEIVABLE_CASH_MOVEMENT_MISMATCH");
+  if (movement.id !== collection.cashMovementId) throw new Error("RECEIVABLE_CASH_MOVEMENT_REFERENCE_MISMATCH");
+  return registerCollection(receivable, collection);
 }
