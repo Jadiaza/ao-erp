@@ -6,6 +6,7 @@ import type { PurchaseRequest, StockMovement } from "../procurement/procurement"
 import { receivePurchaseItems } from "../procurement/procurement";
 
 export function reservePurchaseAgainstBudget(line: BudgetLine, request: PurchaseRequest): { budgetLine: BudgetLine; committedAmountMinor: number } {
+  if (request.status !== "approved") throw new Error("PURCHASE_REQUEST_NOT_APPROVED_FOR_BUDGET");
   const amount = request.lines.reduce((total, item) => total + item.quantity * item.unitPriceMinor, 0);
   return { budgetLine: commitBudgetAmount(line, amount), committedAmountMinor: amount };
 }
@@ -21,9 +22,10 @@ export function receivePurchaseIntoInventory(
   const movements = request.lines.flatMap((line) => {
     const quantity = receivedQuantities[line.id] ?? 0;
     if (!quantity) return [];
+    if (!line.inventoryItemId) throw new Error(`PURCHASE_INVENTORY_ITEM_REQUIRED:${line.id}`);
     return [{
       id: `STK-${request.id}-${line.id}-${receivedOn}`,
-      itemId: line.id,
+      itemId: line.inventoryItemId,
       warehouseId,
       kind: "receipt" as const,
       quantity,
