@@ -1,4 +1,4 @@
-import { money, type Money } from "../shared/primitives";
+import { isIsoCalendarDate, money, type Money } from "../shared/primitives";
 
 export type CashMovementStatus = "draft" | "pending_approval" | "approved" | "posted" | "reconciled" | "cancelled";
 export type CashMovement = { id: string; direction: "inflow" | "outflow"; amountMinor: number; currency: string; accountId: string; date: string; status: CashMovementStatus; sourceType: "donation" | "offering" | "purchase" | "payroll" | "transfer" | "other"; sourceId?: string; reference?: string };
@@ -40,12 +40,12 @@ export function reconcileCashMovement(movement: CashMovement, bankAmountMinor: n
   return { ...movement, status: "reconciled" };
 }
 
-export function transferCash(from: CashAccount, to: CashAccount, amountMinor: number): { outgoing: CashMovement; incoming: CashMovement } {
+export function transferCash(from: CashAccount, to: CashAccount, amountMinor: number, transferDate: string): { outgoing: CashMovement; incoming: CashMovement } {
   if (from.id === to.id) throw new Error("TRANSFER_ACCOUNTS_MUST_DIFFER");
   if (from.currency !== to.currency) throw new Error("TRANSFER_CURRENCY_MISMATCH");
-  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) throw new Error("TRANSFER_AMOUNT_INVALID");
+  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) throw new Error("TRANSFER_AMOUNT_INVALID");\n  if (!isIsoCalendarDate(transferDate)) throw new Error("TRANSFER_DATE_INVALID");
   if (calculateCashBalance(from).amountMinor < amountMinor) throw new Error("TRANSFER_INSUFFICIENT_FUNDS");
-  const common = { date: new Date().toISOString().slice(0,10), amountMinor, currency: from.currency, status: "draft" as const, sourceType: "transfer" as const };
+  const common = { date: transferDate, amountMinor, currency: from.currency, status: "draft" as const, sourceType: "transfer" as const };
   return {
     outgoing: { ...common, id: `${from.id}-OUT-${to.id}-${amountMinor}`, direction: "outflow", accountId: from.id },
     incoming: { ...common, id: `${to.id}-IN-${from.id}-${amountMinor}`, direction: "inflow", accountId: to.id },
