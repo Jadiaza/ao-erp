@@ -60,3 +60,29 @@ Un módulo se considera funcionalmente integrado cuando tiene:
 - pantallas existentes preparadas para usar la lógica sin rediseño.
 
 La etapa termina cuando todos los módulos incluidos en el mapa cumplen estos criterios y los flujos intermodulares principales pueden recorrerse con datos de prueba. Solo entonces se diseña y conecta la persistencia definitiva.
+
+
+## Avance de implementación en la rama de integración
+
+Se incorporaron primeras reglas ejecutables y pruebas para los siguientes dominios:
+
+- **Compartido:** importes enteros con moneda, fechas ISO de calendario, resultados de dominio, eventos, metadatos de auditoría y transiciones.
+- **Gobierno institucional:** jerarquía eclesial, detección de ciclos, vigencias y delegaciones.
+- **Seguridad:** autorización por rol, organización, unidad y atributos; estado de cuenta y requisito MFA.
+- **Comunidad:** validación de persona y vínculos familiares, consentimiento y decisión de contacto por finalidad.
+- **Sacramentos:** flujo de solicitud, control documental, programación, validación de partida y notas marginales.
+- **Pastoral y formación:** actividades, cupos, inscripciones, asistencia y requisitos de finalización.
+- **Liturgia:** validación de celebraciones, ministros y conflictos de sede/horario.
+- **Tesorería y presupuesto:** movimientos, aprobación, contabilización, conciliación, saldos, transferencias y control de compromisos/causaciones/pagos presupuestales.
+- **Compras:** solicitud, aprobación separada del solicitante, orden de compra y recepción parcial o completa.
+- **Inventarios y activos:** entradas/salidas, costo promedio ponderado, control de existencias y depreciación lineal.
+- **Gestión documental:** estados, versiones, clasificación de acceso y revisión de retención.
+- **Agenda:** reservas y conflictos de recursos.
+- **Comunicaciones:** consentimiento, aprobación, cola y resultado de envío.
+- **Informe anual:** validación de secciones, revisión, presentación y devolución.
+- **IA:** control de herramientas por rol, finalidad, sensibilidad, riesgo y aprobación humana.
+- **Flujos entre módulos:** compromiso de compra contra presupuesto, recepción de compra hacia inventario y conversión de movimiento de tesorería en propuesta de comprobante contable balanceado.
+
+### Pendiente para cerrar la etapa funcional
+
+Esta entrega es una primera implementación de dominio, no la integración completa de todos los módulos. Falta ampliar reglas específicas, cubrir casos límite con pruebas, conectar las pantallas existentes a los casos de uso, completar flujos de compras/cuentas por pagar/tesorería/contabilidad, cubrir fondos y proyectos, completar procesos sacramentales y documentales, y validar todo mediante ejecución de typecheck, lint, build y Vitest. La persistencia permanece deliberadamente aplazada.
