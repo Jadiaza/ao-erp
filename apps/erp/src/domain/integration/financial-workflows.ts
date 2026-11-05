@@ -105,9 +105,11 @@ export function registerPurchaseSupplierInvoice(
   request: PurchaseRequest,
   input: SupplierInvoiceInput,
   budgetLines: readonly BudgetLine[],
+  existingPayables: readonly Payable[],
 ): { payable: Payable; budgetLines: BudgetLine[]; allocations: SupplierInvoiceAllocation[] } {
   if (request.status !== "partially_received" && request.status !== "received") throw new Error("PURCHASE_INVOICE_REQUIRES_RECEIPT");
   if (!request.supplierId?.trim()) throw new Error("PURCHASE_INVOICE_SUPPLIER_REQUIRED");
+  if (existingPayables.some((item) => item.id === input.payableId || (item.supplierId === request.supplierId && item.invoiceNumber === input.invoiceNumber))) throw new Error("PURCHASE_SUPPLIER_INVOICE_DUPLICATE");
   if (!input.payableId.trim() || !input.invoiceNumber.trim() || !isIsoCalendarDate(input.issueDate) || !isIsoCalendarDate(input.dueDate) || input.dueDate < input.issueDate || !/^[A-Z]{3}$/.test(input.currency)) throw new Error("PURCHASE_INVOICE_HEADER_INVALID");
   if (!input.allocations.length || new Set(input.allocations.map((item) => item.purchaseLineId)).size !== input.allocations.length) throw new Error("PURCHASE_INVOICE_ALLOCATIONS_INVALID");
   const purchaseLines = new Map(request.lines.map((line) => [line.id, line]));
@@ -149,8 +151,12 @@ export function settleSupplierInvoicePayment(
   movement: CashMovement,
   budgetLines: readonly BudgetLine[],
   allocations: readonly SupplierInvoiceAllocation[],
+  priorPayments: readonly PayablePayment[],
   ledgerContext: { voucherId: string; accountingEntityId: string; organizationId: string; accountsPayableAccountId: string },
 ): { payable: Payable; payment: PayablePayment; budgetLines: BudgetLine[]; allocations: SupplierInvoiceAllocation[]; ledgerProposal: LedgerVoucherInput } {
+  if (priorPayments.some((item) => item.id === payment.id || item.cashMovementId === payment.cashMovementId)) throw new Error("PURCHASE_PAYMENT_DUPLICATE");
+  if (priorPayments.reduce((sum, item) => sum + item.amountMinor, 0) !== payable.paidMinor) throw new Error("PURCHASE_PAYMENT_HISTORY_MISMATCH");
+  if (allocations.reduce((sum, item) => sum + item.accruedAmountMinor, 0) !== payable.totalMinor || allocations.reduce((sum, item) => sum + item.paidAmountMinor, 0) !== payable.paidMinor) throw new Error("PURCHASE_INVOICE_ALLOCATION_HISTORY_MISMATCH");
   const settled = paySupplierFromTreasury(payable, payment, movement);
   const nextAllocations = allocations.map((allocation) => ({ ...allocation }));
   const nextBudget = [...budgetLines];
