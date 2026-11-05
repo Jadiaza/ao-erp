@@ -95,3 +95,15 @@ Se añadieron dominios de fondos con restricciones y trazabilidad de movimientos
 También se reforzó la integración entre módulos: un pago a proveedor solo se aplica a la obligación cuando se presenta un movimiento de tesorería contabilizado, de egreso, con moneda e importe coincidentes. Un recaudo solo se aplica a la cuenta por cobrar cuando existe un movimiento contabilizado de ingreso con los mismos datos. Se añadieron pruebas de estos recorridos.
 
 Se corrigieron referencias de tipos entre compras e inventario y validaciones de fecha. La compilación y las pruebas siguen pendientes de ejecución local; no se debe interpretar el código incorporado como validado por CI.
+
+
+## Tercera ampliación y endurecimiento de reglas
+
+- Fondos: validación de fechas reales de calendario, referencias obligatorias y fecha de corte al calcular saldos.
+- Cuentas por pagar y por cobrar: fechas reales de calendario, identificación obligatoria y validación de la fecha de cada pago o recaudo.
+- Inventarios: no se aplica un movimiento sin validar previamente artículo, estado, cantidad, costo, almacén, referencias y fecha. Se controlan también los parámetros de depreciación acumulada.
+- Compras y presupuesto: cada línea de compra reserva contra la apropiación que coincide con su cuenta de gasto y centro de costos. La recepción requiere identificador propio para distinguir recepciones parciales y rechaza líneas desconocidas.
+- Tesorería y cartera: el pago/recaudo debe coincidir también en fecha con el movimiento contabilizado.
+- Espacio de trabajo: los scripts y workspaces raíz quedan orientados a una única aplicación ejecutable, `apps/erp`; los paquetes compartidos permanecen como librerías internas.
+
+Estas reglas siguen siendo lógica de dominio sin persistencia. La unicidad de identificadores de recepción/pago/recaudo, la idempotencia transaccional, la atomicidad entre módulos y la ejecución de pruebas/build deben verificarse al incorporar el backend y el entorno de CI. No se declara esta entrega compilada ni probada localmente.
