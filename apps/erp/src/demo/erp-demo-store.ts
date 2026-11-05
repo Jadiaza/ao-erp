@@ -226,7 +226,7 @@ function addAudit(module: string, action: string, entityId: string, description:
   state.audit.push({ id: `AUD-DEMO-${String(state.audit.length + 1).padStart(3, "0")}`, date: DEMO_DATE, actor: "Usuario demostrativo", role: "Administrador parroquial · demo", module, action, entityId, description, sourceId: SOURCE });
   addEvent("audit", "Trazabilidad: " + description, entityId, 0, "Registrado");
 }
-function commit() { state.updatedAt = new Date().toISOString(); persist(); emit(); }
+function commit() { state = { ...state, updatedAt: new Date().toISOString() }; persist(); emit(); }
 
 /** Puerto que implementará el repositorio PostgreSQL sin modificar las pantallas ni los casos de uso. */
 export interface ErpRepository {
