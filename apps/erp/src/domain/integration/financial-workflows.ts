@@ -4,7 +4,7 @@ import type { Payable, PayablePayment } from "../finance/payables";
 import { registerPayablePayment } from "../finance/payables";
 import type { Receivable, Collection } from "../finance/receivables";
 import { registerCollection } from "../finance/receivables";
-import { accrueBudgetAmount, commitBudgetAmount, registerBudgetPayment } from "../finance/budget";
+import { accrueBudgetAmount, commitBudgetAmount, registerBudgetPayment, releaseBudgetCommitment } from "../finance/budget";
 import type { CashMovement } from "../finance/treasury";
 import { createCashMovementReversal } from "../finance/treasury";
 import type { PurchaseRequest } from "../procurement/procurement";
@@ -20,7 +20,7 @@ export function reservePurchaseAgainstBudget(lines: readonly BudgetLine[], reque
     const matches = updated.map((line, index) => ({ line, index })).filter(({ line }) => line.accountCode === purchaseLine.expenseAccountCode && line.costCenterId === purchaseLine.costCenterId && line.direction === "expense");
     if (matches.length !== 1) throw new Error(`PURCHASE_BUDGET_LINE_MAPPING_INVALID:${purchaseLine.expenseAccountCode}:${purchaseLine.costCenterId}`);
     const budgetIndex = matches[0].index;
-    updated[budgetIndex] = commitBudgetAmount(updated[budgetIndex], purchaseLineTotal(purchaseLine));
+    updated[budgetIndex] = commitBudgetAmount(updated[budgetIndex]!, purchaseLineTotal(purchaseLine));
   }
   return { budgetLines: updated, committedAmountMinor: purchaseTotal(request) };
 }
@@ -207,7 +207,7 @@ export function cancelPurchaseAndReleaseUnreceivedBudget(
     if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) throw new Error("PURCHASE_RELEASE_AMOUNT_INVALID");
     const matches = updated.map((line, index) => ({ line, index })).filter(({ line }) => line.accountCode === purchaseLine.expenseAccountCode && line.costCenterId === purchaseLine.costCenterId && line.direction === "expense");
     if (matches.length !== 1) throw new Error("PURCHASE_RELEASE_BUDGET_MAPPING_INVALID");
-    updated[matches[0].index] = releaseBudgetCommitment(matches[0].line, amountMinor);
+    updated[matches[0]!.index] = releaseBudgetCommitment(matches[0]!.line, amountMinor);
     releasedAmountMinor += amountMinor;
     if (!Number.isSafeInteger(releasedAmountMinor)) throw new Error("PURCHASE_RELEASE_TOTAL_OUT_OF_RANGE");
   }
