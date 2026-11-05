@@ -9,7 +9,6 @@ import {
   Coins,
   FileClock,
   FileText,
-  FolderOpen,
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
