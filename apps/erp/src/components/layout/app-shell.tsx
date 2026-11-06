@@ -33,7 +33,11 @@ type PreferencesView = "main" | "appearance";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const activeModule = appModules.find((module) => module.path === pathname);
+  const activeModule =
+    appModules.find((module) => module.path === pathname) ??
+    (pathname.startsWith("/app/archivo-")
+      ? appModules.find((module) => module.id === "archivo-gestion-documental")
+      : undefined);
   const activeGroup = activeModule?.group === "General" ? undefined : activeModule?.group;
   const initialActiveGroup = useRef(activeGroup);
   const [open, setOpen] = useState(true);
