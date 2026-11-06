@@ -39,6 +39,14 @@ import { Route as AppPlanificacionPastoralRouteImport } from './routes/app/plani
 import { Route as AppPortalFeligresRouteImport } from './routes/app/portal-feligres'
 import { Route as AppPresupuestosRouteImport } from './routes/app/presupuestos'
 import { Route as AppUsuariosPermisosRouteImport } from './routes/app/usuarios-permisos'
+import { Route as AppGestionDocumentalClasificacionRouteImport } from './routes/app/gestion-documental/clasificacion'
+import { Route as AppGestionDocumentalConservacionRouteImport } from './routes/app/gestion-documental/conservacion'
+import { Route as AppGestionDocumentalDigitalizacionRouteImport } from './routes/app/gestion-documental/digitalizacion'
+import { Route as AppGestionDocumentalExpedientesRouteImport } from './routes/app/gestion-documental/expedientes'
+import { Route as AppGestionDocumentalInstrumentosRouteImport } from './routes/app/gestion-documental/instrumentos'
+import { Route as AppGestionDocumentalRecepcionRouteImport } from './routes/app/gestion-documental/recepcion'
+import { Route as AppGestionDocumentalRepositorioRouteImport } from './routes/app/gestion-documental/repositorio'
+import { Route as AppGestionDocumentalTransferenciasRouteImport } from './routes/app/gestion-documental/transferencias'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -201,6 +209,54 @@ const AppUsuariosPermisosRoute = AppUsuariosPermisosRouteImport.update({
   path: '/app/usuarios-permisos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppGestionDocumentalClasificacionRoute =
+  AppGestionDocumentalClasificacionRouteImport.update({
+    id: '/clasificacion',
+    path: '/clasificacion',
+    getParentRoute: () => AppGestionDocumentalRoute,
+  } as any)
+const AppGestionDocumentalConservacionRoute =
+  AppGestionDocumentalConservacionRouteImport.update({
+    id: '/conservacion',
+    path: '/conservacion',
+    getParentRoute: () => AppGestionDocumentalRoute,
+  } as any)
+const AppGestionDocumentalDigitalizacionRoute =
+  AppGestionDocumentalDigitalizacionRouteImport.update({
+    id: '/digitalizacion',
+    path: '/digitalizacion',
+    getParentRoute: () => AppGestionDocumentalRoute,
+  } as any)
+const AppGestionDocumentalExpedientesRoute =
+  AppGestionDocumentalExpedientesRouteImport.update({
+    id: '/expedientes',
+    path: '/expedientes',
+    getParentRoute: () => AppGestionDocumentalRoute,
+  } as any)
+const AppGestionDocumentalInstrumentosRoute =
+  AppGestionDocumentalInstrumentosRouteImport.update({
+    id: '/instrumentos',
+    path: '/instrumentos',
+    getParentRoute: () => AppGestionDocumentalRoute,
+  } as any)
+const AppGestionDocumentalRecepcionRoute =
+  AppGestionDocumentalRecepcionRouteImport.update({
+    id: '/recepcion',
+    path: '/recepcion',
+    getParentRoute: () => AppGestionDocumentalRoute,
+  } as any)
+const AppGestionDocumentalRepositorioRoute =
+  AppGestionDocumentalRepositorioRouteImport.update({
+    id: '/repositorio',
+    path: '/repositorio',
+    getParentRoute: () => AppGestionDocumentalRoute,
+  } as any)
+const AppGestionDocumentalTransferenciasRoute =
+  AppGestionDocumentalTransferenciasRouteImport.update({
+    id: '/transferencias',
+    path: '/transferencias',
+    getParentRoute: () => AppGestionDocumentalRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -219,7 +275,7 @@ export interface FileRoutesByFullPath {
   '/app/feligreses-familias': typeof AppFeligresesFamiliasRoute
   '/app/finanzas-tesoreria': typeof AppFinanzasTesoreriaRoute
   '/app/gestion-diocesana': typeof AppGestionDiocesanaRoute
-  '/app/gestion-documental': typeof AppGestionDocumentalRoute
+  '/app/gestion-documental': typeof AppGestionDocumentalRouteWithChildren
   '/app/gestion-sacramental': typeof AppGestionSacramentalRoute
   '/app/gobierno-normativa': typeof AppGobiernoNormativaRoute
   '/app/grupos-ministerios': typeof AppGruposMinisteriosRoute
@@ -233,6 +289,14 @@ export interface FileRoutesByFullPath {
   '/app/portal-feligres': typeof AppPortalFeligresRoute
   '/app/presupuestos': typeof AppPresupuestosRoute
   '/app/usuarios-permisos': typeof AppUsuariosPermisosRoute
+  '/app/gestion-documental/clasificacion': typeof AppGestionDocumentalClasificacionRoute
+  '/app/gestion-documental/conservacion': typeof AppGestionDocumentalConservacionRoute
+  '/app/gestion-documental/digitalizacion': typeof AppGestionDocumentalDigitalizacionRoute
+  '/app/gestion-documental/expedientes': typeof AppGestionDocumentalExpedientesRoute
+  '/app/gestion-documental/instrumentos': typeof AppGestionDocumentalInstrumentosRoute
+  '/app/gestion-documental/recepcion': typeof AppGestionDocumentalRecepcionRoute
+  '/app/gestion-documental/repositorio': typeof AppGestionDocumentalRepositorioRoute
+  '/app/gestion-documental/transferencias': typeof AppGestionDocumentalTransferenciasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -251,7 +315,7 @@ export interface FileRoutesByTo {
   '/app/feligreses-familias': typeof AppFeligresesFamiliasRoute
   '/app/finanzas-tesoreria': typeof AppFinanzasTesoreriaRoute
   '/app/gestion-diocesana': typeof AppGestionDiocesanaRoute
-  '/app/gestion-documental': typeof AppGestionDocumentalRoute
+  '/app/gestion-documental': typeof AppGestionDocumentalRouteWithChildren
   '/app/gestion-sacramental': typeof AppGestionSacramentalRoute
   '/app/gobierno-normativa': typeof AppGobiernoNormativaRoute
   '/app/grupos-ministerios': typeof AppGruposMinisteriosRoute
@@ -265,6 +329,14 @@ export interface FileRoutesByTo {
   '/app/portal-feligres': typeof AppPortalFeligresRoute
   '/app/presupuestos': typeof AppPresupuestosRoute
   '/app/usuarios-permisos': typeof AppUsuariosPermisosRoute
+  '/app/gestion-documental/clasificacion': typeof AppGestionDocumentalClasificacionRoute
+  '/app/gestion-documental/conservacion': typeof AppGestionDocumentalConservacionRoute
+  '/app/gestion-documental/digitalizacion': typeof AppGestionDocumentalDigitalizacionRoute
+  '/app/gestion-documental/expedientes': typeof AppGestionDocumentalExpedientesRoute
+  '/app/gestion-documental/instrumentos': typeof AppGestionDocumentalInstrumentosRoute
+  '/app/gestion-documental/recepcion': typeof AppGestionDocumentalRecepcionRoute
+  '/app/gestion-documental/repositorio': typeof AppGestionDocumentalRepositorioRoute
+  '/app/gestion-documental/transferencias': typeof AppGestionDocumentalTransferenciasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -284,7 +356,7 @@ export interface FileRoutesById {
   '/app/feligreses-familias': typeof AppFeligresesFamiliasRoute
   '/app/finanzas-tesoreria': typeof AppFinanzasTesoreriaRoute
   '/app/gestion-diocesana': typeof AppGestionDiocesanaRoute
-  '/app/gestion-documental': typeof AppGestionDocumentalRoute
+  '/app/gestion-documental': typeof AppGestionDocumentalRouteWithChildren
   '/app/gestion-sacramental': typeof AppGestionSacramentalRoute
   '/app/gobierno-normativa': typeof AppGobiernoNormativaRoute
   '/app/grupos-ministerios': typeof AppGruposMinisteriosRoute
@@ -298,6 +370,14 @@ export interface FileRoutesById {
   '/app/portal-feligres': typeof AppPortalFeligresRoute
   '/app/presupuestos': typeof AppPresupuestosRoute
   '/app/usuarios-permisos': typeof AppUsuariosPermisosRoute
+  '/app/gestion-documental/clasificacion': typeof AppGestionDocumentalClasificacionRoute
+  '/app/gestion-documental/conservacion': typeof AppGestionDocumentalConservacionRoute
+  '/app/gestion-documental/digitalizacion': typeof AppGestionDocumentalDigitalizacionRoute
+  '/app/gestion-documental/expedientes': typeof AppGestionDocumentalExpedientesRoute
+  '/app/gestion-documental/instrumentos': typeof AppGestionDocumentalInstrumentosRoute
+  '/app/gestion-documental/recepcion': typeof AppGestionDocumentalRecepcionRoute
+  '/app/gestion-documental/repositorio': typeof AppGestionDocumentalRepositorioRoute
+  '/app/gestion-documental/transferencias': typeof AppGestionDocumentalTransferenciasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -332,6 +412,14 @@ export interface FileRouteTypes {
     | '/app/portal-feligres'
     | '/app/presupuestos'
     | '/app/usuarios-permisos'
+    | '/app/gestion-documental/clasificacion'
+    | '/app/gestion-documental/conservacion'
+    | '/app/gestion-documental/digitalizacion'
+    | '/app/gestion-documental/expedientes'
+    | '/app/gestion-documental/instrumentos'
+    | '/app/gestion-documental/recepcion'
+    | '/app/gestion-documental/repositorio'
+    | '/app/gestion-documental/transferencias'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -364,6 +452,14 @@ export interface FileRouteTypes {
     | '/app/portal-feligres'
     | '/app/presupuestos'
     | '/app/usuarios-permisos'
+    | '/app/gestion-documental/clasificacion'
+    | '/app/gestion-documental/conservacion'
+    | '/app/gestion-documental/digitalizacion'
+    | '/app/gestion-documental/expedientes'
+    | '/app/gestion-documental/instrumentos'
+    | '/app/gestion-documental/recepcion'
+    | '/app/gestion-documental/repositorio'
+    | '/app/gestion-documental/transferencias'
   id:
     | '__root__'
     | '/'
@@ -396,6 +492,14 @@ export interface FileRouteTypes {
     | '/app/portal-feligres'
     | '/app/presupuestos'
     | '/app/usuarios-permisos'
+    | '/app/gestion-documental/clasificacion'
+    | '/app/gestion-documental/conservacion'
+    | '/app/gestion-documental/digitalizacion'
+    | '/app/gestion-documental/expedientes'
+    | '/app/gestion-documental/instrumentos'
+    | '/app/gestion-documental/recepcion'
+    | '/app/gestion-documental/repositorio'
+    | '/app/gestion-documental/transferencias'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -415,7 +519,7 @@ export interface RootRouteChildren {
   AppFeligresesFamiliasRoute: typeof AppFeligresesFamiliasRoute
   AppFinanzasTesoreriaRoute: typeof AppFinanzasTesoreriaRoute
   AppGestionDiocesanaRoute: typeof AppGestionDiocesanaRoute
-  AppGestionDocumentalRoute: typeof AppGestionDocumentalRoute
+  AppGestionDocumentalRoute: typeof AppGestionDocumentalRouteWithChildren
   AppGestionSacramentalRoute: typeof AppGestionSacramentalRoute
   AppGobiernoNormativaRoute: typeof AppGobiernoNormativaRoute
   AppGruposMinisteriosRoute: typeof AppGruposMinisteriosRoute
@@ -643,8 +747,92 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsuariosPermisosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/gestion-documental/clasificacion': {
+      id: '/app/gestion-documental/clasificacion'
+      path: '/clasificacion'
+      fullPath: '/app/gestion-documental/clasificacion'
+      preLoaderRoute: typeof AppGestionDocumentalClasificacionRouteImport
+      parentRoute: typeof AppGestionDocumentalRoute
+    }
+    '/app/gestion-documental/conservacion': {
+      id: '/app/gestion-documental/conservacion'
+      path: '/conservacion'
+      fullPath: '/app/gestion-documental/conservacion'
+      preLoaderRoute: typeof AppGestionDocumentalConservacionRouteImport
+      parentRoute: typeof AppGestionDocumentalRoute
+    }
+    '/app/gestion-documental/digitalizacion': {
+      id: '/app/gestion-documental/digitalizacion'
+      path: '/digitalizacion'
+      fullPath: '/app/gestion-documental/digitalizacion'
+      preLoaderRoute: typeof AppGestionDocumentalDigitalizacionRouteImport
+      parentRoute: typeof AppGestionDocumentalRoute
+    }
+    '/app/gestion-documental/expedientes': {
+      id: '/app/gestion-documental/expedientes'
+      path: '/expedientes'
+      fullPath: '/app/gestion-documental/expedientes'
+      preLoaderRoute: typeof AppGestionDocumentalExpedientesRouteImport
+      parentRoute: typeof AppGestionDocumentalRoute
+    }
+    '/app/gestion-documental/instrumentos': {
+      id: '/app/gestion-documental/instrumentos'
+      path: '/instrumentos'
+      fullPath: '/app/gestion-documental/instrumentos'
+      preLoaderRoute: typeof AppGestionDocumentalInstrumentosRouteImport
+      parentRoute: typeof AppGestionDocumentalRoute
+    }
+    '/app/gestion-documental/recepcion': {
+      id: '/app/gestion-documental/recepcion'
+      path: '/recepcion'
+      fullPath: '/app/gestion-documental/recepcion'
+      preLoaderRoute: typeof AppGestionDocumentalRecepcionRouteImport
+      parentRoute: typeof AppGestionDocumentalRoute
+    }
+    '/app/gestion-documental/repositorio': {
+      id: '/app/gestion-documental/repositorio'
+      path: '/repositorio'
+      fullPath: '/app/gestion-documental/repositorio'
+      preLoaderRoute: typeof AppGestionDocumentalRepositorioRouteImport
+      parentRoute: typeof AppGestionDocumentalRoute
+    }
+    '/app/gestion-documental/transferencias': {
+      id: '/app/gestion-documental/transferencias'
+      path: '/transferencias'
+      fullPath: '/app/gestion-documental/transferencias'
+      preLoaderRoute: typeof AppGestionDocumentalTransferenciasRouteImport
+      parentRoute: typeof AppGestionDocumentalRoute
+    }
   }
 }
+
+interface AppGestionDocumentalRouteChildren {
+  AppGestionDocumentalClasificacionRoute: typeof AppGestionDocumentalClasificacionRoute
+  AppGestionDocumentalConservacionRoute: typeof AppGestionDocumentalConservacionRoute
+  AppGestionDocumentalDigitalizacionRoute: typeof AppGestionDocumentalDigitalizacionRoute
+  AppGestionDocumentalExpedientesRoute: typeof AppGestionDocumentalExpedientesRoute
+  AppGestionDocumentalInstrumentosRoute: typeof AppGestionDocumentalInstrumentosRoute
+  AppGestionDocumentalRecepcionRoute: typeof AppGestionDocumentalRecepcionRoute
+  AppGestionDocumentalRepositorioRoute: typeof AppGestionDocumentalRepositorioRoute
+  AppGestionDocumentalTransferenciasRoute: typeof AppGestionDocumentalTransferenciasRoute
+}
+
+const AppGestionDocumentalRouteChildren: AppGestionDocumentalRouteChildren = {
+  AppGestionDocumentalClasificacionRoute:
+    AppGestionDocumentalClasificacionRoute,
+  AppGestionDocumentalConservacionRoute: AppGestionDocumentalConservacionRoute,
+  AppGestionDocumentalDigitalizacionRoute:
+    AppGestionDocumentalDigitalizacionRoute,
+  AppGestionDocumentalExpedientesRoute: AppGestionDocumentalExpedientesRoute,
+  AppGestionDocumentalInstrumentosRoute: AppGestionDocumentalInstrumentosRoute,
+  AppGestionDocumentalRecepcionRoute: AppGestionDocumentalRecepcionRoute,
+  AppGestionDocumentalRepositorioRoute: AppGestionDocumentalRepositorioRoute,
+  AppGestionDocumentalTransferenciasRoute:
+    AppGestionDocumentalTransferenciasRoute,
+}
+
+const AppGestionDocumentalRouteWithChildren =
+  AppGestionDocumentalRoute._addFileChildren(AppGestionDocumentalRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -663,7 +851,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppFeligresesFamiliasRoute: AppFeligresesFamiliasRoute,
   AppFinanzasTesoreriaRoute: AppFinanzasTesoreriaRoute,
   AppGestionDiocesanaRoute: AppGestionDiocesanaRoute,
-  AppGestionDocumentalRoute: AppGestionDocumentalRoute,
+  AppGestionDocumentalRoute: AppGestionDocumentalRouteWithChildren,
   AppGestionSacramentalRoute: AppGestionSacramentalRoute,
   AppGobiernoNormativaRoute: AppGobiernoNormativaRoute,
   AppGruposMinisteriosRoute: AppGruposMinisteriosRoute,

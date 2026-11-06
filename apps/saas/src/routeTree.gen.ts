@@ -10,44 +10,360 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnaliticaReportesRouteImport } from './routes/analitica-reportes'
+import { Route as AprovisionamientoRouteImport } from './routes/aprovisionamiento'
+import { Route as AuditoriaCumplimientoRouteImport } from './routes/auditoria-cumplimiento'
+import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConfiguracionRouteImport } from './routes/configuracion'
+import { Route as FacturacionCarteraRouteImport } from './routes/facturacion-cartera'
+import { Route as IdentidadSeguridadRouteImport } from './routes/identidad-seguridad'
+import { Route as InfraestructuraRouteImport } from './routes/infraestructura'
+import { Route as InstitucionesRouteImport } from './routes/instituciones'
+import { Route as OrganizacionesRouteImport } from './routes/organizaciones'
+import { Route as PlanesLicenciasRouteImport } from './routes/planes-licencias'
+import { Route as ProductosServiciosRouteImport } from './routes/productos-servicios'
+import { Route as RolesPermisosRouteImport } from './routes/roles-permisos'
+import { Route as SoporteRouteImport } from './routes/soporte'
+import { Route as SuscripcionesRouteImport } from './routes/suscripciones'
+import { Route as UsuariosRouteImport } from './routes/usuarios'
+import { Route as SoporteAsistenciaContextualRouteImport } from './routes/soporte/asistencia-contextual'
+import { Route as SoporteAsistenteInteligenteRouteImport } from './routes/soporte/asistente-inteligente'
+import { Route as SoporteBaseConocimientosRouteImport } from './routes/soporte/base-conocimientos'
+import { Route as SoporteDiagnosticoDocumentalRouteImport } from './routes/soporte/diagnostico-documental'
+import { Route as SoporteDiagnosticoPostgresqlRouteImport } from './routes/soporte/diagnostico-postgresql'
+import { Route as SoporteIndicadoresSoporteRouteImport } from './routes/soporte/indicadores-soporte'
+import { Route as SoporteLogsTrazabilidadRouteImport } from './routes/soporte/logs-trazabilidad'
+import { Route as SoporteMesaAyudaRouteImport } from './routes/soporte/mesa-ayuda'
+import { Route as SoporteSesionesAsistenciaRouteImport } from './routes/soporte/sesiones-asistencia'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-
+const AnaliticaReportesRoute = AnaliticaReportesRouteImport.update({
+  id: '/analitica-reportes',
+  path: '/analitica-reportes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AprovisionamientoRoute = AprovisionamientoRouteImport.update({
+  id: '/aprovisionamiento',
+  path: '/aprovisionamiento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditoriaCumplimientoRoute = AuditoriaCumplimientoRouteImport.update({
+  id: '/auditoria-cumplimiento',
+  path: '/auditoria-cumplimiento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientesRoute = ClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfiguracionRoute = ConfiguracionRouteImport.update({
   id: '/configuracion',
   path: '/configuracion',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FacturacionCarteraRoute = FacturacionCarteraRouteImport.update({
+  id: '/facturacion-cartera',
+  path: '/facturacion-cartera',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IdentidadSeguridadRoute = IdentidadSeguridadRouteImport.update({
+  id: '/identidad-seguridad',
+  path: '/identidad-seguridad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InfraestructuraRoute = InfraestructuraRouteImport.update({
+  id: '/infraestructura',
+  path: '/infraestructura',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstitucionesRoute = InstitucionesRouteImport.update({
+  id: '/instituciones',
+  path: '/instituciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizacionesRoute = OrganizacionesRouteImport.update({
+  id: '/organizaciones',
+  path: '/organizaciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanesLicenciasRoute = PlanesLicenciasRouteImport.update({
+  id: '/planes-licencias',
+  path: '/planes-licencias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductosServiciosRoute = ProductosServiciosRouteImport.update({
+  id: '/productos-servicios',
+  path: '/productos-servicios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesPermisosRoute = RolesPermisosRouteImport.update({
+  id: '/roles-permisos',
+  path: '/roles-permisos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SoporteRoute = SoporteRouteImport.update({
+  id: '/soporte',
+  path: '/soporte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuscripcionesRoute = SuscripcionesRouteImport.update({
+  id: '/suscripciones',
+  path: '/suscripciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsuariosRoute = UsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SoporteAsistenciaContextualRoute =
+  SoporteAsistenciaContextualRouteImport.update({
+    id: '/asistencia-contextual',
+    path: '/asistencia-contextual',
+    getParentRoute: () => SoporteRoute,
+  } as any)
+const SoporteAsistenteInteligenteRoute =
+  SoporteAsistenteInteligenteRouteImport.update({
+    id: '/asistente-inteligente',
+    path: '/asistente-inteligente',
+    getParentRoute: () => SoporteRoute,
+  } as any)
+const SoporteBaseConocimientosRoute =
+  SoporteBaseConocimientosRouteImport.update({
+    id: '/base-conocimientos',
+    path: '/base-conocimientos',
+    getParentRoute: () => SoporteRoute,
+  } as any)
+const SoporteDiagnosticoDocumentalRoute =
+  SoporteDiagnosticoDocumentalRouteImport.update({
+    id: '/diagnostico-documental',
+    path: '/diagnostico-documental',
+    getParentRoute: () => SoporteRoute,
+  } as any)
+const SoporteDiagnosticoPostgresqlRoute =
+  SoporteDiagnosticoPostgresqlRouteImport.update({
+    id: '/diagnostico-postgresql',
+    path: '/diagnostico-postgresql',
+    getParentRoute: () => SoporteRoute,
+  } as any)
+const SoporteIndicadoresSoporteRoute =
+  SoporteIndicadoresSoporteRouteImport.update({
+    id: '/indicadores-soporte',
+    path: '/indicadores-soporte',
+    getParentRoute: () => SoporteRoute,
+  } as any)
+const SoporteLogsTrazabilidadRoute = SoporteLogsTrazabilidadRouteImport.update({
+  id: '/logs-trazabilidad',
+  path: '/logs-trazabilidad',
+  getParentRoute: () => SoporteRoute,
+} as any)
+const SoporteMesaAyudaRoute = SoporteMesaAyudaRouteImport.update({
+  id: '/mesa-ayuda',
+  path: '/mesa-ayuda',
+  getParentRoute: () => SoporteRoute,
+} as any)
+const SoporteSesionesAsistenciaRoute =
+  SoporteSesionesAsistenciaRouteImport.update({
+    id: '/sesiones-asistencia',
+    path: '/sesiones-asistencia',
+    getParentRoute: () => SoporteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analitica-reportes': typeof AnaliticaReportesRoute
+  '/aprovisionamiento': typeof AprovisionamientoRoute
+  '/auditoria-cumplimiento': typeof AuditoriaCumplimientoRoute
+  '/clientes': typeof ClientesRoute
   '/configuracion': typeof ConfiguracionRoute
+  '/facturacion-cartera': typeof FacturacionCarteraRoute
+  '/identidad-seguridad': typeof IdentidadSeguridadRoute
+  '/infraestructura': typeof InfraestructuraRoute
+  '/instituciones': typeof InstitucionesRoute
+  '/organizaciones': typeof OrganizacionesRoute
+  '/planes-licencias': typeof PlanesLicenciasRoute
+  '/productos-servicios': typeof ProductosServiciosRoute
+  '/roles-permisos': typeof RolesPermisosRoute
+  '/soporte': typeof SoporteRouteWithChildren
+  '/suscripciones': typeof SuscripcionesRoute
+  '/usuarios': typeof UsuariosRoute
+  '/soporte/asistencia-contextual': typeof SoporteAsistenciaContextualRoute
+  '/soporte/asistente-inteligente': typeof SoporteAsistenteInteligenteRoute
+  '/soporte/base-conocimientos': typeof SoporteBaseConocimientosRoute
+  '/soporte/diagnostico-documental': typeof SoporteDiagnosticoDocumentalRoute
+  '/soporte/diagnostico-postgresql': typeof SoporteDiagnosticoPostgresqlRoute
+  '/soporte/indicadores-soporte': typeof SoporteIndicadoresSoporteRoute
+  '/soporte/logs-trazabilidad': typeof SoporteLogsTrazabilidadRoute
+  '/soporte/mesa-ayuda': typeof SoporteMesaAyudaRoute
+  '/soporte/sesiones-asistencia': typeof SoporteSesionesAsistenciaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analitica-reportes': typeof AnaliticaReportesRoute
+  '/aprovisionamiento': typeof AprovisionamientoRoute
+  '/auditoria-cumplimiento': typeof AuditoriaCumplimientoRoute
+  '/clientes': typeof ClientesRoute
   '/configuracion': typeof ConfiguracionRoute
+  '/facturacion-cartera': typeof FacturacionCarteraRoute
+  '/identidad-seguridad': typeof IdentidadSeguridadRoute
+  '/infraestructura': typeof InfraestructuraRoute
+  '/instituciones': typeof InstitucionesRoute
+  '/organizaciones': typeof OrganizacionesRoute
+  '/planes-licencias': typeof PlanesLicenciasRoute
+  '/productos-servicios': typeof ProductosServiciosRoute
+  '/roles-permisos': typeof RolesPermisosRoute
+  '/soporte': typeof SoporteRouteWithChildren
+  '/suscripciones': typeof SuscripcionesRoute
+  '/usuarios': typeof UsuariosRoute
+  '/soporte/asistencia-contextual': typeof SoporteAsistenciaContextualRoute
+  '/soporte/asistente-inteligente': typeof SoporteAsistenteInteligenteRoute
+  '/soporte/base-conocimientos': typeof SoporteBaseConocimientosRoute
+  '/soporte/diagnostico-documental': typeof SoporteDiagnosticoDocumentalRoute
+  '/soporte/diagnostico-postgresql': typeof SoporteDiagnosticoPostgresqlRoute
+  '/soporte/indicadores-soporte': typeof SoporteIndicadoresSoporteRoute
+  '/soporte/logs-trazabilidad': typeof SoporteLogsTrazabilidadRoute
+  '/soporte/mesa-ayuda': typeof SoporteMesaAyudaRoute
+  '/soporte/sesiones-asistencia': typeof SoporteSesionesAsistenciaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analitica-reportes': typeof AnaliticaReportesRoute
+  '/aprovisionamiento': typeof AprovisionamientoRoute
+  '/auditoria-cumplimiento': typeof AuditoriaCumplimientoRoute
+  '/clientes': typeof ClientesRoute
   '/configuracion': typeof ConfiguracionRoute
+  '/facturacion-cartera': typeof FacturacionCarteraRoute
+  '/identidad-seguridad': typeof IdentidadSeguridadRoute
+  '/infraestructura': typeof InfraestructuraRoute
+  '/instituciones': typeof InstitucionesRoute
+  '/organizaciones': typeof OrganizacionesRoute
+  '/planes-licencias': typeof PlanesLicenciasRoute
+  '/productos-servicios': typeof ProductosServiciosRoute
+  '/roles-permisos': typeof RolesPermisosRoute
+  '/soporte': typeof SoporteRouteWithChildren
+  '/suscripciones': typeof SuscripcionesRoute
+  '/usuarios': typeof UsuariosRoute
+  '/soporte/asistencia-contextual': typeof SoporteAsistenciaContextualRoute
+  '/soporte/asistente-inteligente': typeof SoporteAsistenteInteligenteRoute
+  '/soporte/base-conocimientos': typeof SoporteBaseConocimientosRoute
+  '/soporte/diagnostico-documental': typeof SoporteDiagnosticoDocumentalRoute
+  '/soporte/diagnostico-postgresql': typeof SoporteDiagnosticoPostgresqlRoute
+  '/soporte/indicadores-soporte': typeof SoporteIndicadoresSoporteRoute
+  '/soporte/logs-trazabilidad': typeof SoporteLogsTrazabilidadRoute
+  '/soporte/mesa-ayuda': typeof SoporteMesaAyudaRoute
+  '/soporte/sesiones-asistencia': typeof SoporteSesionesAsistenciaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/configuracion'
+  fullPaths:
+    | '/'
+    | '/analitica-reportes'
+    | '/aprovisionamiento'
+    | '/auditoria-cumplimiento'
+    | '/clientes'
+    | '/configuracion'
+    | '/facturacion-cartera'
+    | '/identidad-seguridad'
+    | '/infraestructura'
+    | '/instituciones'
+    | '/organizaciones'
+    | '/planes-licencias'
+    | '/productos-servicios'
+    | '/roles-permisos'
+    | '/soporte'
+    | '/suscripciones'
+    | '/usuarios'
+    | '/soporte/asistencia-contextual'
+    | '/soporte/asistente-inteligente'
+    | '/soporte/base-conocimientos'
+    | '/soporte/diagnostico-documental'
+    | '/soporte/diagnostico-postgresql'
+    | '/soporte/indicadores-soporte'
+    | '/soporte/logs-trazabilidad'
+    | '/soporte/mesa-ayuda'
+    | '/soporte/sesiones-asistencia'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/configuracion'
-  id: '__root__' | '/' | '/configuracion'
+  to:
+    | '/'
+    | '/analitica-reportes'
+    | '/aprovisionamiento'
+    | '/auditoria-cumplimiento'
+    | '/clientes'
+    | '/configuracion'
+    | '/facturacion-cartera'
+    | '/identidad-seguridad'
+    | '/infraestructura'
+    | '/instituciones'
+    | '/organizaciones'
+    | '/planes-licencias'
+    | '/productos-servicios'
+    | '/roles-permisos'
+    | '/soporte'
+    | '/suscripciones'
+    | '/usuarios'
+    | '/soporte/asistencia-contextual'
+    | '/soporte/asistente-inteligente'
+    | '/soporte/base-conocimientos'
+    | '/soporte/diagnostico-documental'
+    | '/soporte/diagnostico-postgresql'
+    | '/soporte/indicadores-soporte'
+    | '/soporte/logs-trazabilidad'
+    | '/soporte/mesa-ayuda'
+    | '/soporte/sesiones-asistencia'
+  id:
+    | '__root__'
+    | '/'
+    | '/analitica-reportes'
+    | '/aprovisionamiento'
+    | '/auditoria-cumplimiento'
+    | '/clientes'
+    | '/configuracion'
+    | '/facturacion-cartera'
+    | '/identidad-seguridad'
+    | '/infraestructura'
+    | '/instituciones'
+    | '/organizaciones'
+    | '/planes-licencias'
+    | '/productos-servicios'
+    | '/roles-permisos'
+    | '/soporte'
+    | '/suscripciones'
+    | '/usuarios'
+    | '/soporte/asistencia-contextual'
+    | '/soporte/asistente-inteligente'
+    | '/soporte/base-conocimientos'
+    | '/soporte/diagnostico-documental'
+    | '/soporte/diagnostico-postgresql'
+    | '/soporte/indicadores-soporte'
+    | '/soporte/logs-trazabilidad'
+    | '/soporte/mesa-ayuda'
+    | '/soporte/sesiones-asistencia'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnaliticaReportesRoute: typeof AnaliticaReportesRoute
+  AprovisionamientoRoute: typeof AprovisionamientoRoute
+  AuditoriaCumplimientoRoute: typeof AuditoriaCumplimientoRoute
+  ClientesRoute: typeof ClientesRoute
   ConfiguracionRoute: typeof ConfiguracionRoute
+  FacturacionCarteraRoute: typeof FacturacionCarteraRoute
+  IdentidadSeguridadRoute: typeof IdentidadSeguridadRoute
+  InfraestructuraRoute: typeof InfraestructuraRoute
+  InstitucionesRoute: typeof InstitucionesRoute
+  OrganizacionesRoute: typeof OrganizacionesRoute
+  PlanesLicenciasRoute: typeof PlanesLicenciasRoute
+  ProductosServiciosRoute: typeof ProductosServiciosRoute
+  RolesPermisosRoute: typeof RolesPermisosRoute
+  SoporteRoute: typeof SoporteRouteWithChildren
+  SuscripcionesRoute: typeof SuscripcionesRoute
+  UsuariosRoute: typeof UsuariosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -59,6 +375,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analitica-reportes': {
+      id: '/analitica-reportes'
+      path: '/analitica-reportes'
+      fullPath: '/analitica-reportes'
+      preLoaderRoute: typeof AnaliticaReportesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aprovisionamiento': {
+      id: '/aprovisionamiento'
+      path: '/aprovisionamiento'
+      fullPath: '/aprovisionamiento'
+      preLoaderRoute: typeof AprovisionamientoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditoria-cumplimiento': {
+      id: '/auditoria-cumplimiento'
+      path: '/auditoria-cumplimiento'
+      fullPath: '/auditoria-cumplimiento'
+      preLoaderRoute: typeof AuditoriaCumplimientoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clientes': {
+      id: '/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof ClientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/configuracion': {
       id: '/configuracion'
       path: '/configuracion'
@@ -66,12 +410,194 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfiguracionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/facturacion-cartera': {
+      id: '/facturacion-cartera'
+      path: '/facturacion-cartera'
+      fullPath: '/facturacion-cartera'
+      preLoaderRoute: typeof FacturacionCarteraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/identidad-seguridad': {
+      id: '/identidad-seguridad'
+      path: '/identidad-seguridad'
+      fullPath: '/identidad-seguridad'
+      preLoaderRoute: typeof IdentidadSeguridadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/infraestructura': {
+      id: '/infraestructura'
+      path: '/infraestructura'
+      fullPath: '/infraestructura'
+      preLoaderRoute: typeof InfraestructuraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/instituciones': {
+      id: '/instituciones'
+      path: '/instituciones'
+      fullPath: '/instituciones'
+      preLoaderRoute: typeof InstitucionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizaciones': {
+      id: '/organizaciones'
+      path: '/organizaciones'
+      fullPath: '/organizaciones'
+      preLoaderRoute: typeof OrganizacionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planes-licencias': {
+      id: '/planes-licencias'
+      path: '/planes-licencias'
+      fullPath: '/planes-licencias'
+      preLoaderRoute: typeof PlanesLicenciasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/productos-servicios': {
+      id: '/productos-servicios'
+      path: '/productos-servicios'
+      fullPath: '/productos-servicios'
+      preLoaderRoute: typeof ProductosServiciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles-permisos': {
+      id: '/roles-permisos'
+      path: '/roles-permisos'
+      fullPath: '/roles-permisos'
+      preLoaderRoute: typeof RolesPermisosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/soporte': {
+      id: '/soporte'
+      path: '/soporte'
+      fullPath: '/soporte'
+      preLoaderRoute: typeof SoporteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suscripciones': {
+      id: '/suscripciones'
+      path: '/suscripciones'
+      fullPath: '/suscripciones'
+      preLoaderRoute: typeof SuscripcionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/usuarios': {
+      id: '/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof UsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/soporte/asistencia-contextual': {
+      id: '/soporte/asistencia-contextual'
+      path: '/asistencia-contextual'
+      fullPath: '/soporte/asistencia-contextual'
+      preLoaderRoute: typeof SoporteAsistenciaContextualRouteImport
+      parentRoute: typeof SoporteRoute
+    }
+    '/soporte/asistente-inteligente': {
+      id: '/soporte/asistente-inteligente'
+      path: '/asistente-inteligente'
+      fullPath: '/soporte/asistente-inteligente'
+      preLoaderRoute: typeof SoporteAsistenteInteligenteRouteImport
+      parentRoute: typeof SoporteRoute
+    }
+    '/soporte/base-conocimientos': {
+      id: '/soporte/base-conocimientos'
+      path: '/base-conocimientos'
+      fullPath: '/soporte/base-conocimientos'
+      preLoaderRoute: typeof SoporteBaseConocimientosRouteImport
+      parentRoute: typeof SoporteRoute
+    }
+    '/soporte/diagnostico-documental': {
+      id: '/soporte/diagnostico-documental'
+      path: '/diagnostico-documental'
+      fullPath: '/soporte/diagnostico-documental'
+      preLoaderRoute: typeof SoporteDiagnosticoDocumentalRouteImport
+      parentRoute: typeof SoporteRoute
+    }
+    '/soporte/diagnostico-postgresql': {
+      id: '/soporte/diagnostico-postgresql'
+      path: '/diagnostico-postgresql'
+      fullPath: '/soporte/diagnostico-postgresql'
+      preLoaderRoute: typeof SoporteDiagnosticoPostgresqlRouteImport
+      parentRoute: typeof SoporteRoute
+    }
+    '/soporte/indicadores-soporte': {
+      id: '/soporte/indicadores-soporte'
+      path: '/indicadores-soporte'
+      fullPath: '/soporte/indicadores-soporte'
+      preLoaderRoute: typeof SoporteIndicadoresSoporteRouteImport
+      parentRoute: typeof SoporteRoute
+    }
+    '/soporte/logs-trazabilidad': {
+      id: '/soporte/logs-trazabilidad'
+      path: '/logs-trazabilidad'
+      fullPath: '/soporte/logs-trazabilidad'
+      preLoaderRoute: typeof SoporteLogsTrazabilidadRouteImport
+      parentRoute: typeof SoporteRoute
+    }
+    '/soporte/mesa-ayuda': {
+      id: '/soporte/mesa-ayuda'
+      path: '/mesa-ayuda'
+      fullPath: '/soporte/mesa-ayuda'
+      preLoaderRoute: typeof SoporteMesaAyudaRouteImport
+      parentRoute: typeof SoporteRoute
+    }
+    '/soporte/sesiones-asistencia': {
+      id: '/soporte/sesiones-asistencia'
+      path: '/sesiones-asistencia'
+      fullPath: '/soporte/sesiones-asistencia'
+      preLoaderRoute: typeof SoporteSesionesAsistenciaRouteImport
+      parentRoute: typeof SoporteRoute
+    }
   }
 }
 
+interface SoporteRouteChildren {
+  SoporteAsistenciaContextualRoute: typeof SoporteAsistenciaContextualRoute
+  SoporteAsistenteInteligenteRoute: typeof SoporteAsistenteInteligenteRoute
+  SoporteBaseConocimientosRoute: typeof SoporteBaseConocimientosRoute
+  SoporteDiagnosticoDocumentalRoute: typeof SoporteDiagnosticoDocumentalRoute
+  SoporteDiagnosticoPostgresqlRoute: typeof SoporteDiagnosticoPostgresqlRoute
+  SoporteIndicadoresSoporteRoute: typeof SoporteIndicadoresSoporteRoute
+  SoporteLogsTrazabilidadRoute: typeof SoporteLogsTrazabilidadRoute
+  SoporteMesaAyudaRoute: typeof SoporteMesaAyudaRoute
+  SoporteSesionesAsistenciaRoute: typeof SoporteSesionesAsistenciaRoute
+}
+
+const SoporteRouteChildren: SoporteRouteChildren = {
+  SoporteAsistenciaContextualRoute: SoporteAsistenciaContextualRoute,
+  SoporteAsistenteInteligenteRoute: SoporteAsistenteInteligenteRoute,
+  SoporteBaseConocimientosRoute: SoporteBaseConocimientosRoute,
+  SoporteDiagnosticoDocumentalRoute: SoporteDiagnosticoDocumentalRoute,
+  SoporteDiagnosticoPostgresqlRoute: SoporteDiagnosticoPostgresqlRoute,
+  SoporteIndicadoresSoporteRoute: SoporteIndicadoresSoporteRoute,
+  SoporteLogsTrazabilidadRoute: SoporteLogsTrazabilidadRoute,
+  SoporteMesaAyudaRoute: SoporteMesaAyudaRoute,
+  SoporteSesionesAsistenciaRoute: SoporteSesionesAsistenciaRoute,
+}
+
+const SoporteRouteWithChildren =
+  SoporteRoute._addFileChildren(SoporteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnaliticaReportesRoute: AnaliticaReportesRoute,
+  AprovisionamientoRoute: AprovisionamientoRoute,
+  AuditoriaCumplimientoRoute: AuditoriaCumplimientoRoute,
+  ClientesRoute: ClientesRoute,
   ConfiguracionRoute: ConfiguracionRoute,
+  FacturacionCarteraRoute: FacturacionCarteraRoute,
+  IdentidadSeguridadRoute: IdentidadSeguridadRoute,
+  InfraestructuraRoute: InfraestructuraRoute,
+  InstitucionesRoute: InstitucionesRoute,
+  OrganizacionesRoute: OrganizacionesRoute,
+  PlanesLicenciasRoute: PlanesLicenciasRoute,
+  ProductosServiciosRoute: ProductosServiciosRoute,
+  RolesPermisosRoute: RolesPermisosRoute,
+  SoporteRoute: SoporteRouteWithChildren,
+  SuscripcionesRoute: SuscripcionesRoute,
+  UsuariosRoute: UsuariosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

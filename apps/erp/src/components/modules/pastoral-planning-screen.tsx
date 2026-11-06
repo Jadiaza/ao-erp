@@ -1,25 +1,355 @@
 import { useState } from "react";
 import { CalendarRange, ClipboardList, Flag, Goal, Plus, Target } from "lucide-react";
-import { ActivityTimeline, DemoNotice, DetailDrawer, InfoItem, ModuleLayout, Progress, StatCard, StatusBadge, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/modules";
+import {
+  ActivityTimeline,
+  DemoNotice,
+  DetailDrawer,
+  FormDialog,
+  InfoItem,
+  ModuleLayout,
+  Progress,
+  StatCard,
+  StatusBadge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/modules";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { pastoralObjectives, type PastoralObjective } from "@/data/pastoral-demo";
+import { Input } from "@/components/ui/input";
+import {
+  pastoralObjectives as initialPastoralObjectives,
+  type PastoralObjective,
+} from "@/data/pastoral-demo";
+import { useLocalCollection } from "@/data/local-repository";
+import { PastoralPlanningOperationsPanel } from "@/components/modules/pastoral-planning-operations-panel";
 
 const months = ["Sep.", "Oct.", "Nov.", "Dic.", "Ene.", "Feb."];
-const monthPosition = (date: string) => months.findIndex((month) => month.startsWith(date.split(" ")[0] ?? ""));
+const monthPosition = (date: string) =>
+  months.findIndex((month) => month.startsWith(date.split(" ")[0] ?? ""));
+const objectiveProgress = (objective: PastoralObjective) =>
+  objective.activities.length
+    ? Math.round(
+        objective.activities.reduce(
+          (total, activity) =>
+            total +
+            (activity.progress ??
+              (activity.status === "approved" ? 100 : activity.status === "active" ? 50 : 0)),
+          0,
+        ) / objective.activities.length,
+      )
+    : 0;
 
 export function PastoralPlanningScreen() {
   const [tab, setTab] = useState("objectives");
   const [selected, setSelected] = useState<PastoralObjective | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const { records: objectives, create } = useLocalCollection(
+    "ao-erp:pastoral:objectives",
+    initialPastoralObjectives,
+  );
+  const pastoralObjectives = objectives;
 
-  return <ModuleLayout breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Comunidad y pastoral" }, { label: "Planificación pastoral" }]} title="Planificación pastoral" description="Plan de trabajo demostrativo con objetivos, líneas de acción, programas, proyectos, cronogramas e indicadores." actions={<Button className="gap-2"><Plus className="size-4" />Agregar objetivo</Button>} stats={<><StatCard label="Objetivos del plan" value="12" icon={Goal} caption="3 líneas estratégicas" /><StatCard label="Avance general" value="61%" icon={Target} caption="Ejecución demostrativa" /><StatCard label="Actividades activas" value="9" icon={ClipboardList} caption="Seguimiento del ciclo" /><StatCard label="Próxima evaluación" value="30 nov." icon={CalendarRange} caption="Corte de seguimiento" /></>}>
-    <DemoNotice>Plan, indicadores y metas ficticios. Los porcentajes ilustran seguimiento y no constituyen resultados institucionales.</DemoNotice>
-    <div className="grid gap-4 lg:grid-cols-3">{[{ title: "Comunidad y participación", value: "74%", detail: "4 de 5 acciones en marcha", progress: 74 }, { title: "Formación y misión", value: "58%", detail: "7 de 12 hitos iniciados", progress: 58 }, { title: "Cuidado y servicio", value: "43%", detail: "3 de 7 acciones en ejecución", progress: 43 }].map((line) => <Card key={line.title} className="shadow-none"><CardContent className="p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{line.title}</p><p className="mt-1 text-xs text-muted-foreground">{line.detail}</p></div><span className="text-xl font-bold text-primary">{line.value}</span></div><Progress value={line.progress} className="mt-4" /></CardContent></Card>)}</div>
-    <Tabs value={tab} onValueChange={setTab}><TabsList><TabsTrigger value="objectives">Objetivos y evaluación</TabsTrigger><TabsTrigger value="programs">Programas y proyectos</TabsTrigger><TabsTrigger value="timeline">Cronograma</TabsTrigger></TabsList>
-      <TabsContent value="objectives" className="grid gap-4 lg:grid-cols-2">{pastoralObjectives.map((objective) => <Card key={objective.id} className="shadow-none"><CardHeader className="pb-3"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-primary">{objective.line}</p><CardTitle className="mt-2 text-base leading-snug">{objective.objective}</CardTitle></div><Flag className="size-5 shrink-0 text-accent" /></div></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-2 gap-3 border-y py-3 text-sm"><InfoItem label="Meta">{objective.target}</InfoItem><InfoItem label="Responsable">{objective.lead}</InfoItem></div><div><div className="mb-2 flex justify-between text-xs"><span className="text-muted-foreground">Avance del objetivo</span><span className="font-semibold">{objective.progress}%</span></div><Progress value={objective.progress} /></div><div className="rounded-lg bg-muted/50 p-3"><p className="text-xs font-semibold">Indicador</p><p className="mt-1 text-sm">{objective.indicator}</p><p className="mt-1 text-xs text-muted-foreground">Meta: {objective.target} · Corte de muestra: noviembre 2026</p></div><div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Responsable: {objective.lead}</span><button onClick={() => setSelected(objective)} className="font-semibold text-primary hover:underline">Ver seguimiento y evaluación →</button></div></CardContent></Card>)}</TabsContent>
-      <TabsContent value="programs" className="space-y-4">{pastoralObjectives.map((objective) => <div key={objective.id} className="grid gap-4 rounded-xl border bg-card p-5 md:grid-cols-[1fr_1fr_160px]"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{objective.line}</p><h2 className="mt-1 font-semibold">{objective.program}</h2><p className="mt-1 text-sm text-muted-foreground">{objective.objective}</p></div><div className="border-y py-3 md:border-y-0 md:border-x md:px-4 md:py-0"><p className="text-xs uppercase tracking-wide text-muted-foreground">Proyecto</p><p className="mt-1 text-sm font-semibold">{objective.project}</p><p className="mt-2 text-xs text-muted-foreground">Responsable · {objective.lead}</p><p className="mt-1 text-xs text-muted-foreground">{objective.activities.length} actividades de seguimiento</p></div><div className="flex items-center justify-between gap-3 md:flex-col md:items-start md:justify-center"><div><p className="text-xs text-muted-foreground">Avance</p><p className="text-2xl font-bold text-primary">{objective.progress}%</p></div><button onClick={() => setSelected(objective)} className="text-xs font-semibold text-primary hover:underline">Abrir ficha →</button></div></div>)}</TabsContent>
-      <TabsContent value="timeline" className="space-y-4"><Card className="overflow-hidden shadow-none"><CardHeader><CardTitle className="text-base">Cronograma de ejecución · septiembre 2026 a febrero 2027</CardTitle></CardHeader><CardContent className="overflow-x-auto"><div className="min-w-[760px]"><div className="grid grid-cols-[230px_repeat(6,minmax(60px,1fr))] border-b pb-2 text-xs font-semibold text-muted-foreground"><span>Actividad / línea</span>{months.map((month) => <span key={month} className="text-center">{month}</span>)}</div><div className="divide-y">{pastoralObjectives.flatMap((objective) => objective.activities.map((activity, index) => <div key={objective.id + activity.name} className="grid min-h-14 grid-cols-[230px_repeat(6,minmax(60px,1fr))] items-center"><div className="pr-3"><p className="text-sm font-medium">{activity.name}</p><p className="text-[10px] text-muted-foreground">{objective.line}</p></div>{months.map((month, monthIndex) => <div key={month} className="flex h-14 items-center justify-center border-l border-dashed"><span className={monthIndex === monthPosition(activity.date) ? "h-2.5 w-full rounded-full bg-primary" : "h-1 w-full bg-muted"} /></div>)}</div>))}</div></div><div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground"><span className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-primary"/>En ejecución / hito previsto</span><span className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-muted"/>Sin actividad en el periodo</span></div></CardContent></Card><div className="grid gap-3 md:grid-cols-3">{pastoralObjectives.map((objective) => <Card key={objective.id} className="shadow-none"><CardContent className="p-4"><div className="flex items-center justify-between"><p className="text-sm font-semibold">{objective.line}</p><StatusBadge status={objective.progress > 65 ? "active" : "pending"} /></div><p className="mt-2 text-xs text-muted-foreground">Indicador: {objective.indicator}</p><Progress value={objective.progress} className="mt-3" /><p className="mt-2 text-xs text-muted-foreground">Meta: {objective.target}</p></CardContent></Card>)}</div></TabsContent>
-    </Tabs>
-    <DetailDrawer open={!!selected} onOpenChange={(open) => !open && setSelected(null)} title={selected?.line ?? "Seguimiento del objetivo"} description={selected?.id}><div>{selected && <div className="space-y-5"><p className="text-sm leading-relaxed">{selected.objective}</p><div className="grid grid-cols-2 gap-4"><InfoItem label="Programa">{selected.program}</InfoItem><InfoItem label="Proyecto">{selected.project}</InfoItem><InfoItem label="Responsable">{selected.lead}</InfoItem><InfoItem label="Meta">{selected.target}</InfoItem><InfoItem label="Indicador">{selected.indicator}</InfoItem><InfoItem label="Avance">{selected.progress}%</InfoItem></div><div><div className="mb-2 flex justify-between text-sm"><h3 className="font-semibold">Ejecución del objetivo</h3><span>{selected.progress}%</span></div><Progress value={selected.progress} /></div><div><h3 className="mb-3 text-sm font-semibold">Actividades y evaluación</h3><ActivityTimeline entries={selected.activities.map((activity, index) => ({ id: selected.id + "-activity-" + index, title: activity.name, description: "Estado de ejecución: " + activity.status, date: activity.date, actor: selected.lead }))} /></div><p className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">La evaluación del plan es demostrativa. El avance resume hitos de ejemplo y no se envía a ninguna instancia.</p></div>}</div></DetailDrawer>
-  </ModuleLayout>;
+  return (
+    <ModuleLayout
+      breadcrumbs={[
+        { label: "Dashboard", href: "/" },
+        { label: "Comunidad y pastoral" },
+        { label: "Planificación pastoral" },
+      ]}
+      title="Planificación pastoral"
+      description="Plan de trabajo demostrativo con objetivos, líneas de acción, programas, proyectos, cronogramas e indicadores."
+      actions={
+        <Button className="gap-2">
+          <Plus className="size-4" />
+          Agregar objetivo
+        </Button>
+      }
+      stats={
+        <>
+          <StatCard
+            label="Objetivos del plan"
+            value="12"
+            icon={Goal}
+            caption="3 líneas estratégicas"
+          />
+          <StatCard
+            label="Avance general"
+            value="61%"
+            icon={Target}
+            caption="Ejecución demostrativa"
+          />
+          <StatCard
+            label="Actividades activas"
+            value="9"
+            icon={ClipboardList}
+            caption="Seguimiento del ciclo"
+          />
+          <StatCard
+            label="Próxima evaluación"
+            value="30 nov."
+            icon={CalendarRange}
+            caption="Corte de seguimiento"
+          />
+        </>
+      }
+    >
+      <DemoNotice>
+        Plan, indicadores y metas ficticios. Los porcentajes ilustran seguimiento y no constituyen
+        resultados institucionales.
+      </DemoNotice>
+      <PastoralPlanningOperationsPanel />
+      <div className="grid gap-4 lg:grid-cols-3">
+        {[
+          {
+            title: "Comunidad y participación",
+            value: "74%",
+            detail: "4 de 5 acciones en marcha",
+            progress: 74,
+          },
+          {
+            title: "Formación y misión",
+            value: "58%",
+            detail: "7 de 12 hitos iniciados",
+            progress: 58,
+          },
+          {
+            title: "Cuidado y servicio",
+            value: "43%",
+            detail: "3 de 7 acciones en ejecución",
+            progress: 43,
+          },
+        ].map((line) => (
+          <Card key={line.title} className="shadow-none">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">{line.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{line.detail}</p>
+                </div>
+                <span className="text-xl font-bold text-primary">{line.value}</span>
+              </div>
+              <Progress value={line.progress} className="mt-4" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="objectives">Objetivos y evaluación</TabsTrigger>
+          <TabsTrigger value="programs">Programas y proyectos</TabsTrigger>
+          <TabsTrigger value="timeline">Cronograma</TabsTrigger>
+        </TabsList>
+        <TabsContent value="objectives" className="grid gap-4 lg:grid-cols-2">
+          {pastoralObjectives.map((objective) => (
+            <Card key={objective.id} className="shadow-none">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                      {objective.line}
+                    </p>
+                    <CardTitle className="mt-2 text-base leading-snug">
+                      {objective.objective}
+                    </CardTitle>
+                  </div>
+                  <Flag className="size-5 shrink-0 text-accent" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 border-y py-3 text-sm">
+                  <InfoItem label="Meta">{objective.target}</InfoItem>
+                  <InfoItem label="Responsable">{objective.lead}</InfoItem>
+                </div>
+                <div>
+                  <div className="mb-2 flex justify-between text-xs">
+                    <span className="text-muted-foreground">Avance del objetivo</span>
+                    <span className="font-semibold">{objectiveProgress(objective)}%</span>
+                  </div>
+                  <Progress value={objectiveProgress(objective)} />
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <p className="text-xs font-semibold">Indicador</p>
+                  <p className="mt-1 text-sm">{objective.indicator}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Meta: {objective.target} · Corte de muestra: noviembre 2026
+                  </p>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Responsable: {objective.lead}</span>
+                  <button
+                    onClick={() => setSelected(objective)}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    Ver seguimiento y evaluación →
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+        <TabsContent value="programs" className="space-y-4">
+          {pastoralObjectives.map((objective) => (
+            <div
+              key={objective.id}
+              className="grid gap-4 rounded-xl border bg-card p-5 md:grid-cols-[1fr_1fr_160px]"
+            >
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {objective.line}
+                </p>
+                <h2 className="mt-1 font-semibold">{objective.program}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{objective.objective}</p>
+              </div>
+              <div className="border-y py-3 md:border-y-0 md:border-x md:px-4 md:py-0">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Proyecto</p>
+                <p className="mt-1 text-sm font-semibold">{objective.project}</p>
+                <p className="mt-2 text-xs text-muted-foreground">Responsable · {objective.lead}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {objective.activities.length} actividades de seguimiento
+                </p>
+              </div>
+              <div className="flex items-center justify-between gap-3 md:flex-col md:items-start md:justify-center">
+                <div>
+                  <p className="text-xs text-muted-foreground">Avance</p>
+                  <p className="text-2xl font-bold text-primary">{objectiveProgress(objective)}%</p>
+                </div>
+                <button
+                  onClick={() => setSelected(objective)}
+                  className="text-xs font-semibold text-primary hover:underline"
+                >
+                  Abrir ficha →
+                </button>
+              </div>
+            </div>
+          ))}
+        </TabsContent>
+        <TabsContent value="timeline" className="space-y-4">
+          <Card className="overflow-hidden shadow-none">
+            <CardHeader>
+              <CardTitle className="text-base">
+                Cronograma de ejecución · septiembre 2026 a febrero 2027
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <div className="min-w-[760px]">
+                <div className="grid grid-cols-[230px_repeat(6,minmax(60px,1fr))] border-b pb-2 text-xs font-semibold text-muted-foreground">
+                  <span>Actividad / línea</span>
+                  {months.map((month) => (
+                    <span key={month} className="text-center">
+                      {month}
+                    </span>
+                  ))}
+                </div>
+                <div className="divide-y">
+                  {pastoralObjectives.flatMap((objective) =>
+                    objective.activities.map((activity, index) => (
+                      <div
+                        key={objective.id + activity.name}
+                        className="grid min-h-14 grid-cols-[230px_repeat(6,minmax(60px,1fr))] items-center"
+                      >
+                        <div className="pr-3">
+                          <p className="text-sm font-medium">{activity.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{objective.line}</p>
+                        </div>
+                        {months.map((month, monthIndex) => (
+                          <div
+                            key={month}
+                            className="flex h-14 items-center justify-center border-l border-dashed"
+                          >
+                            <span
+                              className={
+                                monthIndex === monthPosition(activity.date)
+                                  ? "h-2.5 w-full rounded-full bg-primary"
+                                  : "h-1 w-full bg-muted"
+                              }
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )),
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-2">
+                  <span className="size-2.5 rounded-full bg-primary" />
+                  En ejecución / hito previsto
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <span className="size-2.5 rounded-full bg-muted" />
+                  Sin actividad en el periodo
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+          <div className="grid gap-3 md:grid-cols-3">
+            {pastoralObjectives.map((objective) => (
+              <Card key={objective.id} className="shadow-none">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">{objective.line}</p>
+                    <StatusBadge
+                      status={objectiveProgress(objective) > 65 ? "active" : "pending"}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Indicador: {objective.indicator}
+                  </p>
+                  <Progress value={objectiveProgress(objective)} className="mt-3" />
+                  <p className="mt-2 text-xs text-muted-foreground">Meta: {objective.target}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+      <DetailDrawer
+        open={!!selected}
+        onOpenChange={(open) => !open && setSelected(null)}
+        title={selected?.line ?? "Seguimiento del objetivo"}
+        description={selected?.id}
+      >
+        <div>
+          {selected && (
+            <div className="space-y-5">
+              <p className="text-sm leading-relaxed">{selected.objective}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <InfoItem label="Programa">{selected.program}</InfoItem>
+                <InfoItem label="Proyecto">{selected.project}</InfoItem>
+                <InfoItem label="Responsable">{selected.lead}</InfoItem>
+                <InfoItem label="Meta">{selected.target}</InfoItem>
+                <InfoItem label="Indicador">{selected.indicator}</InfoItem>
+                <InfoItem label="Avance">{objectiveProgress(selected)}%</InfoItem>
+              </div>
+              <div>
+                <div className="mb-2 flex justify-between text-sm">
+                  <h3 className="font-semibold">Ejecución del objetivo</h3>
+                  <span>{objectiveProgress(selected)}%</span>
+                </div>
+                <Progress value={objectiveProgress(selected)} />
+              </div>
+              <div>
+                <h3 className="mb-3 text-sm font-semibold">Actividades y evaluación</h3>
+                <ActivityTimeline
+                  entries={selected.activities.map((activity, index) => ({
+                    id: selected.id + "-activity-" + index,
+                    title: activity.name,
+                    description: "Estado de ejecución: " + activity.status,
+                    date: activity.date,
+                    actor: selected.lead,
+                  }))}
+                />
+              </div>
+              <p className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+                La evaluación del plan es demostrativa. El avance resume hitos de ejemplo y no se
+                envía a ninguna instancia.
+              </p>
+            </div>
+          )}
+        </div>
+      </DetailDrawer>
+    </ModuleLayout>
+  );
 }
