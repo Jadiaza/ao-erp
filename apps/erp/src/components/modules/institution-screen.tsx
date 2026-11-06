@@ -1,25 +1,419 @@
 import { useState } from "react";
-import { Building2, CheckCircle2, Church, FileBadge2, FileText, Fingerprint, Globe2, Landmark, Link2, MapPin, Network, ShieldCheck, Unlink2 } from "lucide-react";
-import { DemoNotice, InfoItem, ModuleLayout, StatusBadge, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/modules";
+import {
+  Building2,
+  CheckCircle2,
+  Church,
+  FileBadge2,
+  FileText,
+  Fingerprint,
+  Globe2,
+  Landmark,
+  Link2,
+  MapPin,
+  Network,
+  ShieldCheck,
+  Unlink2,
+} from "lucide-react";
+import {
+  DemoNotice,
+  InfoItem,
+  ModuleLayout,
+  StatusBadge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/modules";
+import { InstitutionOperationsPanel } from "@/components/modules/institution-operations-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { institutionAuthoritiesDemo, institutionDependenciesDemo, institutionProfileDemo as institution } from "@/data/institution-profile-demo";
+import {
+  institutionAuthoritiesDemo,
+  institutionDependenciesDemo,
+  institutionProfileDemo as initialInstitution,
+} from "@/data/institution-profile-demo";
+import { useEffect, useState as useReactState } from "react";
 import { parishDemo } from "@/data/parish-demo";
 
 export function InstitutionScreen() {
   const [tab, setTab] = useState("identity");
   const [linked, setLinked] = useState(false);
-  return <ModuleLayout breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Gobierno e institución" }, { label: "Institución" }]} title="Institución" description="Identidad, naturaleza y constitución de la entidad que utiliza A&O ERP. Este módulo describe quién es la institución." actions={<Button variant="outline" className="gap-2" onClick={() => setLinked((value) => !value)}>{linked ? <Unlink2 className="size-4" /> : <Link2 className="size-4" />}{linked ? "Quitar vínculo de muestra" : "Vincular a jurisdicción"}</Button>}>
-    <DemoNotice>Perfil institucional ficticio y editable solo a modo de demostración. Identidad institucional no equivale a administración operativa; contactos de servicio, actividades y documentación administrativa se consultan en Administración institucional.</DemoNotice>
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]"><Card className="overflow-hidden shadow-none"><div className="h-1.5 bg-[#B9934B]" /><CardContent className="flex flex-wrap items-center gap-5 p-5"><div className="flex size-20 shrink-0 flex-col items-center justify-center rounded-2xl border bg-[#12304A] text-white shadow-sm"><Church className="size-7" /><span className="mt-1 text-[9px] font-semibold tracking-widest">SMC</span></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="text-xs font-semibold uppercase tracking-widest text-[#B9934B]">Identidad institucional</p><StatusBadge status="active" label={institution.status} /></div><h2 className="mt-1 text-xl font-semibold text-[#12304A]">{institution.officialName}</h2><p className="mt-1 text-sm text-muted-foreground">{institution.shortName} · {institution.entityType}</p><p className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground"><MapPin className="size-3.5" />{institution.country}</p></div><div className="rounded-xl border bg-muted/20 px-4 py-3"><p className="text-[10px] uppercase tracking-wide text-muted-foreground">Identificador institucional</p><p className="mt-1 font-mono text-sm font-semibold">{parishDemo.id}</p><p className="mt-1 text-[10px] text-muted-foreground">Conservado ante cambios de vínculo</p></div></CardContent></Card>
-      <Card className={`shadow-none ${linked ? "border-emerald-200 bg-emerald-50/40" : "border-primary/15 bg-primary/[0.025]"}`}><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm">{linked ? <Link2 className="size-4 text-emerald-700" /> : <Network className="size-4 text-primary" />}{linked ? "Vinculación eclesiástica" : "Institución independiente"}</CardTitle></CardHeader><CardContent><p className="text-sm font-semibold">{linked ? "Diócesis de San Gabriel" : "Configuración autónoma"}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{linked ? `Relación jurisdiccional ilustrativa. La identidad local y los registros de ${parishDemo.id} se conservan; no representa acceso.` : "La parroquia puede configurar su identidad sin depender de una diócesis registrada en la plataforma."}</p><Button variant="link" size="sm" className="mt-2 h-auto p-0 text-xs" onClick={() => setLinked((value) => !value)}>{linked ? "Conservar entidad independiente" : "Vincular posteriormente"}</Button></CardContent></Card></div>
-    <Tabs value={tab} onValueChange={setTab}><TabsList><TabsTrigger value="identity">Identidad institucional</TabsTrigger><TabsTrigger value="canonical">Identidad canónica</TabsTrigger><TabsTrigger value="civil">Identidad jurídica civil</TabsTrigger><TabsTrigger value="organization">Organización</TabsTrigger><TabsTrigger value="configuration">Identificación y periodo</TabsTrigger></TabsList>
-      <TabsContent value="identity" className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]"><Card className="shadow-none"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Fingerprint className="size-4 text-primary" />Datos oficiales de la entidad</CardTitle></CardHeader><CardContent className="grid gap-5 sm:grid-cols-2"><InfoItem label="Nombre oficial">{institution.officialName}</InfoItem><InfoItem label="Nombre corto">{institution.shortName}</InfoItem><InfoItem label="Tipo de entidad">{institution.entityType}</InfoItem><InfoItem label="Naturaleza eclesiástica">{institution.ecclesiasticalNature}</InfoItem><InfoItem label="País">{institution.country}</InfoItem><InfoItem label="Dirección principal">{institution.address}</InfoItem><InfoItem label="Datos de contacto">{institution.contact}</InfoItem><InfoItem label="Sitio web">{institution.website}</InfoItem></CardContent></Card><Card className="shadow-none"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><FileBadge2 className="size-4 text-primary" />Logotipo e identificación visual</CardTitle></CardHeader><CardContent><div className="flex items-center gap-4 rounded-xl border border-dashed bg-muted/20 p-5"><div className="flex size-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#12304A] text-white"><Church className="size-6" /><span className="mt-1 text-[8px] font-bold tracking-widest">SMC</span></div><div><p className="text-sm font-semibold">Marca institucional de muestra</p><p className="mt-1 text-xs text-muted-foreground">Emblema ilustrativo para documentos e informes. No es un logotipo oficial.</p></div></div><div className="mt-4 rounded-lg bg-secondary/30 p-3"><p className="text-xs font-semibold text-primary">Referencia en documentos</p><p className="mt-1 text-xs text-muted-foreground">{institution.documentIdentity}</p></div></CardContent></Card><Card className="lg:col-span-2 shadow-none"><CardHeader className="pb-2"><CardTitle className="text-sm">Datos operativos relacionados</CardTitle></CardHeader><CardContent className="flex flex-wrap items-center justify-between gap-3"><p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">La gestión diaria de contactos, responsables de servicio, actividades y comunicaciones se organiza separadamente en Administración institucional.</p><Button variant="outline" size="sm" onClick={() => window.location.assign("/app/administracion-institucional")}>Consultar administración institucional</Button></CardContent></Card></TabsContent>
-      <TabsContent value="canonical" className="grid gap-4 lg:grid-cols-[1fr_0.85fr]"><Card className="shadow-none"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Church className="size-4 text-primary" />Constitución e identidad canónica</CardTitle><p className="text-xs text-muted-foreground">La descripción depende de la naturaleza y las normas de cada jurisdicción.</p></CardHeader><CardContent className="grid gap-5 sm:grid-cols-2"><InfoItem label="Tipo de jurisdicción o entidad">{institution.jurisdictionType}</InfoItem><InfoItem label="Adscripción eclesiástica">{linked ? "Diócesis de San Gabriel · vínculo local de muestra" : "No vinculada en este perfil independiente"}</InfoItem><InfoItem label="Autoridad eclesiástica competente">{institution.authority}</InfoItem><InfoItem label="Decreto o documento de constitución">{institution.erectionDecree}</InfoItem><InfoItem label="Fecha de constitución">{institution.erectionDate}</InfoItem><InfoItem label="Naturaleza eclesiástica">{institution.ecclesiasticalNature}</InfoItem></CardContent></Card><Card className="shadow-none"><CardHeader><CardTitle className="text-sm">Memoria histórica institucional</CardTitle></CardHeader><CardContent><div className="rounded-lg border-l-2 border-[#B9934B] bg-muted/30 p-4"><p className="text-sm leading-relaxed text-muted-foreground">{institution.history}</p><p className="mt-4 text-[10px] text-muted-foreground">Dato de contexto ficticio · consultar documentos constitutivos correspondientes en el repositorio autorizado.</p></div><div className="mt-4 flex items-center gap-2 rounded-lg border p-3 text-xs"><FileText className="size-4 text-primary" /><span className="flex-1">{institution.erectionDecree}</span><StatusBadge status="active" label="Referencia" /></div></CardContent></Card></TabsContent>
-      <TabsContent value="civil" className="space-y-4"><Card className="shadow-none"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Landmark className="size-4 text-primary" />Identidad jurídica civil</CardTitle><p className="text-xs text-muted-foreground">La naturaleza civil, los identificadores y los registros aplicables dependen del país y del tipo de entidad.</p></CardHeader><CardContent className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"><InfoItem label="Razón social">{institution.legalName}</InfoItem><InfoItem label="Naturaleza jurídica">{institution.legalNature}</InfoItem><InfoItem label="Identificación tributaria">{institution.taxId}</InfoItem><InfoItem label="Representación legal">{institution.legalRepresentative}</InfoItem><InfoItem label="Reconocimiento jurídico">{institution.civilRecognition}</InfoItem><InfoItem label="Registro civil o tributario">{institution.civilRegistration}</InfoItem></CardContent></Card><div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-amber-800" /><p className="text-xs leading-relaxed text-amber-900">Los campos civiles son configurables y pueden ser no aplicables para algunas entidades. Este perfil contiene datos inventados y no constituye prueba de existencia o representación legal.</p></div></TabsContent>
-      <TabsContent value="organization" className="grid gap-4 lg:grid-cols-[1fr_0.8fr]"><Card className="shadow-none"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Network className="size-4 text-primary" />Autoridades y responsables</CardTitle></CardHeader><CardContent className="space-y-3">{institutionAuthoritiesDemo.map((person) => <div key={person.role} className="flex items-start gap-3 rounded-lg border p-3"><div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary"><Building2 className="size-4" /></div><div><p className="text-sm font-semibold">{person.role}</p><p className="mt-0.5 text-xs text-muted-foreground">{person.person}</p><p className="mt-2 text-xs text-muted-foreground">{person.scope}</p></div></div>)}</CardContent></Card><Card className="shadow-none"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><MapPin className="size-4 text-primary" />Dependencias y sedes</CardTitle></CardHeader><CardContent className="space-y-3">{institutionDependenciesDemo.map((unit) => <div key={unit.name} className="rounded-lg border p-3"><div className="flex justify-between gap-2"><p className="text-sm font-semibold">{unit.name}</p><span className="text-[10px] text-muted-foreground">{unit.kind}</span></div><p className="mt-1 text-xs text-muted-foreground">{unit.location}</p><p className="mt-2 text-[10px]">Responsable: {unit.lead}</p></div>)}</CardContent></Card><Card className="lg:col-span-2 shadow-none"><CardHeader className="pb-2"><CardTitle className="text-sm">Relaciones institucionales</CardTitle></CardHeader><CardContent><div className="flex flex-wrap items-center gap-3 rounded-lg bg-muted/30 p-4 text-sm"><span className="rounded-lg border bg-white px-3 py-2 font-medium">{parishDemo.shortName} · {parishDemo.id}</span><span className="text-muted-foreground">{linked ? "↔ vínculo de referencia ↔" : "· entidad independiente ·"}</span><span className="rounded-lg border bg-white px-3 py-2 font-medium">{linked ? "Diócesis de San Gabriel" : "Sin jurisdicción enlazada"}</span></div><p className="mt-3 text-xs text-muted-foreground">El vínculo puede representarse posteriormente sin reemplazar el identificador ni la identidad propia de la entidad.</p></CardContent></Card></TabsContent>
-      <TabsContent value="configuration" className="grid gap-4 md:grid-cols-2"><Card className="shadow-none"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Globe2 className="size-4 text-primary" />Periodo y preferencias regionales</CardTitle></CardHeader><CardContent className="grid gap-4"><InfoItem label="Periodo institucional">{institution.period}</InfoItem><InfoItem label="País y región">{institution.country} · zona Centro</InfoItem><InfoItem label="Idioma de identificación">Español</InfoItem><InfoItem label="Moneda de referencia">COP · configurable en Configuración</InfoItem></CardContent></Card><Card className="shadow-none"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><FileText className="size-4 text-primary" />Identificación para documentos</CardTitle></CardHeader><CardContent className="space-y-4"><InfoItem label="Nombre institucional impreso">{institution.documentIdentity}</InfoItem><InfoItem label="Identificador conservado">{parishDemo.id}</InfoItem><InfoItem label="Estado de entidad"><StatusBadge status="active" label={institution.status} /></InfoItem><p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">Preferencias generales ampliadas, como moneda, formatos y parámetros contables, se organizan en el módulo Configuración.</p></CardContent></Card></TabsContent>
-    </Tabs>
-    <div className="flex items-start gap-3 rounded-xl border bg-card p-4"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" /><div><p className="text-xs font-semibold">Identidad propia y vínculo flexible</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Una entidad puede iniciar como institución independiente y vincularse después a una jurisdicción disponible. El vínculo no elimina sus registros ni su identificador institucional.</p></div></div>
-  </ModuleLayout>;
+  const [institution] = useReactState(() => {
+    try {
+      const saved = window.localStorage.getItem("ao-erp:institution:profile");
+      return saved ? JSON.parse(saved) : initialInstitution;
+    } catch {
+      return initialInstitution;
+    }
+  });
+  useEffect(() => {
+    window.localStorage.setItem("ao-erp:institution:profile", JSON.stringify(institution));
+  }, [institution]);
+  return (
+    <ModuleLayout
+      breadcrumbs={[
+        { label: "Dashboard", href: "/" },
+        { label: "Gobierno e institución" },
+        { label: "Institución" },
+      ]}
+      title="Institución"
+      description="Identidad, naturaleza y constitución de la entidad que utiliza A&O ERP. Este módulo describe quién es la institución."
+      actions={
+        <Button variant="outline" className="gap-2" onClick={() => setLinked((value) => !value)}>
+          {linked ? <Unlink2 className="size-4" /> : <Link2 className="size-4" />}
+          {linked ? "Quitar vínculo de muestra" : "Vincular a jurisdicción"}
+        </Button>
+      }
+    >
+      <DemoNotice>
+        Perfil institucional ficticio y editable solo a modo de demostración. Identidad
+        institucional no equivale a administración operativa; contactos de servicio, actividades y
+        documentación administrativa se consultan en Administración institucional.
+      </DemoNotice>
+      <InstitutionOperationsPanel />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+        <Card className="overflow-hidden shadow-none">
+          <div className="h-1.5 bg-[#B9934B]" />
+          <CardContent className="flex flex-wrap items-center gap-5 p-5">
+            <div className="flex size-20 shrink-0 flex-col items-center justify-center rounded-2xl border bg-[#12304A] text-white shadow-sm">
+              <Church className="size-7" />
+              <span className="mt-1 text-[9px] font-semibold tracking-widest">SMC</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#B9934B]">
+                  Identidad institucional
+                </p>
+                <StatusBadge status="active" label={institution.status} />
+              </div>
+              <h2 className="mt-1 text-xl font-semibold text-[#12304A]">
+                {institution.officialName}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {institution.shortName} · {institution.entityType}
+              </p>
+              <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="size-3.5" />
+                {institution.country}
+              </p>
+            </div>
+            <div className="rounded-xl border bg-muted/20 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Identificador institucional
+              </p>
+              <p className="mt-1 font-mono text-sm font-semibold">{parishDemo.id}</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Conservado ante cambios de vínculo
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card
+          className={`shadow-none ${linked ? "border-emerald-200 bg-emerald-50/40" : "border-primary/15 bg-primary/[0.025]"}`}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              {linked ? (
+                <Link2 className="size-4 text-emerald-700" />
+              ) : (
+                <Network className="size-4 text-primary" />
+              )}
+              {linked ? "Vinculación eclesiástica" : "Institución independiente"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-semibold">
+              {linked ? "Diócesis de San Gabriel" : "Configuración autónoma"}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {linked
+                ? `Relación jurisdiccional ilustrativa. La identidad local y los registros de ${parishDemo.id} se conservan; no representa acceso.`
+                : "La parroquia puede configurar su identidad sin depender de una diócesis registrada en la plataforma."}
+            </p>
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-2 h-auto p-0 text-xs"
+              onClick={() => setLinked((value) => !value)}
+            >
+              {linked ? "Conservar entidad independiente" : "Vincular posteriormente"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="identity">Identidad institucional</TabsTrigger>
+          <TabsTrigger value="canonical">Identidad canónica</TabsTrigger>
+          <TabsTrigger value="civil">Identidad jurídica civil</TabsTrigger>
+          <TabsTrigger value="organization">Organización</TabsTrigger>
+          <TabsTrigger value="configuration">Identificación y periodo</TabsTrigger>
+        </TabsList>
+        <TabsContent value="identity" className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Fingerprint className="size-4 text-primary" />
+                Datos oficiales de la entidad
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-5 sm:grid-cols-2">
+              <InfoItem label="Nombre oficial">{institution.officialName}</InfoItem>
+              <InfoItem label="Nombre corto">{institution.shortName}</InfoItem>
+              <InfoItem label="Tipo de entidad">{institution.entityType}</InfoItem>
+              <InfoItem label="Naturaleza eclesiástica">
+                {institution.ecclesiasticalNature}
+              </InfoItem>
+              <InfoItem label="País">{institution.country}</InfoItem>
+              <InfoItem label="Dirección principal">{institution.address}</InfoItem>
+              <InfoItem label="Datos de contacto">{institution.contact}</InfoItem>
+              <InfoItem label="Sitio web">{institution.website}</InfoItem>
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <FileBadge2 className="size-4 text-primary" />
+                Logotipo e identificación visual
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4 rounded-xl border border-dashed bg-muted/20 p-5">
+                <div className="flex size-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#12304A] text-white">
+                  <Church className="size-6" />
+                  <span className="mt-1 text-[8px] font-bold tracking-widest">SMC</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Marca institucional de muestra</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Emblema ilustrativo para documentos e informes. No es un logotipo oficial.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 rounded-lg bg-secondary/30 p-3">
+                <p className="text-xs font-semibold text-primary">Referencia en documentos</p>
+                <p className="mt-1 text-xs text-muted-foreground">{institution.documentIdentity}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="lg:col-span-2 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Datos operativos relacionados</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3">
+              <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">
+                La gestión diaria de contactos, responsables de servicio, actividades y
+                comunicaciones se organiza separadamente en Administración institucional.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.assign("/app/administracion-institucional")}
+              >
+                Consultar administración institucional
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="canonical" className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Church className="size-4 text-primary" />
+                Constitución e identidad canónica
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                La descripción depende de la naturaleza y las normas de cada jurisdicción.
+              </p>
+            </CardHeader>
+            <CardContent className="grid gap-5 sm:grid-cols-2">
+              <InfoItem label="Tipo de jurisdicción o entidad">
+                {institution.jurisdictionType}
+              </InfoItem>
+              <InfoItem label="Adscripción eclesiástica">
+                {linked
+                  ? "Diócesis de San Gabriel · vínculo local de muestra"
+                  : "No vinculada en este perfil independiente"}
+              </InfoItem>
+              <InfoItem label="Autoridad eclesiástica competente">{institution.authority}</InfoItem>
+              <InfoItem label="Decreto o documento de constitución">
+                {institution.erectionDecree}
+              </InfoItem>
+              <InfoItem label="Fecha de constitución">{institution.erectionDate}</InfoItem>
+              <InfoItem label="Naturaleza eclesiástica">
+                {institution.ecclesiasticalNature}
+              </InfoItem>
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="text-sm">Memoria histórica institucional</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg border-l-2 border-[#B9934B] bg-muted/30 p-4">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {institution.history}
+                </p>
+                <p className="mt-4 text-[10px] text-muted-foreground">
+                  Dato de contexto ficticio · consultar documentos constitutivos correspondientes en
+                  el repositorio autorizado.
+                </p>
+              </div>
+              <div className="mt-4 flex items-center gap-2 rounded-lg border p-3 text-xs">
+                <FileText className="size-4 text-primary" />
+                <span className="flex-1">{institution.erectionDecree}</span>
+                <StatusBadge status="active" label="Referencia" />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="civil" className="space-y-4">
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Landmark className="size-4 text-primary" />
+                Identidad jurídica civil
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                La naturaleza civil, los identificadores y los registros aplicables dependen del
+                país y del tipo de entidad.
+              </p>
+            </CardHeader>
+            <CardContent className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <InfoItem label="Razón social">{institution.legalName}</InfoItem>
+              <InfoItem label="Naturaleza jurídica">{institution.legalNature}</InfoItem>
+              <InfoItem label="Identificación tributaria">{institution.taxId}</InfoItem>
+              <InfoItem label="Representación legal">{institution.legalRepresentative}</InfoItem>
+              <InfoItem label="Reconocimiento jurídico">{institution.civilRecognition}</InfoItem>
+              <InfoItem label="Registro civil o tributario">
+                {institution.civilRegistration}
+              </InfoItem>
+            </CardContent>
+          </Card>
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-amber-800" />
+            <p className="text-xs leading-relaxed text-amber-900">
+              Los campos civiles son configurables y pueden ser no aplicables para algunas
+              entidades. Este perfil contiene datos inventados y no constituye prueba de existencia
+              o representación legal.
+            </p>
+          </div>
+        </TabsContent>
+        <TabsContent value="organization" className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Network className="size-4 text-primary" />
+                Autoridades y responsables
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {institutionAuthoritiesDemo.map((person) => (
+                <div key={person.role} className="flex items-start gap-3 rounded-lg border p-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                    <Building2 className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{person.role}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{person.person}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{person.scope}</p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <MapPin className="size-4 text-primary" />
+                Dependencias y sedes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {institutionDependenciesDemo.map((unit) => (
+                <div key={unit.name} className="rounded-lg border p-3">
+                  <div className="flex justify-between gap-2">
+                    <p className="text-sm font-semibold">{unit.name}</p>
+                    <span className="text-[10px] text-muted-foreground">{unit.kind}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{unit.location}</p>
+                  <p className="mt-2 text-[10px]">Responsable: {unit.lead}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+          <Card className="lg:col-span-2 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Relaciones institucionales</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap items-center gap-3 rounded-lg bg-muted/30 p-4 text-sm">
+                <span className="rounded-lg border bg-white px-3 py-2 font-medium">
+                  {parishDemo.shortName} · {parishDemo.id}
+                </span>
+                <span className="text-muted-foreground">
+                  {linked ? "↔ vínculo de referencia ↔" : "· entidad independiente ·"}
+                </span>
+                <span className="rounded-lg border bg-white px-3 py-2 font-medium">
+                  {linked ? "Diócesis de San Gabriel" : "Sin jurisdicción enlazada"}
+                </span>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                El vínculo puede representarse posteriormente sin reemplazar el identificador ni la
+                identidad propia de la entidad.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="configuration" className="grid gap-4 md:grid-cols-2">
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Globe2 className="size-4 text-primary" />
+                Periodo y preferencias regionales
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <InfoItem label="Periodo institucional">{institution.period}</InfoItem>
+              <InfoItem label="País y región">{institution.country} · zona Centro</InfoItem>
+              <InfoItem label="Idioma de identificación">Español</InfoItem>
+              <InfoItem label="Moneda de referencia">COP · configurable en Configuración</InfoItem>
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <FileText className="size-4 text-primary" />
+                Identificación para documentos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <InfoItem label="Nombre institucional impreso">
+                {institution.documentIdentity}
+              </InfoItem>
+              <InfoItem label="Identificador conservado">{parishDemo.id}</InfoItem>
+              <InfoItem label="Estado de entidad">
+                <StatusBadge status="active" label={institution.status} />
+              </InfoItem>
+              <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+                Preferencias generales ampliadas, como moneda, formatos y parámetros contables, se
+                organizan en el módulo Configuración.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      <div className="flex items-start gap-3 rounded-xl border bg-card p-4">
+        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+        <div>
+          <p className="text-xs font-semibold">Identidad propia y vínculo flexible</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Una entidad puede iniciar como institución independiente y vincularse después a una
+            jurisdicción disponible. El vínculo no elimina sus registros ni su identificador
+            institucional.
+          </p>
+        </div>
+      </div>
+    </ModuleLayout>
+  );
 }

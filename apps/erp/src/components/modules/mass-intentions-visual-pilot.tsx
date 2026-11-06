@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
-import { z } from "zod";
 import {
   CalendarDays,
   Eye,
@@ -27,19 +25,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const schema = z.object({
-  requesterName: z.string(),
-  contactMethod: z.string(),
-  contactDetail: z.string(),
-  intentionType: z.string(),
-  intention: z.string(),
-  suggestedDate: z.string(),
-  suggestedTimeRange: z.string(),
-  preferredSite: z.string(),
-  observations: z.string(),
-});
-
-type FormValues = z.infer<typeof schema>;
+type FormValues = {
+  requesterName: string;
+  contactMethod: string;
+  contactDetail: string;
+  intentionType: string;
+  intention: string;
+  suggestedDate: string;
+  suggestedTimeRange: string;
+  preferredSite: string;
+  observations: string;
+};
 
 const demoValues: FormValues = {
   requesterName: "Elena Ríos (dato ficticio)",
@@ -90,7 +86,7 @@ const examples: Example[] = [
 ];
 
 function usePreviewForm(onPreview: (values: FormValues) => void) {
-  const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: demoValues });
+  const form = useForm<FormValues>({ defaultValues: demoValues });
   return { form, onSubmit: (values: FormValues) => onPreview(values) };
 }
 

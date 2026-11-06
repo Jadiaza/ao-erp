@@ -1,44 +1,432 @@
 import { useState } from "react";
 import { BookOpen, CalendarDays, ClipboardCheck, GraduationCap, Plus, Users } from "lucide-react";
-import { ActivityTimeline, DataTable, type DataTableColumn, DemoNotice, DetailDrawer, InfoItem, ModuleLayout, StatCard, StatusBadge, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/modules";
+import {
+  ActivityTimeline,
+  DataTable,
+  type DataTableColumn,
+  DemoNotice,
+  DetailDrawer,
+  FormDialog,
+  InfoItem,
+  ModuleLayout,
+  StatCard,
+  StatusBadge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/modules";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { formationGroups, formationParticipants, formationPrograms, type FormationGroup, type FormationParticipant, type FormationProgram } from "@/data/pastoral-demo";
+import {
+  formationGroups,
+  formationParticipants,
+  formationPrograms,
+  type FormationGroup,
+  type FormationParticipant,
+  type FormationProgram,
+} from "@/data/pastoral-demo";
+import { useLocalCollection } from "@/data/local-repository";
 
 export function FormationScreen() {
   const [tab, setTab] = useState("programs");
   const [program, setProgram] = useState<FormationProgram | null>(null);
   const [group, setGroup] = useState<FormationGroup | null>(null);
   const [participant, setParticipant] = useState<FormationParticipant | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const { records: participants, create } = useLocalCollection(
+    "ao-erp:formation:participants",
+    formationParticipants,
+  );
   const groupColumns: DataTableColumn<FormationGroup>[] = [
-    { id: "name", header: "Grupo formativo", cell: (row) => <div><p className="font-semibold">{row.name}</p><p className="text-xs text-muted-foreground">{row.id}</p></div> },
+    {
+      id: "name",
+      header: "Grupo formativo",
+      cell: (row) => (
+        <div>
+          <p className="font-semibold">{row.name}</p>
+          <p className="text-xs text-muted-foreground">{row.id}</p>
+        </div>
+      ),
+    },
     { id: "stage", header: "Etapa / nivel", cell: (row) => row.stage },
     { id: "lead", header: "Catequista", cell: (row) => row.catechist },
     { id: "count", header: "Participantes", cell: (row) => row.participants },
-    { id: "attendance", header: "Asistencia", cell: (row) => <div className="flex items-center gap-2"><Progress value={row.attendance} className="w-16" /><span className="text-xs">{row.attendance}%</span></div> },
+    {
+      id: "attendance",
+      header: "Asistencia",
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <Progress value={row.attendance} className="w-16" />
+          <span className="text-xs">{row.attendance}%</span>
+        </div>
+      ),
+    },
     { id: "status", header: "Estado", cell: (row) => <StatusBadge status={row.status} /> },
   ];
   const participantColumns: DataTableColumn<FormationParticipant>[] = [
-    { id: "name", header: "Participante", cell: (row) => <div><p className="font-semibold">{row.name}</p><p className="text-xs text-muted-foreground">{row.id}</p></div> },
-    { id: "group", header: "Grupo", cell: (row) => formationGroups.find((item) => item.id === row.groupId)?.name },
+    {
+      id: "name",
+      header: "Participante",
+      cell: (row) => (
+        <div>
+          <p className="font-semibold">{row.name}</p>
+          <p className="text-xs text-muted-foreground">{row.id}</p>
+        </div>
+      ),
+    },
+    {
+      id: "group",
+      header: "Grupo",
+      cell: (row) => formationGroups.find((item) => item.id === row.groupId)?.name,
+    },
     { id: "guardian", header: "Contacto familiar", cell: (row) => row.guardian },
-    { id: "progress", header: "Avance", cell: (row) => <div className="min-w-28"><p className="mb-1 text-xs">{row.progress}</p><Progress value={row.attendance} /></div> },
+    {
+      id: "progress",
+      header: "Avance",
+      cell: (row) => (
+        <div className="min-w-28">
+          <p className="mb-1 text-xs">{row.progress}</p>
+          <Progress value={row.attendance} />
+        </div>
+      ),
+    },
     { id: "attendance", header: "Asistencia", cell: (row) => `${row.attendance}%` },
     { id: "status", header: "Estado", cell: (row) => <StatusBadge status={row.status} /> },
   ];
 
-  return <ModuleLayout breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Comunidad y pastoral" }, { label: "Catequesis y formación" }]} title="Catequesis y formación" description="Itinerarios, grupos, encuentros y seguimiento formativo de participantes ficticios." actions={<Button className="gap-2"><Plus className="size-4" />Nuevo proceso</Button>} stats={<><StatCard label="Programas activos" value="3" icon={BookOpen} caption="Itinerarios de formación" /><StatCard label="Grupos" value="9" icon={Users} caption="Por etapa y nivel" /><StatCard label="Participantes" value="141" icon={GraduationCap} caption="Datos demostrativos" /><StatCard label="Encuentros próximos" value="7" icon={CalendarDays} caption="Calendario de muestra" /></>}>
-    <DemoNotice>Participantes y responsables ficticios. La asistencia y el avance son datos ilustrativos, sin registro persistente.</DemoNotice>
-    <Tabs value={tab} onValueChange={setTab}><TabsList><TabsTrigger value="programs">Programas e itinerarios</TabsTrigger><TabsTrigger value="groups">Grupos y encuentros</TabsTrigger><TabsTrigger value="participants">Participantes</TabsTrigger></TabsList>
-      <TabsContent value="programs" className="grid gap-4 lg:grid-cols-3">{formationPrograms.map((item) => <Card key={item.id} className="flex flex-col shadow-none"><CardHeader><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.stage}</p><CardTitle className="mt-1 text-base">{item.name}</CardTitle></div><StatusBadge status={item.status} /></div></CardHeader><CardContent className="flex flex-1 flex-col gap-4"><div className="grid grid-cols-2 gap-3 text-sm"><InfoItem label="Duración">{item.duration}</InfoItem><InfoItem label="Grupos">{item.groups}</InfoItem><InfoItem label="Participantes">{item.participants}</InfoItem><InfoItem label="Responsable">{item.lead}</InfoItem></div><div><div className="mb-2 flex justify-between text-xs"><span className="text-muted-foreground">Avance del itinerario</span><span className="font-semibold">{item.progress}%</span></div><Progress value={item.progress} /></div><Button variant="outline" className="mt-auto" onClick={() => setProgram(item)}>Ver itinerario y recursos</Button></CardContent></Card>)}</TabsContent>
-      <TabsContent value="groups" className="space-y-5"><div className="grid gap-4 md:grid-cols-3">{formationGroups.slice(0, 3).map((item) => <Card key={item.id} className="shadow-none"><CardHeader className="pb-2"><CardTitle className="text-sm">{item.name}</CardTitle><p className="text-xs text-muted-foreground">{item.schedule}</p></CardHeader><CardContent><div className="flex justify-between text-xs"><span>Asistencia reciente</span><span className="font-semibold">{item.attendance}%</span></div><Progress className="mt-2" value={item.attendance} /><p className="mt-3 text-xs text-muted-foreground">Próximo encuentro · {item.schedule}</p></CardContent></Card>)}</div><div><h2 className="mb-3 font-semibold">Grupos por etapa</h2><DataTable rows={formationGroups} columns={groupColumns} getRowId={(row) => row.id} onRowClick={setGroup} /></div><div className="rounded-xl border bg-card p-4"><h3 className="flex items-center gap-2 text-sm font-semibold"><CalendarDays className="size-4 text-primary" />Calendario de encuentros</h3><div className="mt-3 grid gap-2 sm:grid-cols-3">{formationGroups.slice(0, 3).map((item) => <div key={item.id} className="rounded-lg bg-muted/50 p-3"><p className="text-xs font-semibold">{item.schedule}</p><p className="mt-1 text-sm">{item.name}</p><p className="mt-1 text-xs text-muted-foreground">Asistencia media {item.attendance}%</p></div>)}</div></div></TabsContent>
-      <TabsContent value="participants" className="space-y-4"><div className="grid gap-3 sm:grid-cols-3">{formationParticipants.slice(0, 3).map((item) => <button key={item.id} onClick={() => setParticipant(item)} className="rounded-xl border bg-card p-4 text-left hover:border-primary/40"><div className="flex items-center justify-between"><p className="font-semibold">{item.name}</p><ClipboardCheck className="size-4 text-primary" /></div><p className="mt-1 text-xs text-muted-foreground">{formationGroups.find((groupItem) => groupItem.id === item.groupId)?.name}</p><div className="mt-3 flex justify-between text-xs"><span>Asistencia</span><span>{item.attendance}%</span></div><Progress className="mt-1.5" value={item.attendance} /></button>)}</div><DataTable rows={formationParticipants} columns={participantColumns} getRowId={(row) => row.id} onRowClick={setParticipant} /><div className="grid gap-4 md:grid-cols-2"><Card className="shadow-none"><CardHeader><CardTitle className="text-sm">Seguimiento formativo</CardTitle></CardHeader><CardContent><ActivityTimeline entries={[{ id: "f1", title: "Encuentro de etapa", description: "Tema: comunidad y pertenencia.", date: "31 oct. 2026", actor: "Catequista de muestra" }, { id: "f2", title: "Registro de asistencia", description: "Asistencia consolidada para revisión.", date: "24 oct. 2026", actor: "Coordinación formativa" }]} /></CardContent></Card><Card className="shadow-none"><CardHeader><CardTitle className="text-sm">Materiales y recursos</CardTitle></CardHeader><CardContent className="space-y-3 text-sm">{formationPrograms[0]?.materials.map((material) => <div key={material} className="flex items-center gap-2 rounded-lg border p-3"><BookOpen className="size-4 text-primary" />{material}<span className="ml-auto text-xs text-muted-foreground">Recurso de muestra</span></div>)}</CardContent></Card></div></TabsContent>
-    </Tabs>
-    <DetailDrawer open={!!program || !!group || !!participant} onOpenChange={(open) => { if (!open) { setProgram(null); setGroup(null); setParticipant(null); } }} title={program?.name ?? group?.name ?? participant?.name ?? "Detalle formativo"} description={program?.id ?? group?.id ?? participant?.id}>
-      {program && <div className="space-y-5"><div className="grid grid-cols-2 gap-4"><InfoItem label="Etapa">{program.stage}</InfoItem><InfoItem label="Duración">{program.duration}</InfoItem><InfoItem label="Responsable">{program.lead}</InfoItem><InfoItem label="Grupos">{program.groups}</InfoItem></div><div><h3 className="mb-3 text-sm font-semibold">Itinerario de catequesis</h3><ActivityTimeline entries={program.itinerary.map((stage, index) => ({ id: `${program.id}-${index}`, title: stage, date: `Etapa ${index + 1}`, description: index < 2 ? "Completada en la muestra" : "Seguimiento planificado" }))} /></div><div><h3 className="mb-2 text-sm font-semibold">Materiales y recursos</h3>{program.materials.map((material) => <p key={material} className="border-b py-2 text-sm">{material}</p>)}</div></div>}
-      {group && <div className="space-y-4"><div className="grid grid-cols-2 gap-4"><InfoItem label="Etapa">{group.stage}</InfoItem><InfoItem label="Catequista">{group.catechist}</InfoItem><InfoItem label="Horario">{group.schedule}</InfoItem><InfoItem label="Participantes">{group.participants}</InfoItem><InfoItem label="Asistencia">{group.attendance}%</InfoItem><InfoItem label="Estado"><StatusBadge status={group.status} /></InfoItem></div><h3 className="text-sm font-semibold">Próximo encuentro · {group.schedule}</h3><Progress value={group.attendance} /></div>}
-      {participant && <div className="space-y-5"><div className="grid grid-cols-2 gap-4"><InfoItem label="Grupo">{formationGroups.find((item) => item.id === participant.groupId)?.name}</InfoItem><InfoItem label="Contacto familiar">{participant.guardian}</InfoItem><InfoItem label="Avance">{participant.progress}</InfoItem><InfoItem label="Estado"><StatusBadge status={participant.status} /></InfoItem><InfoItem label="Próximo encuentro">{participant.nextEncounter}</InfoItem><InfoItem label="Asistencia">{participant.attendance}%</InfoItem></div><div><p className="mb-2 text-sm font-semibold">Seguimiento de participación</p><Progress value={participant.attendance} /></div><ActivityTimeline entries={[{ id: "p1", title: "Inscripción recibida", description: "Registro de muestra en el grupo formativo.", date: "15 sep. 2026" }, { id: "p2", title: "Encuentro formativo", description: participant.progress, date: "31 oct. 2026" }]} /></div>}
-    </DetailDrawer>
-  </ModuleLayout>;
+  return (
+    <ModuleLayout
+      breadcrumbs={[
+        { label: "Dashboard", href: "/" },
+        { label: "Comunidad y pastoral" },
+        { label: "Catequesis y formación" },
+      ]}
+      title="Catequesis y formación"
+      description="Itinerarios, grupos, encuentros y seguimiento formativo de participantes ficticios."
+      actions={
+        <Button className="gap-2" onClick={() => setFormOpen(true)}>
+          <Plus className="size-4" />
+          Nuevo participante
+        </Button>
+      }
+      stats={
+        <>
+          <StatCard
+            label="Programas activos"
+            value="3"
+            icon={BookOpen}
+            caption="Itinerarios de formación"
+          />
+          <StatCard label="Grupos" value="9" icon={Users} caption="Por etapa y nivel" />
+          <StatCard
+            label="Participantes"
+            value={String(participants.length)}
+            icon={GraduationCap}
+            caption="Datos demostrativos"
+          />
+          <StatCard
+            label="Encuentros próximos"
+            value="7"
+            icon={CalendarDays}
+            caption="Calendario de muestra"
+          />
+        </>
+      }
+    >
+      <DemoNotice>
+        Participantes y responsables ficticios. La asistencia y el avance son datos ilustrativos,
+        sin registro persistente.
+      </DemoNotice>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="programs">Programas e itinerarios</TabsTrigger>
+          <TabsTrigger value="groups">Grupos y encuentros</TabsTrigger>
+          <TabsTrigger value="participants">Participantes</TabsTrigger>
+        </TabsList>
+        <TabsContent value="programs" className="grid gap-4 lg:grid-cols-3">
+          {formationPrograms.map((item) => (
+            <Card key={item.id} className="flex flex-col shadow-none">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {item.stage}
+                    </p>
+                    <CardTitle className="mt-1 text-base">{item.name}</CardTitle>
+                  </div>
+                  <StatusBadge status={item.status} />
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col gap-4">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <InfoItem label="Duración">{item.duration}</InfoItem>
+                  <InfoItem label="Grupos">{item.groups}</InfoItem>
+                  <InfoItem label="Participantes">{item.participants}</InfoItem>
+                  <InfoItem label="Responsable">{item.lead}</InfoItem>
+                </div>
+                <div>
+                  <div className="mb-2 flex justify-between text-xs">
+                    <span className="text-muted-foreground">Avance del itinerario</span>
+                    <span className="font-semibold">{item.progress}%</span>
+                  </div>
+                  <Progress value={item.progress} />
+                </div>
+                <Button variant="outline" className="mt-auto" onClick={() => setProgram(item)}>
+                  Ver itinerario y recursos
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+        <TabsContent value="groups" className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-3">
+            {formationGroups.slice(0, 3).map((item) => (
+              <Card key={item.id} className="shadow-none">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">{item.name}</CardTitle>
+                  <p className="text-xs text-muted-foreground">{item.schedule}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between text-xs">
+                    <span>Asistencia reciente</span>
+                    <span className="font-semibold">{item.attendance}%</span>
+                  </div>
+                  <Progress className="mt-2" value={item.attendance} />
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Próximo encuentro · {item.schedule}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div>
+            <h2 className="mb-3 font-semibold">Grupos por etapa</h2>
+            <DataTable
+              rows={formationGroups}
+              columns={groupColumns}
+              getRowId={(row) => row.id}
+              onRowClick={setGroup}
+            />
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <CalendarDays className="size-4 text-primary" />
+              Calendario de encuentros
+            </h3>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {formationGroups.slice(0, 3).map((item) => (
+                <div key={item.id} className="rounded-lg bg-muted/50 p-3">
+                  <p className="text-xs font-semibold">{item.schedule}</p>
+                  <p className="mt-1 text-sm">{item.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Asistencia media {item.attendance}%
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="participants" className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {participants.slice(0, 3).map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setParticipant(item)}
+                className="rounded-xl border bg-card p-4 text-left hover:border-primary/40"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold">{item.name}</p>
+                  <ClipboardCheck className="size-4 text-primary" />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formationGroups.find((groupItem) => groupItem.id === item.groupId)?.name}
+                </p>
+                <div className="mt-3 flex justify-between text-xs">
+                  <span>Asistencia</span>
+                  <span>{item.attendance}%</span>
+                </div>
+                <Progress className="mt-1.5" value={item.attendance} />
+              </button>
+            ))}
+          </div>
+          <DataTable
+            rows={participants}
+            columns={participantColumns}
+            getRowId={(row) => row.id}
+            onRowClick={setParticipant}
+          />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="shadow-none">
+              <CardHeader>
+                <CardTitle className="text-sm">Seguimiento formativo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ActivityTimeline
+                  entries={[
+                    {
+                      id: "f1",
+                      title: "Encuentro de etapa",
+                      description: "Tema: comunidad y pertenencia.",
+                      date: "31 oct. 2026",
+                      actor: "Catequista de muestra",
+                    },
+                    {
+                      id: "f2",
+                      title: "Registro de asistencia",
+                      description: "Asistencia consolidada para revisión.",
+                      date: "24 oct. 2026",
+                      actor: "Coordinación formativa",
+                    },
+                  ]}
+                />
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardHeader>
+                <CardTitle className="text-sm">Materiales y recursos</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {formationPrograms[0]?.materials.map((material) => (
+                  <div key={material} className="flex items-center gap-2 rounded-lg border p-3">
+                    <BookOpen className="size-4 text-primary" />
+                    {material}
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      Recurso de muestra
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+      <FormDialog
+        title="Inscribir participante"
+        description="La inscripción se conserva en la colección local de formación."
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        submitLabel="Inscribir"
+        onSubmit={(data) => {
+          const name = String(data.get("name") ?? "").trim();
+          if (name.length < 2) return;
+          create({
+            id: `PAR-FOR-${Date.now()}`,
+            name,
+            groupId: formationGroups[0]?.id ?? "CAT-DEMO-11",
+            guardian: String(data.get("guardian") ?? "No informado"),
+            attendance: 0,
+            progress: "Inscripción pendiente",
+            nextEncounter: "Por programar",
+            status: "pending",
+          });
+        }}
+      >
+        <label className="grid gap-1 text-sm">
+          Participante
+          <Input name="name" required />
+        </label>
+        <label className="grid gap-1 text-sm">
+          Contacto familiar
+          <Input name="guardian" />
+        </label>
+      </FormDialog>
+      <DetailDrawer
+        open={!!program || !!group || !!participant}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProgram(null);
+            setGroup(null);
+            setParticipant(null);
+          }
+        }}
+        title={program?.name ?? group?.name ?? participant?.name ?? "Detalle formativo"}
+        description={program?.id ?? group?.id ?? participant?.id}
+      >
+        {program && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <InfoItem label="Etapa">{program.stage}</InfoItem>
+              <InfoItem label="Duración">{program.duration}</InfoItem>
+              <InfoItem label="Responsable">{program.lead}</InfoItem>
+              <InfoItem label="Grupos">{program.groups}</InfoItem>
+            </div>
+            <div>
+              <h3 className="mb-3 text-sm font-semibold">Itinerario de catequesis</h3>
+              <ActivityTimeline
+                entries={program.itinerary.map((stage, index) => ({
+                  id: `${program.id}-${index}`,
+                  title: stage,
+                  date: `Etapa ${index + 1}`,
+                  description: index < 2 ? "Completada en la muestra" : "Seguimiento planificado",
+                }))}
+              />
+            </div>
+            <div>
+              <h3 className="mb-2 text-sm font-semibold">Materiales y recursos</h3>
+              {program.materials.map((material) => (
+                <p key={material} className="border-b py-2 text-sm">
+                  {material}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+        {group && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <InfoItem label="Etapa">{group.stage}</InfoItem>
+              <InfoItem label="Catequista">{group.catechist}</InfoItem>
+              <InfoItem label="Horario">{group.schedule}</InfoItem>
+              <InfoItem label="Participantes">{group.participants}</InfoItem>
+              <InfoItem label="Asistencia">{group.attendance}%</InfoItem>
+              <InfoItem label="Estado">
+                <StatusBadge status={group.status} />
+              </InfoItem>
+            </div>
+            <h3 className="text-sm font-semibold">Próximo encuentro · {group.schedule}</h3>
+            <Progress value={group.attendance} />
+          </div>
+        )}
+        {participant && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <InfoItem label="Grupo">
+                {formationGroups.find((item) => item.id === participant.groupId)?.name}
+              </InfoItem>
+              <InfoItem label="Contacto familiar">{participant.guardian}</InfoItem>
+              <InfoItem label="Avance">{participant.progress}</InfoItem>
+              <InfoItem label="Estado">
+                <StatusBadge status={participant.status} />
+              </InfoItem>
+              <InfoItem label="Próximo encuentro">{participant.nextEncounter}</InfoItem>
+              <InfoItem label="Asistencia">{participant.attendance}%</InfoItem>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-semibold">Seguimiento de participación</p>
+              <Progress value={participant.attendance} />
+            </div>
+            <ActivityTimeline
+              entries={[
+                {
+                  id: "p1",
+                  title: "Inscripción recibida",
+                  description: "Registro de muestra en el grupo formativo.",
+                  date: "15 sep. 2026",
+                },
+                {
+                  id: "p2",
+                  title: "Encuentro formativo",
+                  description: participant.progress,
+                  date: "31 oct. 2026",
+                },
+              ]}
+            />
+          </div>
+        )}
+      </DetailDrawer>
+    </ModuleLayout>
+  );
 }

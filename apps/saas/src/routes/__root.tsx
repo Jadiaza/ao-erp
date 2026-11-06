@@ -48,8 +48,50 @@ function RootComponent() {
           <span>SaaS</span>
         </div>
         <nav aria-label="Navegación principal">
-          <Link to="/" aria-current={pathname === "/" ? "page" : undefined} className="nav-link">
+          <Link
+            to="/"
+            aria-current={pathname === "/" ? "page" : undefined}
+            className={pathname === "/" ? "nav-link active" : "nav-link"}
+          >
             Dashboard
+          </Link>
+          <Link
+            to="/configuracion"
+            aria-current={pathname === "/configuracion" ? "page" : undefined}
+            className={pathname === "/configuracion" ? "nav-link active" : "nav-link"}
+          >
+            Configuración
+          </Link>
+          <span className="nav-caption">OPERACIÓN DE PLATAFORMA</span>
+          <Link
+            to="/organizaciones"
+            className={pathname === "/organizaciones" ? "nav-link active" : "nav-link"}
+          >
+            Organizaciones
+          </Link>
+          <Link
+            to="/instituciones"
+            className={pathname === "/instituciones" ? "nav-link active" : "nav-link"}
+          >
+            Instituciones
+          </Link>
+          <Link
+            to="/usuarios"
+            className={pathname === "/usuarios" ? "nav-link active" : "nav-link"}
+          >
+            Usuarios
+          </Link>
+          <Link
+            to="/roles-permisos"
+            className={pathname === "/roles-permisos" ? "nav-link active" : "nav-link"}
+          >
+            Roles y permisos
+          </Link>
+          <Link
+            to="/planes-licencias"
+            className={pathname === "/planes-licencias" ? "nav-link active" : "nav-link"}
+          >
+            Planes y licencias
           </Link>
         </nav>
         <p className="sidebar-note">Administración del ecosistema</p>

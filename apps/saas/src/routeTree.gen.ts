@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConfiguracionRouteImport } from './routes/configuracion'
+import { Route as InstitucionesRouteImport } from './routes/instituciones'
+import { Route as OrganizacionesRouteImport } from './routes/organizaciones'
+import { Route as PlanesLicenciasRouteImport } from './routes/planes-licencias'
+import { Route as RolesPermisosRouteImport } from './routes/roles-permisos'
+import { Route as UsuariosRouteImport } from './routes/usuarios'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfiguracionRoute = ConfiguracionRouteImport.update({
+  id: '/configuracion',
+  path: '/configuracion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstitucionesRoute = InstitucionesRouteImport.update({
+  id: '/instituciones',
+  path: '/instituciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizacionesRoute = OrganizacionesRouteImport.update({
+  id: '/organizaciones',
+  path: '/organizaciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanesLicenciasRoute = PlanesLicenciasRouteImport.update({
+  id: '/planes-licencias',
+  path: '/planes-licencias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesPermisosRoute = RolesPermisosRouteImport.update({
+  id: '/roles-permisos',
+  path: '/roles-permisos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsuariosRoute = UsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/configuracion': typeof ConfiguracionRoute
+  '/instituciones': typeof InstitucionesRoute
+  '/organizaciones': typeof OrganizacionesRoute
+  '/planes-licencias': typeof PlanesLicenciasRoute
+  '/roles-permisos': typeof RolesPermisosRoute
+  '/usuarios': typeof UsuariosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/configuracion': typeof ConfiguracionRoute
+  '/instituciones': typeof InstitucionesRoute
+  '/organizaciones': typeof OrganizacionesRoute
+  '/planes-licencias': typeof PlanesLicenciasRoute
+  '/roles-permisos': typeof RolesPermisosRoute
+  '/usuarios': typeof UsuariosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/configuracion': typeof ConfiguracionRoute
+  '/instituciones': typeof InstitucionesRoute
+  '/organizaciones': typeof OrganizacionesRoute
+  '/planes-licencias': typeof PlanesLicenciasRoute
+  '/roles-permisos': typeof RolesPermisosRoute
+  '/usuarios': typeof UsuariosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/configuracion'
+    | '/instituciones'
+    | '/organizaciones'
+    | '/planes-licencias'
+    | '/roles-permisos'
+    | '/usuarios'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/configuracion'
+    | '/instituciones'
+    | '/organizaciones'
+    | '/planes-licencias'
+    | '/roles-permisos'
+    | '/usuarios'
+  id:
+    | '__root__'
+    | '/'
+    | '/configuracion'
+    | '/instituciones'
+    | '/organizaciones'
+    | '/planes-licencias'
+    | '/roles-permisos'
+    | '/usuarios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConfiguracionRoute: typeof ConfiguracionRoute
+  InstitucionesRoute: typeof InstitucionesRoute
+  OrganizacionesRoute: typeof OrganizacionesRoute
+  PlanesLicenciasRoute: typeof PlanesLicenciasRoute
+  RolesPermisosRoute: typeof RolesPermisosRoute
+  UsuariosRoute: typeof UsuariosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/configuracion': {
+      id: '/configuracion'
+      path: '/configuracion'
+      fullPath: '/configuracion'
+      preLoaderRoute: typeof ConfiguracionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/instituciones': {
+      id: '/instituciones'
+      path: '/instituciones'
+      fullPath: '/instituciones'
+      preLoaderRoute: typeof InstitucionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizaciones': {
+      id: '/organizaciones'
+      path: '/organizaciones'
+      fullPath: '/organizaciones'
+      preLoaderRoute: typeof OrganizacionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planes-licencias': {
+      id: '/planes-licencias'
+      path: '/planes-licencias'
+      fullPath: '/planes-licencias'
+      preLoaderRoute: typeof PlanesLicenciasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles-permisos': {
+      id: '/roles-permisos'
+      path: '/roles-permisos'
+      fullPath: '/roles-permisos'
+      preLoaderRoute: typeof RolesPermisosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/usuarios': {
+      id: '/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof UsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConfiguracionRoute: ConfiguracionRoute,
+  InstitucionesRoute: InstitucionesRoute,
+  OrganizacionesRoute: OrganizacionesRoute,
+  PlanesLicenciasRoute: PlanesLicenciasRoute,
+  RolesPermisosRoute: RolesPermisosRoute,
+  UsuariosRoute: UsuariosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
