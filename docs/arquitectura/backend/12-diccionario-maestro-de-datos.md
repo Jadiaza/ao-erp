@@ -1,35 +1,47 @@
 # Diccionario maestro de datos — Ecosistema A&O
 
-**Estado:** consolidación arquitectónica; no es un esquema SQL aprobado ni una implementación.  
+**Estado:** línea base canónica del modelo lógico; pendiente de completar el detalle físico y aprobar migraciones. No está implementado.  
 **Repositorio:** Jadiaza/ao-erp  
 **Rama:** design/saas-dashboard-refresh  
-**Versión:** 1.0 — 2026-11-08
+**Versión:** 1.1 — 2026-11-08
 
-## 1. Propósito y alcance
+## 1. Propósito, autoridad y alcance
 
-Consolida el vocabulario, las entidades, las relaciones y las reglas de datos identificadas en los documentos de arquitectura 01 a 11. Será la referencia para completar el modelo relacional, los diagramas ERD, las migraciones PostgreSQL, las políticas RLS y los contratos entre aplicaciones.
+Este documento es la **referencia maestra y única de consulta para construir el modelo de datos del ecosistema A&O**. Consolida las decisiones de dominio, las entidades, las relaciones y las reglas que deben respetarse al elaborar el ERD, completar las fichas de tablas y preparar las migraciones PostgreSQL.
 
-No se inventan columnas, tipos SQL, restricciones ni cardinalidades ausentes en las fuentes. Los vacíos se marcan como pendientes. La presencia de una entidad en este diccionario no significa que exista físicamente en la base de datos.
+A partir de esta versión, el equipo de desarrollo debe tomar las definiciones de este diccionario como línea base. No debe escoger libremente entre documentos anteriores ni combinar modelos alternativos. Si una definición no aparece aquí o está marcada como pendiente, no se debe inventar ni implementar por interpretación.
 
-## 2. Estado real del proyecto
+### 1.1 Jerarquía normativa de la documentación
 
-- A&O SaaS es actualmente una aplicación frontend de demostración que utiliza LocalSaasStore/localStorage.
-- No hay migraciones SQL, tablas Supabase, Auth conectado ni RLS ejecutado en el estado documentado.
-- PostgreSQL/Supabase, Supabase Auth, RLS, Storage y Vercel son arquitectura objetivo sujeta a aprobación y validación técnica.
-- El documento 09 amplía y corrige el modelo multiinstitución inicial. Para el modelo institucional objetivo prevalecen organizations, ecclesial_entities, organization_entities, entity_relationships y institutional_access_grants.
-- El modelo inicial del documento 02 —institutions, dioceses, parishes, institution_memberships y active_institution_contexts— no debe duplicarse como segundo modelo canónico.
-- Los documentos 01–11 no especifican por completo todas las tablas operativas de ERP ni todas las cardinalidades comerciales. Esos vacíos se conservan como pendientes.
+Los documentos de arquitectura no son versiones equivalentes de un mismo modelo. Cada uno tiene un alcance distinto. La autoridad queda establecida así:
 
-### 2.1 Convenciones de estado
+| Documento | Función dentro de la arquitectura | Tratamiento para construir el modelo |
+|---|---|---|
+| **12 — Diccionario maestro de datos (este documento)** | Referencia consolidada de entidades, conceptos, relaciones y reglas de datos del ecosistema | **Fuente canónica de consulta.** Toda construcción del ERD debe partir de aquí. |
+| **09 — Informes institucionales y comunicaciones diocesanas, incluida su sección de cierre de integridad 006.1** | Especificación funcional y de datos del dominio institucional, informes, comunicaciones, grants, archivos y auditoría relacionada | **Definición vigente de ese dominio.** Las correcciones de integridad de su sección 17 prevalecen sobre las formulaciones anteriores del propio documento. Sus definiciones ya están incorporadas en este diccionario. |
+| **11 — Arquitectura ejecutable Vercel y Supabase** | Arquitectura técnica objetivo: aplicaciones, server-side, Auth, repositorios, RLS, despliegue y fases | Autoridad para decisiones técnicas de implementación. No sustituye el modelo funcional de entidades de este diccionario. |
+| **01 y 03–08** | Decisiones y especificaciones transversales de backend, autorización, RLS, servicios, migraciones, infraestructura y plan de implementación | Se mantienen vigentes en su ámbito cuando no contradicen este diccionario ni las decisiones funcionales consolidadas. |
+| **02 — Modelo multiinstitución** | Primer diseño conceptual de instituciones, diócesis, parroquias y membresías | **Versión histórica superada para el modelo institucional canónico.** No se deben crear sus tablas `institutions`, `dioceses`, `parishes`, `institution_memberships` ni `active_institution_contexts` como un segundo modelo paralelo. |
 
-| Estado | Significado |
-|---|---|
-| DEFINIDO | Concepto y responsabilidad expresamente descritos en documentos. |
-| PROPUESTO | Entidad descrita como diseño conceptual, aún no implementada. |
-| DERIVADO | Vista o proyección calculada; no es fuente independiente de verdad. |
-| OPCIONAL | Se incorpora solo si se confirma la necesidad funcional. |
-| PENDIENTE | Faltan atributos, cardinalidad, regla o decisión. |
-| SUPERADO | Diseño anterior que no debe coexistir como modelo paralelo. |
+### 1.2 Decisión institucional definitiva
+
+El modelo institucional canónico utiliza exclusivamente estos conceptos:
+
+- `organizations`: tenant/organización que contrata o utiliza los servicios de la plataforma.
+- `ecclesial_entities`: entidades del dominio eclesial, como diócesis, parroquias, comunidades, congregaciones, seminarios, institutos, fundaciones y otras instituciones.
+- `organization_entities`: vínculo explícito entre una organización y una entidad eclesial.
+- `entity_relationships`: relaciones canónicas, jurisdiccionales o institucionales entre entidades eclesiales.
+- `institutional_access_grants`: autorización expresa, limitada por finalidad, acciones, vigencia y estado.
+
+No se utilizará una jerarquía rígida de tablas para representar diócesis y parroquias. Tampoco se inferirán permisos por pertenencia canónica, jurisdiccional, directorio o vínculo organizacional. La diócesis no administra las parroquias ni adquiere acceso a sus registros por el solo hecho de existir una relación eclesial.
+
+Las tablas de informes y comunicaciones se rigen por el modelo institucional consolidado en este diccionario. Las presentaciones conservan versiones; la recepción documental y la revisión son estados separados; los grants son autorizaciones explícitas; los archivos permanecen privados y sujetos a autorización y auditoría.
+
+### 1.3 Qué significa que una definición sea definitiva
+
+“Definitiva” significa que existe una única decisión de arquitectura para orientar el diseño y evitar modelos contradictorios. **No significa que las tablas estén implementadas ni que todos los atributos físicos estén aprobados.**
+
+Las entidades y relaciones aquí descritas constituyen la línea base del modelo lógico. Los campos, tipos PostgreSQL, nulabilidad, restricciones, índices y cardinalidades que no estén expresamente especificados permanecen pendientes y deben completarse antes de generar SQL.
 
 ## 3. Principios del modelo
 
@@ -412,21 +424,32 @@ Antes de migraciones SQL, cada tabla debe tener:
 
 Este documento consolida el inventario y las reglas expresadas; no reemplaza la especificación física de cada tabla.
 
-## 18. Trazabilidad documental
+## 18. Vigencia y tratamiento de documentos de arquitectura
 
-| Fuente | Aporte |
-|---|---|
-| 01 — Decisión de arquitectura backend | PostgreSQL/Supabase propuesto y límites de producto |
-| 02 — Modelo multiinstitución | Identidad y membresías iniciales; modelo institucional marcado como superado |
-| 03 — Autenticación y autorización | Auth, SSR, contexto y autorización server-side |
-| 04 — Políticas RLS | Aislamiento, matriz y pruebas negativas |
-| 05 — Arquitectura de servicios | Bounded contexts y servicios documentales |
-| 06 — Migraciones y datos | SQL versionado, datos demo y conceptos documentales |
-| 07 — Infraestructura, costos y despliegue | Ambientes, secretos, backups y runtime pendiente |
-| 08 — Plan de implementación backend | Secuencia de implementación y calidad |
-| 09 — Informes institucionales y comunicaciones | Modelo institucional evolucionado, grants, informes, comunicaciones, archivos y auditoría |
-| 10 — Preparación técnica de implementación SaaS | Estado real de SaaS y LocalSaasStore |
-| 11 — Arquitectura ejecutable Vercel y Supabase | Responsabilidades de producto, transición y CRM |
+La siguiente matriz fija el uso de cada documento. No constituye una lista de alternativas entre las cuales el desarrollador deba elegir.
+
+| Documento | Vigencia | Decisión que debe aplicarse |
+|---|---|---|
+| 01 — Decisión de arquitectura backend | Vigente como decisión arquitectónica condicionada | PostgreSQL/Supabase es la alternativa recomendada; proveedor, región, presupuesto y condiciones de operación deben aprobarse antes de producción. |
+| 02 — Modelo multiinstitución | **Superado en su modelo institucional** | No utilizar sus entidades `institutions`, `dioceses`, `parishes`, `institution_memberships` ni `active_institution_contexts` como tablas canónicas. |
+| 03 — Autenticación y autorización | Vigente en su ámbito | Aplicar identidad, sesión y autorización server-side según la arquitectura técnica aprobada. |
+| 04 — Políticas RLS | Vigente en su ámbito | Aplicar aislamiento por organización, alcance y permisos, con pruebas negativas. |
+| 05 — Arquitectura de servicios | Vigente en su ámbito | Mantener límites de dominio y servicios; los nombres de servicios no se convierten automáticamente en tablas. |
+| 06 — Migraciones y datos | Vigente como lineamiento | Versionar migraciones y separar datos de prueba; no asumir que los conceptos documentales ya tienen esquema físico aprobado. |
+| 07 — Infraestructura, costos y despliegue | Vigente como análisis sujeto a decisiones de ambiente | Confirmar proveedor, región, costos, respaldos y operación antes de producción. |
+| 08 — Plan de implementación backend | Vigente como secuencia orientativa | Implementar por fases después de cerrar los bloqueos de modelo y plataforma. |
+| 09 — Informes institucionales y comunicaciones diocesanas | **Vigente para el dominio institucional** | Aplicar el modelo de informes, comunicaciones, grants y archivos consolidado aquí. Dentro del documento 09, su sección 17 de cierre de integridad 006.1 prevalece sobre las definiciones anteriores cuando las corrige. |
+| 10 — Preparación técnica de implementación SaaS | Vigente como diagnóstico del estado del repositorio | El estado real descrito allí debe distinguirse de la arquitectura objetivo. |
+| 11 — Arquitectura ejecutable Vercel y Supabase | Vigente como arquitectura técnica objetivo, sujeta a aprobaciones de infraestructura | Aplicar sus límites server/client, Auth SSR, repositorios, RLS, migraciones y estrategia de despliegue; no tomarlo como sustituto del modelo lógico. |
+| 12 — Diccionario maestro de datos | **Referencia canónica de datos** | Este documento consolida el vocabulario, entidades, relaciones y reglas que se usarán para construir el ERD y completar el modelo físico. |
+
+### Regla para resolver contradicciones
+
+1. Para identidad institucional, vínculos, grants, informes, comunicaciones y archivos institucionales, aplicar la definición consolidada en este diccionario, derivada de la especificación vigente del dominio institucional y sus correcciones de integridad.
+2. Para la arquitectura técnica de ejecución, aplicar el documento 11, respetando las decisiones de proveedor, región y despliegue que continúen condicionadas.
+3. Para los lineamientos transversales de backend, seguridad y operación, aplicar los documentos 01 y 03–08 en sus respectivos ámbitos, siempre que no contradigan las decisiones consolidadas aquí.
+4. El modelo institucional inicial del documento 02 queda retirado como fuente de tablas canónicas. Solo puede consultarse como antecedente histórico.
+5. Si aparece una contradicción no resuelta entre definiciones vigentes, se debe registrar como decisión pendiente y detener la implementación de esa parte. No se debe elegir una opción por conveniencia del desarrollador ni crear ambas estructuras.
 
 ## 19. Criterio de cierre
 
