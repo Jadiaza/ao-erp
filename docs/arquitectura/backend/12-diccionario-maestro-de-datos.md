@@ -43,6 +43,27 @@ Las tablas de informes y comunicaciones se rigen por el modelo institucional con
 
 Las entidades y relaciones aquí descritas constituyen la línea base del modelo lógico. Los campos, tipos PostgreSQL, nulabilidad, restricciones, índices y cardinalidades que no estén expresamente especificados permanecen pendientes y deben completarse antes de generar SQL.
 
+## 2. Estado real de implementación
+
+Este apartado distingue el modelo objetivo del software que existe actualmente:
+
+- A&O SaaS continúa documentado como una aplicación frontend de demostración que utiliza `LocalSaasStore` y `localStorage`.
+- No se considera implementado el modelo de datos descrito en este diccionario: no hay evidencia aquí de migraciones SQL aplicadas, tablas productivas, Supabase Auth conectado ni políticas RLS ejecutándose.
+- PostgreSQL/Supabase, Auth, RLS, Storage y Vercel forman parte de la arquitectura objetivo, pero su contratación, región, configuración y puesta en producción dependen de las aprobaciones técnicas y operativas correspondientes.
+- La presencia de una entidad en este diccionario significa que pertenece al modelo lógico aprobado como línea base; no significa que exista físicamente en la base de datos.
+- Los datos demostrativos del frontend no son datos maestros ni deben migrarse automáticamente a producción.
+
+### 2.1 Convenciones de estado del diccionario
+
+| Estado | Significado |
+|---|---|
+| DEFINIDO | Concepto y responsabilidad establecidos como regla de dominio. |
+| PROPUESTO | Entidad incluida en la línea base lógica, pendiente de completar su especificación física e implementación. |
+| DERIVADO | Vista o proyección calculada; no constituye una fuente independiente de verdad. |
+| OPCIONAL | Componente que solo se incorpora si se confirma su necesidad funcional. |
+| PENDIENTE | Atributos, cardinalidad, restricción o decisión aún no resueltos. |
+| SUPERADO | Definición histórica que no debe utilizarse como modelo canónico. |
+
 ## 3. Principios del modelo
 
 1. Organization es el tenant/organización contratante; ecclesial_entity es una institución del dominio eclesial. No son sinónimos.
