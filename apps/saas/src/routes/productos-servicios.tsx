@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SaasModuleScreen } from "../components/saas-module-screen";
+import { ProductsCatalogScreen } from "../components/products-catalog-screen";
 
 export const Route = createFileRoute("/productos-servicios")({
-  component: () => <SaasModuleScreen path="productos-servicios" />,
+  component: ProductsCatalogScreen,
 });

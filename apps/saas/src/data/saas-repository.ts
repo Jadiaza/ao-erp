@@ -39,10 +39,59 @@ class LocalSaasStore {
     try {
       const parsed: unknown = JSON.parse(saved);
       if (isState(parsed)) {
+        const defaults = clone(initialSaasState);
+        const mergeDefaults = <T extends { id: string }>(savedRows: T[], defaultRows: T[]): T[] =>
+          savedRows.map((row) => {
+            const match = defaultRows.find((item) => item.id === row.id);
+            return match ? { ...match, ...row } : row;
+          });
         this.state = {
-          ...clone(initialSaasState),
+          ...defaults,
           ...parsed,
-          settings: parsed.settings ?? clone(initialSaasState.settings),
+          clients: mergeDefaults(parsed.clients, defaults.clients),
+          organizations: mergeDefaults(parsed.organizations, defaults.organizations),
+          institutions: mergeDefaults(parsed.institutions, defaults.institutions),
+          applications: mergeDefaults(
+            parsed.applications ?? defaults.applications,
+            defaults.applications,
+          ),
+          modules: mergeDefaults(parsed.modules ?? defaults.modules, defaults.modules),
+          features: mergeDefaults(parsed.features ?? defaults.features, defaults.features),
+          plans: mergeDefaults(parsed.plans ?? defaults.plans, defaults.plans),
+          contracts: mergeDefaults(parsed.contracts ?? defaults.contracts, defaults.contracts),
+          subscriptions: mergeDefaults(
+            parsed.subscriptions ?? defaults.subscriptions,
+            defaults.subscriptions,
+          ),
+          licenses: mergeDefaults(parsed.licenses ?? defaults.licenses, defaults.licenses),
+          entitlements: mergeDefaults(
+            parsed.entitlements ?? defaults.entitlements,
+            defaults.entitlements,
+          ),
+          usageLimits:
+            Array.isArray(parsed.usageLimits) &&
+            parsed.usageLimits.length >= defaults.usageLimits.length
+              ? mergeDefaults(parsed.usageLimits, defaults.usageLimits)
+              : defaults.usageLimits,
+          invoices: mergeDefaults(parsed.invoices ?? defaults.invoices, defaults.invoices),
+          payments: mergeDefaults(parsed.payments ?? defaults.payments, defaults.payments),
+          provisioningRequests: mergeDefaults(
+            parsed.provisioningRequests ?? defaults.provisioningRequests,
+            defaults.provisioningRequests,
+          ),
+          environments: mergeDefaults(
+            parsed.environments ?? defaults.environments,
+            defaults.environments,
+          ),
+          infrastructureIncidents: mergeDefaults(
+            parsed.infrastructureIncidents ?? defaults.infrastructureIncidents,
+            defaults.infrastructureIncidents,
+          ),
+          contacts:
+            Array.isArray(parsed.contacts) && parsed.contacts.length > 0
+              ? mergeDefaults(parsed.contacts, defaults.contacts)
+              : defaults.contacts,
+          settings: parsed.settings ?? defaults.settings,
         };
       } else window.localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -235,6 +284,9 @@ export const repositories = {
   invoices: new EntityRepository("invoices"),
   payments: new EntityRepository("payments"),
   tickets: new EntityRepository("tickets"),
+  provisioningRequests: new EntityRepository("provisioningRequests"),
+  environments: new EntityRepository("environments"),
+  infrastructureIncidents: new EntityRepository("infrastructureIncidents"),
 } as const;
 
 export class SupportRepository {

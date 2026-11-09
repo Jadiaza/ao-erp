@@ -26,6 +26,7 @@ import { Route as RolesPermisosRouteImport } from './routes/roles-permisos'
 import { Route as SoporteRouteImport } from './routes/soporte'
 import { Route as SuscripcionesRouteImport } from './routes/suscripciones'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
+import { Route as VercelRuntimeRouteImport } from './routes/vercel-runtime'
 import { Route as SoporteAsistenciaContextualRouteImport } from './routes/soporte/asistencia-contextual'
 import { Route as SoporteAsistenteInteligenteRouteImport } from './routes/soporte/asistente-inteligente'
 import { Route as SoporteBaseConocimientosRouteImport } from './routes/soporte/base-conocimientos'
@@ -121,6 +122,11 @@ const UsuariosRoute = UsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VercelRuntimeRoute = VercelRuntimeRouteImport.update({
+  id: '/vercel-runtime',
+  path: '/vercel-runtime',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SoporteAsistenciaContextualRoute =
   SoporteAsistenciaContextualRouteImport.update({
     id: '/asistencia-contextual',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/soporte': typeof SoporteRouteWithChildren
   '/suscripciones': typeof SuscripcionesRoute
   '/usuarios': typeof UsuariosRoute
+  '/vercel-runtime': typeof VercelRuntimeRoute
   '/soporte/asistencia-contextual': typeof SoporteAsistenciaContextualRoute
   '/soporte/asistente-inteligente': typeof SoporteAsistenteInteligenteRoute
   '/soporte/base-conocimientos': typeof SoporteBaseConocimientosRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/soporte': typeof SoporteRouteWithChildren
   '/suscripciones': typeof SuscripcionesRoute
   '/usuarios': typeof UsuariosRoute
+  '/vercel-runtime': typeof VercelRuntimeRoute
   '/soporte/asistencia-contextual': typeof SoporteAsistenciaContextualRoute
   '/soporte/asistente-inteligente': typeof SoporteAsistenteInteligenteRoute
   '/soporte/base-conocimientos': typeof SoporteBaseConocimientosRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/soporte': typeof SoporteRouteWithChildren
   '/suscripciones': typeof SuscripcionesRoute
   '/usuarios': typeof UsuariosRoute
+  '/vercel-runtime': typeof VercelRuntimeRoute
   '/soporte/asistencia-contextual': typeof SoporteAsistenciaContextualRoute
   '/soporte/asistente-inteligente': typeof SoporteAsistenteInteligenteRoute
   '/soporte/base-conocimientos': typeof SoporteBaseConocimientosRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/suscripciones'
     | '/usuarios'
+    | '/vercel-runtime'
     | '/soporte/asistencia-contextual'
     | '/soporte/asistente-inteligente'
     | '/soporte/base-conocimientos'
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/suscripciones'
     | '/usuarios'
+    | '/vercel-runtime'
     | '/soporte/asistencia-contextual'
     | '/soporte/asistente-inteligente'
     | '/soporte/base-conocimientos'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/soporte'
     | '/suscripciones'
     | '/usuarios'
+    | '/vercel-runtime'
     | '/soporte/asistencia-contextual'
     | '/soporte/asistente-inteligente'
     | '/soporte/base-conocimientos'
@@ -364,6 +376,7 @@ export interface RootRouteChildren {
   SoporteRoute: typeof SoporteRouteWithChildren
   SuscripcionesRoute: typeof SuscripcionesRoute
   UsuariosRoute: typeof UsuariosRoute
+  VercelRuntimeRoute: typeof VercelRuntimeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -487,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vercel-runtime': {
+      id: '/vercel-runtime'
+      path: '/vercel-runtime'
+      fullPath: '/vercel-runtime'
+      preLoaderRoute: typeof VercelRuntimeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/soporte/asistencia-contextual': {
       id: '/soporte/asistencia-contextual'
       path: '/asistencia-contextual'
@@ -598,6 +618,7 @@ const rootRouteChildren: RootRouteChildren = {
   SoporteRoute: SoporteRouteWithChildren,
   SuscripcionesRoute: SuscripcionesRoute,
   UsuariosRoute: UsuariosRoute,
+  VercelRuntimeRoute: VercelRuntimeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

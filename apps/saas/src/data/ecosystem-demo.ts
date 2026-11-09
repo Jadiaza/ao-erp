@@ -1,4 +1,16 @@
-export type EcosystemStatus = "Activo" | "Pendiente" | "En revisión" | "Suspendido" | "Borrador";
+export type EcosystemStatus =
+  | "Activo"
+  | "Pendiente"
+  | "En revisión"
+  | "Suspendido"
+  | "Borrador"
+  | "Vencido"
+  | "Cancelado"
+  | "Terminado"
+  | "Inactivo"
+  | "Anulada"
+  | "Operativo"
+  | "Fallido";
 
 export type EcosystemRecord = {
   id: string;
