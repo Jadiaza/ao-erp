@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SaasModuleScreen } from "../components/saas-module-screen";
+import { ProvisioningConsoleScreen } from "../components/provisioning-console-screen";
 
 export const Route = createFileRoute("/aprovisionamiento")({
-  component: () => <SaasModuleScreen path="aprovisionamiento" />,
+  component: ProvisioningConsoleScreen,
 });

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { SaasIcon } from "../components/saas-icons";
 import { saasStore, useSettings } from "../data/saas-repository";
 
 type ModuleItem = { id: string; name: string; detail: string; enabled: boolean };
@@ -173,6 +174,11 @@ function ConfigurationPage() {
   const total = groups.reduce((sum, group) => sum + group.items.length, 0);
 
   useEffect(() => {
+    setTheme(settings.theme);
+    setDensity(settings.density);
+  }, [settings.theme, settings.density]);
+
+  useEffect(() => {
     saasStore.updateSettings({
       theme,
       density,
@@ -221,20 +227,26 @@ function ConfigurationPage() {
         <aside className="panel settings-nav">
           <span className="settings-caption">PREFERENCIAS DE PLATAFORMA</span>
           <button
+            type="button"
             className={tab === "appearance" ? "settings-tab selected" : "settings-tab"}
             onClick={() => setTab("appearance")}
           >
-            <span className="settings-icon">◐</span>
+            <span className="settings-icon">
+              <SaasIcon name="palette" size={16} />
+            </span>
             <span>
               <strong>Interfaz</strong>
               <small>Temas y presentación</small>
             </span>
           </button>
           <button
+            type="button"
             className={tab === "modules" ? "settings-tab selected" : "settings-tab"}
             onClick={() => setTab("modules")}
           >
-            <span className="settings-icon">▦</span>
+            <span className="settings-icon">
+              <SaasIcon name="plans" size={16} />
+            </span>
             <span>
               <strong>Módulos</strong>
               <small>Catálogo y disponibilidad</small>
@@ -253,7 +265,9 @@ function ConfigurationPage() {
                   <h2>Interfaz y apariencia</h2>
                   <p>Establece los valores predeterminados de presentación de A&amp;O ERP.</p>
                 </div>
-                <span className="section-symbol">◐</span>
+                <span className="section-symbol">
+                  <SaasIcon name="palette" size={16} />
+                </span>
               </div>
               <div className="settings-fields">
                 <label className="settings-field">
@@ -334,7 +348,9 @@ function ConfigurationPage() {
                   <h2>Catálogo y disponibilidad de módulos</h2>
                   <p>Define qué funcionalidades forman parte de la oferta de la plataforma.</p>
                 </div>
-                <span className="section-symbol">▦</span>
+                <span className="section-symbol">
+                  <SaasIcon name="plans" size={16} />
+                </span>
               </div>
               <div className="module-summary">
                 <div>

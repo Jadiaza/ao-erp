@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { runVercelRuntimeProbe } from "@/server/spikes/vercel-runtime";
+import { runVercelRuntimeProbe } from "@/server-functions/vercel-runtime";
 
 export const Route = createFileRoute("/vercel-runtime")({
   component: VercelRuntimeSpikePage,
@@ -37,8 +37,8 @@ function VercelRuntimeSpikePage() {
           Validación de ejecución server-side
         </h1>
         <p className="text-sm text-slate-600">
-          Prueba temporal de TanStack Start. No autentica usuarios, no consulta
-          datos de negocio y no reemplaza la validación de despliegue en Vercel.
+          Prueba temporal de TanStack Start. No autentica usuarios, no consulta datos de negocio y
+          no reemplaza la validación de despliegue en Vercel.
         </p>
       </header>
 
@@ -61,13 +61,16 @@ function VercelRuntimeSpikePage() {
           {loading ? "Ejecutando..." : "Ejecutar prueba"}
         </button>
         <p className="mt-2 text-xs text-slate-500">
-          Ejecuta el botón dos veces: la segunda solicitud debe recibir la cookie
-          escrita por la primera.
+          Ejecuta el botón dos veces: la segunda solicitud debe recibir la cookie escrita por la
+          primera.
         </p>
       </section>
 
       {error && (
-        <section role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <section
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+        >
           {error}
         </section>
       )}
@@ -75,12 +78,10 @@ function VercelRuntimeSpikePage() {
       {result && (
         <section className="rounded-xl border border-slate-200 bg-slate-950 p-5 text-slate-100">
           <h2 className="mb-3 font-semibold">Resultado devuelto por el servidor</h2>
-          <pre className="overflow-x-auto text-xs leading-6">
-            {JSON.stringify(result, null, 2)}
-          </pre>
+          <pre className="overflow-x-auto text-xs leading-6">{JSON.stringify(result, null, 2)}</pre>
           <p className="mt-4 text-xs text-slate-400">
-            cookieReceived debe pasar a true en la segunda ejecución. provider
-            solo será vercel cuando la función se ejecute dentro de Vercel.
+            cookieReceived debe pasar a true en la segunda ejecución. provider solo será vercel
+            cuando la función se ejecute dentro de Vercel.
           </p>
         </section>
       )}

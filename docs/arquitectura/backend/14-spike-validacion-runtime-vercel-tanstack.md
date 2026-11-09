@@ -117,6 +117,57 @@ No se debe promover a Production ni conectar Supabase como parte de este spike.
 
 ## 9. Dictamen
 
+## 10. Actualizacion de validacion local - 2026-11-08
+
+La implementacion fue revisada en la rama `design/saas-dashboard-refresh` sin crear una segunda prueba.
+
+### Correcciones aplicadas
+
+- Se corrigio el acceso a variables de entorno para cumplir `noPropertyAccessFromIndexSignature`, usando `env["..."]`.
+- Se traslado el modulo de la funcion a `apps/saas/src/server-functions/vercel-runtime.ts`. El import desde una carpeta llamada `server` era bloqueado por la proteccion de imports de TanStack en el bundle cliente, aunque la funcion utilizara `createServerFn`.
+- La ruta `apps/saas/src/routes/vercel-runtime.tsx` ahora importa el modulo server function desde `@/server-functions/vercel-runtime`.
+- Se ejecuto el generador de rutas mediante el build; `apps/saas/src/routeTree.gen.ts` registra `/vercel-runtime`. No se edito manualmente ese archivo generado.
+- Se normalizo el formato de los archivos del spike y del setup de pruebas para eliminar errores CRLF reportados por Prettier.
+- No se modificaron dependencias, `package.json`, `bun.lock`, ERP, Diocesano ni Supabase.
+
+### Resultados de comandos
+
+| Comando | Resultado |
+|---|---|
+| `bun run typecheck:saas` | Exitoso, codigo 0 |
+| `bun run lint:saas` | Exitoso, codigo 0 |
+| `bun run test:saas` | Exitoso: 2 archivos y 5 pruebas aprobadas |
+| `bun run build:saas` | Exitoso, codigo 0; cliente, SSR y Nitro generados |
+
+Vitest sigue mostrando la advertencia experimental de Node sobre `localStorage` sin `--localstorage-file`, pero las cinco pruebas pasan y el setup existente proporciona almacenamiento en memoria.
+
+### Ruta y bundle
+
+- La solicitud local `GET /vercel-runtime` devolvio `200` con `text/html; charset=utf-8` y HTML SSR con referencias de `__root.tsx`.
+- El bundle de desarrollo transformo la funcion en un `createClientRpc` y conservo la implementacion server-side en el modulo SSR.
+- El build incluyo assets cliente y SSR especificos de `vercel-runtime`.
+- El build continuo generando Nitro con preset `cloudflare-module`; esto no valida Vercel.
+
+### Cookies y variable privada
+
+Se inicio Vite localmente en un proceso aislado con una variable sintetica `AO_SAAS_SPIKE_SECRET`, sin credenciales reales. La pagina SSR cargo correctamente.
+
+No se pudo automatizar desde este entorno el clic del navegador para ejecutar dos invocaciones consecutivas de la server function y observar `Set-Cookie`. Por ello, los siguientes puntos quedan como prueba manual pendiente:
+
+- primera invocacion con `cookieWritten: true`;
+- segunda invocacion con `cookieReceived: true`;
+- presencia de `HttpOnly`, `SameSite=Lax`, `Path=/` y `Max-Age=300`;
+- `Cache-Control: no-store` en la respuesta;
+- `privateVariableConfigured: true` sin devolver el valor secreto.
+
+La implementacion no devuelve el secreto y el bundle cliente inspeccionado no contiene el valor sintetico.
+
+### Estado de cierre
+
+La validacion local del codigo queda **cerrada con correcciones**: typecheck, lint, pruebas, build y registro de ruta pasan. La comprobacion interactiva de cookies queda pendiente de ejecutarse manualmente en el navegador.
+
+La validacion real de Vercel permanece pendiente porque el build usa `cloudflare-module`, no existe un Preview Deployment validado y no se autorizo instalar/configurar Nitro, modificar dependencias o conectar Supabase.
+
 El spike de código queda aislado en A&O SaaS y no incorpora dependencias ni modifica el comportamiento de las rutas existentes. Su validación funcional requiere ejecutar los comandos y probar la ruta en el PC local. La validación Vercel permanece bloqueada hasta autorizar la incorporación de Nitro y realizar un Preview Deployment.
 
 Este resultado no constituye autenticación, persistencia productiva, conexión Supabase ni aprobación del modelo físico de datos.
