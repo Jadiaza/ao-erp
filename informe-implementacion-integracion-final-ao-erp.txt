@@ -1,0 +1,136 @@
+# INFORME DE IMPLEMENTACIÓN — INTEGRACIÓN FINAL A&O ERP (LOCAL, SIN PUBLICAR)
+
+Repositorio: D:\Proyectos\ao-erp
+Rama de trabajo: integracion-final-ao-erp
+Commit base (HEAD, sin commits nuevos): 66380795862900e8e269dd807ec0a9f9a55cfa57 (origin/main, "Merge pull request #4 from Jadiaza/design/saas-dashboard-refresh")
+Fecha: 2026-11-13
+Alcance: implementación funcional local autorizada por fases, sin commit/push/merge/rebase/PR.
+
+================================================================================
+1. RAMA UTILIZADA Y COMMIT BASE
+================================================================================
+- Rama: integracion-final-ao-erp (local, rastrea origin/main), trabajo local no publicado.
+- Base/HEAD: 66380795862900e8e269dd807ec0a9f9a55cfa57.
+- Ramas preservadas sin modificación: main (249104f), integracion-main-ao-erp (a3f174e), respaldo-traslado-ao-erp (507c83c). No se eliminaron ni publicaron ramas.
+
+================================================================================
+2. ARCHIVOS MODIFICADOS Y CREADOS
+================================================================================
+Modificados (código / generados por tooling oficial):
+- apps/saas/src/routes/configuracion.tsx
+  Consolidación de configuración SaaS: uso de organizaciones reales del repositorio, distinción catálogo global vs contexto por organización, contraste con licenciamiento/entitlements efectivos vía evaluateOrganizationLicensing, avisos de persistencia demo local (navegador) y restricción de habilitación en contexto organizacional cuando no hay entitlement/licencia efectiva, sin pérdida de historial por deshabilitación.
+- apps/saas/src/routeTree.gen.ts (regenerado por build oficial de @ao/saas)
+- apps/erp/src/routeTree.gen.ts (regenerado por build oficial de @ao/erp)
+- apps/diocesano/src/routeTree.gen.ts (regenerado por build oficial de @ao/diocesano)
+
+Creados (no commiteados):
+- apps/saas/src/test/saas-consolidation.test.ts
+  Pruebas de consolidación: CRUD/relación org-institución y capacidad, usuarios/roles con alcance organizacional, configuración global/por organización en estado demo local, relación plan-contrato-licencia-entitlements-habilitación efectiva, y validación de preparación comercial/aprovisionamiento con servicios existentes.
+- Informes conservados (untracked): informe-auditoria-comparativa-github.txt, informe-plan-integracion-507c83c.txt, informe-preparacion-integracion-segura.txt, informe-sincronizacion-github.txt.
+
+Corrección de cambio local pendiente (Fase 0/4):
+- apps/erp/src/components/modules/diocesan-management-screen.tsx
+  Cambio pendiente identificado: import accidental con carácter '|' (|import { useMemo, useState } from "react";). Se corrigió la sintaxis; al quedar igual a la base, el archivo no presenta modificaciones en el estado final. Diff original preservado en respaldo externo.
+
+Respaldo externo (no sobrescrito):
+- C:\Users\LVJ\AppData\Local\Temp\opencode\ao-erp-backup-20261113-005039\
+  Contiene: diocesan-management-screen.diff y copias de los 4 informes (incl. informe-preparacion-integracion-segura.txt).
+
+================================================================================
+3. FUNCIONALIDADES COMPLETADAS
+================================================================================
+- Fase 0 (protección): verificación de git status/diff/branch/rev-parse, respaldo externo de diff e informes, confirmación de base 6638079 y cambio seguro a integracion-final-ao-erp con preservación de untracked.
+- Fase 1 (auditoría): revisión de AGENTS.md, estructura y scripts (saas/erp/diocesano), dominio/repositorios/servicios SaaS (saas-domain, saas-repository, commercial-service, provisioning-service), rutas y pantallas SaaS/ERP documental-archivístico y pruebas existentes; verificaciones base.
+- SaaS – Configuración consolidada: organizaciones reales en selector; separación catálogo global de plataforma vs habilitación efectiva por organización; estado/licencia/entitlements efectivos por organización (evaluateOrganizationLicensing); aviso/bloqueo UI para módulos sin entitlement en contexto organizacional; persistencia explícita como demo local (navegador), no backend/producción; deshabilitar no elimina historial; restablecimiento de valores.
+- SaaS – Arquitectura preservada: reutilización de saasStore, EntityRepository, commercial-service, provisioning-service y pantallas/rutas existentes; sin lógica paralela, sin retorno a localStorage ad-hoc; diseño actual conservado.
+- SaaS – Entidades/relaciones (verificadas): fichas maestras organizaciones/instituciones con relación org↔institución/cliente y validaciones de capacidad/licenciamiento en flujos existentes; planes/licencias/contratos/suscripciones/entitlements/límites/aprovisionamiento soportados por servicios y pantallas especializadas.
+- ERP – Gestión documental (auditada, base conservada): document-management-screen con registro, formulario, edición/actualización, persistencia local demo (useLocalCollection/local-repository), búsqueda/filtros/categorías/acceso y enlaces a áreas archivísticas; rutas /app/gestion-documental/* con ArchiveAreaScreen + archive-demo (recepción, digitalización/OCR demo sin motor conectado, repositorio, clasificación, expedientes/libros/folios, instrumentos, transferencias, conservación/preservación). Sin reversión de mejoras de origin/main.
+- Calidad: route trees regenerados mediante builds oficiales.
+
+================================================================================
+4. PROBLEMAS CORREGIDOS
+================================================================================
+- Sintaxis accidental en diocesan-management-screen.tsx ('|import') corregida y alineada a base.
+- configuracion.tsx: eliminadas organizaciones hardcodeadas y ambigüedad de ámbito; añadida verificación contextual real de organización y licenciamiento/entitlements efectivos, con mensajes claros sobre persistencia demo y respeto a plan/contrato/licencia/entitlements/permisos.
+- Cobertura automatizada añadida (saas-consolidation.test.ts) para relaciones/configuración/entitlements/aprovisionamiento en demo local.
+
+================================================================================
+5. DECISIONES DE ARQUITECTURA
+================================================================================
+- Base canónica: origin/main@6638079; no se reintrodujo código antiguo de 507c83c ni se reemplazó el rediseño SaaS.
+- SaaS: se mantuvo dominio + repositorio reactivo local (saasStore/EntityRepository) + servicios (commercial-service, provisioning-service) y pantallas especializadas; sin segunda lógica paralela.
+- Persistencia: todo lo local/navegador tratado como demostración; no se afirmó persistencia backend/real.
+- Configuración: se preservó PlatformSettings existente (sin esquema backend de overrides per-org). Se añadió verificación efectiva contextual (licencia/entitlements) sobre catálogo de plataforma, dentro de capacidades actuales.
+- ERP: se conservaron useLocalCollection, archive-area-screen y archive-demo y la amplitud archivística de origin/main.
+- Generados: routeTree.gen.ts regenerados solo por tooling oficial (builds).
+
+================================================================================
+6. PRUEBAS EJECUTADAS Y RESULTADOS
+================================================================================
+SaaS (apps/saas, scripts reales):
+- bun run typecheck — OK (sin errores TS).
+- bun run test — OK: 3 archivos, 35 tests aprobados (app-routing.test.ts, saas-repository.test.ts, saas-consolidation.test.ts).
+  Nota: ejecución intermedia previa mostró 1 fallo por timeout en saas-repository.test.ts ("controla pagos parciales...", timeout 5000ms, duración observada ~12.5s) no atribuible a los cambios; ejecuciones finales completas aprobaron. Posible inestabilidad preexistente de timing.
+- bun run lint — NO OK (preexistente/entorno): ~21490 errores Prettier CRLF (Delete CR) masivos en todo el app (archivos no modificados incluidos). No se aplicó --fix masivo.
+
+ERP (apps/erp, scripts reales):
+- bun run typecheck — OK.
+- bun run test — OK: 3 archivos, 10 tests aprobados.
+- bun run lint — NO OK (preexistente/entorno): ~9327 problemas, mayoritariamente Prettier CRLF.
+
+Diocesano (apps/diocesano, afectado por regeneración/build):
+- bun run typecheck — OK. (sin cambios funcionales; no se ejecutó suite adicional específica)
+
+================================================================================
+7. TYPECHECK, LINT Y BUILD
+================================================================================
+- Typecheck: @ao/saas OK, @ao/erp OK, @ao/diocesano OK.
+- Lint: @ao/saas y @ao/erp con fallos masivos preexistentes por fin de línea CRLF/Prettier (transversal, no corregidos).
+- Builds (oficiales):
+  - @ao/saas: bun run build — OK (Vite/Nitro, .output generado).
+  - @ao/erp: bun run build — OK (Vite/Nitro, .output generado).
+  - @ao/diocesano: bun run build — OK (Vite/Nitro, .output generado).
+
+================================================================================
+8. FUNCIONALIDADES QUE SIGUEN PENDIENTES
+================================================================================
+- Persistencia real/backend y aplicación efectiva server-side de configuración, entitlements y permisos por organización (actual: demo local/navegador).
+- Esquema/persistencia dedicada de overrides de módulos por organización (hoy: verificación contextual sobre catálogo global con PlatformSettings existente).
+- Usuarios/roles/permisos con identidad y enforcement real en backend y separación global/tenant completa.
+- ERP documental/archivístico: OCR real, transferencias con evidencia de entrega, checksums/integridad calculada (flujos demo o no conectados según diseño).
+- Normalización de lint/EOL a nivel de proyecto para resultados consistentes.
+
+================================================================================
+9. RIESGOS CONOCIDOS
+================================================================================
+- Lint CRLF/prettier transversal reduce señal de regresión en Windows sin normalización.
+- Posible inestabilidad/timing preexistente en caso de pago/facturación de saas-repository.test.ts (timeout intermitente observado en ejecución intermedia).
+- routeTree.gen.ts modificados localmente (generados por build oficial), pendientes de decisión de commit en flujo futuro autorizado.
+- Comportamiento dependiente de datos semilla y almacenamiento demo local; no garantiza comportamiento productivo.
+
+================================================================================
+10. CONFIRMACIÓN DE RESTRICCIONES
+================================================================================
+- No se realizaron: commits, push, merge, rebase, apertura/fusión de PR, eliminación de ramas.
+- No se modificaron: main ni ramas de respaldo (integracion-main-ao-erp, respaldo-traslado-ao-erp).
+- No se realizaron: cambios en bases de datos reales, producción o proyectos Supabase; no se ejecutaron migraciones en entornos compartidos; no se modificaron secretos, credenciales ni configuraciones de producción.
+- No se usaron operaciones destructivas de Git. Implementación local y sin publicar.
+
+================================================================================
+11. ESTADO FINAL DE GIT
+================================================================================
+Rama: integracion-final-ao-erp @ 66380795862900e8e269dd807ec0a9f9a55cfa57
+
+git status --short:
+ M apps/diocesano/src/routeTree.gen.ts
+ M apps/erp/src/routeTree.gen.ts
+ M apps/saas/src/routeTree.gen.ts
+ M apps/saas/src/routes/configuracion.tsx
+?? apps/saas/src/test/saas-consolidation.test.ts
+?? informe-auditoria-comparativa-github.txt
+?? informe-implementacion-integracion-final-ao-erp.txt
+?? informe-plan-integracion-507c83c.txt
+?? informe-preparacion-integracion-segura.txt
+?? informe-sincronizacion-github.txt
+
+FIN DEL INFORME

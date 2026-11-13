@@ -1,0 +1,276 @@
+# AUDITORÍA COMPARATIVA DE SINCRONIZACIÓN Y COMPLETITUD — A&O ERP (SOLO LECTURA)
+
+Repositorio local: D:\Proyectos\ao-erp
+Repositorio remoto esperado: https://github.com/Jadiaza/ao-erp.git (Jadiaza/ao-erp)
+Alcance: auditoría comparativa basada en evidencia de comandos Git.
+
+RESTRICCIONES RESPETADAS
+- No se ejecutaron: pull, push, merge, rebase, reset, checkout, clean, restore.
+- No se crearon commits ni stash.
+- No se cambió de rama.
+- No se modificaron archivos del repositorio (excepto la creación solicitada de este informe).
+- No se alteró Supabase.
+- Operación ejecutada por solicitud: git fetch origin (actualiza referencias remotas, no modifica archivos de trabajo).
+
+================================================================================
+1. ACTUALIZACIÓN DE REFERENCIAS
+================================================================================
+
+Comando ejecutado:
+$ git fetch origin
+
+Resultado:
+(sin salida / ejecución correcta). Las referencias remotas fueron actualizadas sin modificar el árbol de trabajo.
+
+================================================================================
+2. RAMAS EXAMINADAS
+================================================================================
+
+Ramas: main, origin/main, integracion-main-ao-erp, origin/integracion-main-ao-erp, respaldo-traslado-ao-erp, origin/respaldo-traslado-ao-erp
+
+Comando ejecutado:
+$ git for-each-ref --format="%(refname:short)|%(objectname:short)|%(committerdate:iso-strict)|%(subject)" refs/heads/main refs/heads/integracion-main-ao-erp refs/heads/respaldo-traslado-ao-erp refs/remotes/origin/main refs/remotes/origin/integracion-main-ao-erp refs/remotes/origin/respaldo-traslado-ao-erp
+
+Resultado:
+| Rama | Hash corto | Fecha/hora (committer, ISO strict) | Mensaje |
+|---|---|---|---|
+| main (local) | 249104f | 2026-11-03T08:58:19-05:00 | chore: initial A&O platform repository |
+| integracion-main-ao-erp (local, actual) | a3f174e | 2026-11-06T01:10:22-05:00 | Merge remote-tracking branch 'origin/main' into integracion-main-ao-erp |
+| respaldo-traslado-ao-erp (local) | 507c83c | 2026-11-06T00:33:48-05:00 | chore: respaldar trabajo trasladado de A&O ERP |
+| origin/main | 6638079 | 2026-11-09T17:53:51-05:00 | Merge pull request #4 from Jadiaza/design/saas-dashboard-refresh |
+| origin/integracion-main-ao-erp | a3f174e | 2026-11-06T01:10:22-05:00 | Merge remote-tracking branch 'origin/main' into integracion-main-ao-erp |
+| origin/respaldo-traslado-ao-erp | 507c83c | 2026-11-06T00:33:48-05:00 | chore: respaldar trabajo trasladado de A&O ERP |
+
+Comando ejecutado:
+$ git branch -vv
+
+Resultado:
+* integracion-main-ao-erp  a3f174e [origin/integracion-main-ao-erp] Merge remote-tracking branch 'origin/main' into integracion-main-ao-erp
+  main                     249104f [origin/main: behind 21] chore: initial A&O platform repository
+  respaldo-traslado-ao-erp 507c83c [origin/respaldo-traslado-ao-erp] chore: respaldar trabajo trasladado de A&O ERP
+
+================================================================================
+3. HISTORIAL, EXCLUSIVIDAD Y RELACIÓN ENTRE RAMAS
+================================================================================
+
+Comandos ejecutados:
+$ git rev-list --left-right --count main...origin/main
+$ git rev-list --left-right --count integracion-main-ao-erp...origin/integracion-main-ao-erp
+$ git rev-list --left-right --count integracion-main-ao-erp...origin/main
+$ git rev-list --left-right --count respaldo-traslado-ao-erp...origin/respaldo-traslado-ao-erp
+$ git log --oneline --decorate --graph -n 20 origin/main
+$ git log --oneline --decorate --graph -n 20 integracion-main-ao-erp
+$ git log --oneline origin/main..integracion-main-ao-erp
+$ git log --oneline integracion-main-ao-erp..origin/main
+$ git branch --contains 507c83c
+
+Conteos (izquierda = exclusivos de la primera rama, derecha = exclusivos de la segunda):
+| Comparación | Exclusivos izq. | Exclusivos der. | Relación |
+|---|---:|---:|---|
+| main...origin/main | 0 | 21 | main local atrasada respecto a origin/main. |
+| integracion-main-ao-erp...origin/integracion-main-ao-erp | 0 | 0 | Alineadas (mismo commit). |
+| integracion-main-ao-erp...origin/main | 2 | 15 | Divergentes: integración tiene commits no presentes en origin/main y origin/main tiene commits no presentes en integración. |
+| respaldo-traslado-ao-erp...origin/respaldo-traslado-ao-erp | 0 | 0 | Alineadas. |
+
+Commits exclusivos de integracion-main-ao-erp respecto a origin/main (2):
+- a3f174e  Merge remote-tracking branch 'origin/main' into integracion-main-ao-erp
+- 507c83c  chore: respaldar trabajo trasladado de A&O ERP
+
+Commits exclusivos de origin/main respecto a integracion-main-ao-erp (15):
+- 6638079  Merge pull request #4 from Jadiaza/design/saas-dashboard-refresh
+- 55b66c6  feat(saas): complete visual redesign and standardize dashboard
+- 5b399a4  fix(saas): remove unregistered nested runtime probe route
+- e050742  fix(saas): register runtime probe as top-level route
+- 6594114  docs(backend): document Vercel runtime spike 010
+- 2dfe523  test(saas): add temporary runtime probe screen
+- 10d3e8d  test(saas): add isolated server runtime spike
+- 1db176a  Merge pull request #3 from Jadiaza/design/saas-dashboard-refresh
+- 1ff49f6  chore: conserva ajustes locales
+- 1629a8d  docs: add master relational data model
+- be726c1  docs: clarify canonical data model implementation status
+- 80f680e  docs: establish canonical data dictionary authority
+- 56fceec  docs(architecture): add master data dictionary
+- 1d84d11  docs: consolida arquitectura backend de A&O SaaS
+- 5884ae9  feat: actualiza ecosistema completo A&O ERP
+
+Historial reciente origin/main (git log --oneline --decorate --graph -n 20 origin/main):
+*   6638079 (origin/main, origin/HEAD) Merge pull request #4 from Jadiaza/design/saas-dashboard-refresh
+|\
+| * 55b66c6 (origin/design/saas-dashboard-refresh) feat(saas): complete visual redesign and standardize dashboard
+| * 5b399a4 fix(saas): remove unregistered nested runtime probe route
+| * e050742 fix(saas): register runtime probe as top-level route
+| * 6594114 docs(backend): document Vercel runtime spike 010
+| * 2dfe523 test(saas): add temporary runtime probe screen
+| * 10d3e8d test(saas): add isolated server runtime spike
+* | 1db176a Merge pull request #3 from Jadiaza/design/saas-dashboard-refresh
+|\|
+| * 1ff49f6 chore: conserva ajustes locales
+| * 1629a8d docs: add master relational data model
+| * be726c1 docs: clarify canonical data model implementation status
+| * 80f680e docs: establish canonical data dictionary authority
+| * 56fceec docs(architecture): add master data dictionary
+| * 1d84d11 docs: consolida arquitectura backend de A&O SaaS
+|/
+* 5884ae9 feat: actualiza ecosistema completo A&O ERP
+* 9ef86f2 chore(saas): register configuration route
+* 67b81db feat(saas): style central configuration screen
+* 62a8c20 feat(saas): add configuration to main navigation
+* 5c3f624 feat(saas): create central configuration screen
+* b49c86a refactor(erp): remove SaaS configuration navigation
+...
+
+Historial reciente integracion-main-ao-erp (git log --oneline --decorate --graph -n 20 integracion-main-ao-erp):
+*   a3f174e (HEAD -> integracion-main-ao-erp, origin/integracion-main-ao-erp) Merge remote-tracking branch 'origin/main' into integracion-main-ao-erp
+|\
+| * 9ef86f2 chore(saas): register configuration route
+| * 67b81db feat(saas): style central configuration screen
+| * 62a8c20 feat(saas): add configuration to main navigation
+| * 5c3f624 feat(saas): create central configuration screen
+| * b49c86a refactor(erp): remove SaaS configuration navigation
+| * 0d6864c refactor(erp): remove SaaS interface and module administration
+* | 507c83c (origin/respaldo-traslado-ao-erp, respaldo-traslado-ao-erp) chore: respaldar trabajo trasladado de A&O ERP
+|/
+* 249104f (main) chore: initial A&O platform repository
+
+Relaciones clave:
+- git branch --contains 507c83c => integracion-main-ao-erp, respaldo-traslado-ao-erp (507c83c NO está contenido en origin/main).
+- origin/main es la punta remota más reciente por fecha (2026-11-09) y contiene evolución posterior no integrada en integracion-main-ao-erp.
+- integracion-main-ao-erp contiene trabajo de respaldo/traslado (507c83c) no presente en origin/main.
+
+================================================================================
+4. COMPARACIÓN DE CONTENIDO
+================================================================================
+
+Comandos ejecutados:
+$ git diff --name-status main..origin/main
+$ git diff --name-status integracion-main-ao-erp..origin/main
+$ git diff --name-status origin/main..integracion-main-ao-erp
+$ git show --name-status --format=oneline 507c83c
+
+4.1 main (local) vs origin/main
+- Resultado: 117 entradas. main local carece de todo lo incorporado en origin/main desde 249104f (21 commits).
+- Principales áreas presentes en origin/main y ausentes/desactualizadas en main local:
+  - ERP (gestión documental ampliada): apps/erp/src/components/modules/archive-area-screen.tsx (A), apps/erp/src/data/archive-demo.ts (A), rutas apps/erp/src/routes/app/gestion-documental/{clasificacion,conservacion,digitalizacion,expedientes,instrumentos,recepcion,repositorio,transferencias}.tsx (A), modificaciones en document-management-screen.tsx y routeTree.gen.ts.
+  - ERP (formularios/módulos/datos): apps/erp/src/components/forms/{form-character-counter,form-file-field,form-validation-message,form-wizard}.tsx (A), apps/erp/src/components/modules/{demo-crud-panel,institution-operations-panel,pastoral-planning-operations-panel}.tsx (A), apps/erp/src/data/{institutional-structure-demo,local-repository}.ts (A), múltiples pantallas ERP modificadas, navigation.ts, pastoral-demo.ts, forms/index.ts.
+  - SaaS (rediseño y ampliación): componentes app-topbar, billing-portfolio-screen, clients-master-screen, contracts-subscriptions-screen, infrastructure-console-screen, institutions-master-screen, organizations-master-screen, plans-licensing-screen, products-catalog-screen, provisioning-console-screen, saas-brand-logo, saas-icons, saas-module-screen, saas-ui, support-area-screen; datos/servicios commercial-service.ts, ecosystem-demo.ts, provisioning-service.ts, saas-domain.ts, saas-repository.ts, support-demo.ts, demo.ts; rutas analitica-reportes, aprovisionamiento, auditoria-cumplimiento, clientes, configuracion, facturacion-cartera, identidad-seguridad, infraestructura, instituciones, organizaciones, planes-licencias, productos-servicios, roles-permisos, soporte y 9 subrutas, suscripciones, usuarios, vercel-runtime; server-functions/vercel-runtime.ts; tests saas-repository.test.ts y ajustes; public/favicon.svg; modificaciones amplias en __root, index, styles.css, routeTree.gen.ts, package.json.
+  - Documentación: docs/arquitectura/backend/01..15-*.md (A), docs/erp/auditorias/{auditoria-local-completitud-2026-11.md,bloqueo-fase-4-persistencia-documental-2026-11.md,inventario-formularios-global-2026-11.md} (A), docs/erp/integraciones/paperless-ngx/01..07-*.md (A).
+  - Otros: bun.lock modificado, respaldo-cambios-locales.patch añadido.
+
+4.2 integracion-main-ao-erp vs origin/main (presente en origin/main, ausente o distinto en integración)
+- Resultado: 94 entradas. Funcionalidades/activos presentes en origin/main y ausentes en integracion-main-ao-erp (o modificados de forma distinta):
+  - ERP gestión documental ampliada: apps/erp/src/components/modules/archive-area-screen.tsx, apps/erp/src/data/archive-demo.ts, rutas apps/erp/src/routes/app/gestion-documental/{clasificacion,conservacion,digitalizacion,expedientes,instrumentos,recepcion,repositorio,transferencias}.tsx.
+  - SaaS rediseño/consolas completas: public/favicon.svg; componentes app-topbar, billing-portfolio-screen, clients-master-screen, contracts-subscriptions-screen, infrastructure-console-screen, institutions-master-screen, organizations-master-screen, plans-licensing-screen, products-catalog-screen, provisioning-console-screen, saas-brand-logo, saas-icons, saas-module-screen, saas-ui, support-area-screen; datos/servicios commercial-service.ts, ecosystem-demo.ts, provisioning-service.ts, saas-domain.ts, saas-repository.ts, support-demo.ts; rutas analitica-reportes, aprovisionamiento, auditoria-cumplimiento, clientes, facturacion-cartera, identidad-seguridad, infraestructura, productos-servicios, soporte/* (9 subrutas), suscripciones, vercel-runtime; server-functions/vercel-runtime.ts; test saas-repository.test.ts.
+  - Documentación: docs/arquitectura/backend/01..15-*.md, docs/erp/auditorias/bloqueo-fase-4-persistencia-documental-2026-11.md, docs/erp/integraciones/paperless-ngx/01..07-*.md.
+  - Otros: respaldo-cambios-locales.patch.
+  - Modificados en origin/main respecto a integración: apps/erp/src/components/modules/document-management-screen.tsx, apps/erp/src/routeTree.gen.ts, apps/saas/package.json, apps/saas/src/components/admin-screen.tsx, apps/saas/src/routeTree.gen.ts, apps/saas/src/routes/{__root,configuracion,index,instituciones,organizaciones,planes-licencias,roles-permisos,usuarios}.tsx, apps/saas/src/styles.css, apps/saas/src/test/{app-routing.test.ts,setup.ts}.
+
+4.3 origin/main vs integracion-main-ao-erp (presente en integración, ausente en origin/main)
+- Resultado: 94 entradas inversas. Confirma que integracion-main-ao-erp no contiene el bloque amplio de SaaS/rediseño, submódulos documentales ERP, docs backend/paperless ni respaldo-cambios-locales.patch presentes en origin/main.
+- Trabajo propio de integración/respaldo no integrado en origin/main (commit 507c83c, contenido según git show --name-status --format=oneline 507c83c):
+  - ERP formularios nuevos: apps/erp/src/components/forms/form-character-counter.tsx, form-file-field.tsx, form-validation-message.tsx, form-wizard.tsx; forms/index.ts modificado.
+  - ERP módulos/componentes: demo-crud-panel.tsx, institution-operations-panel.tsx, pastoral-planning-operations-panel.tsx (A); modificaciones en accounting-screen.tsx, assets-screen.tsx, budget-screen.tsx, community-screen.tsx, confirm-dialog.tsx, data-table.tsx, document-management-screen.tsx, documents-screen.tsx, form-dialog.tsx, formation-screen.tsx, groups-screen.tsx, institution-screen.tsx, mass-intentions-visual-pilot.tsx, module-layout.tsx, parishioner-portal-screen.tsx, pastoral-planning-screen.tsx, procurement-screen.tsx, sacramental-screen.tsx, settings-center-screen.tsx, treasury-screen.tsx.
+  - ERP datos/utilidades: institutional-structure-demo.ts (A), local-repository.ts (A), navigation.ts (M), pastoral-demo.ts (M).
+  - SaaS (línea de respaldo): components/admin-screen.tsx (A), data/demo.ts (A), rutas configuracion.tsx, instituciones.tsx, organizaciones.tsx, planes-licencias.tsx, roles-permisos.tsx, usuarios.tsx (A), modificaciones en routeTree.gen.ts, routes/__root.tsx, routes/index.tsx, styles.css.
+  - Documentación/auditorías: docs/erp/auditorias/auditoria-local-completitud-2026-11.md (A), docs/erp/auditorias/inventario-formularios-global-2026-11.md (A).
+  - Otros: bun.lock (M).
+- Implicación: existe solapamiento/paralelismo en SaaS y partes de ERP entre 507c83c y la línea de origin/main; la integración requiere comparación archivo por archivo.
+
+4.4 integracion-main-ao-erp vs origin/integracion-main-ao-erp
+- Conteo: 0 0. Hash/fecha idénticos (a3f174e, 2026-11-06T01:10:22-05:00). Sin diferencias de historial.
+
+4.5 respaldo-traslado-ao-erp vs origin/respaldo-traslado-ao-erp
+- Conteo: 0 0. Hash/fecha idénticos (507c83c, 2026-11-06T00:33:48-05:00). Sin diferencias. Contenido: commit 507c83c (ver 4.3).
+
+================================================================================
+5. CAMBIOS LOCALES PENDIENTES
+================================================================================
+
+Archivo: apps/erp/src/components/modules/diocesan-management-screen.tsx
+Estado: modificado, no preparado (no descartado ni sobrescrito).
+
+Comandos ejecutados:
+$ git status --porcelain=2 -b
+$ git diff --stat HEAD -- apps/erp/src/components/modules/diocesan-management-screen.tsx
+$ git diff -- apps/erp/src/components/modules/diocesan-management-screen.tsx
+
+Resultados:
+- status: 1 .M ... apps/erp/src/components/modules/diocesan-management-screen.tsx
+- stat: 1 file changed, 1 insertion(+), 1 deletion(-)
+- diff:
+  diff --git a/apps/erp/src/components/modules/diocesan-management-screen.tsx b/apps/erp/src/components/modules/diocesan-management-screen.tsx
+  index 264f26d..4066d86 100644
+  --- a/apps/erp/src/components/modules/diocesan-management-screen.tsx
+  +++ b/apps/erp/src/components/modules/diocesan-management-screen.tsx
+  @@ -1,4 +1,4 @@
+  -import { useMemo, useState } from "react";
+  +|import { useMemo, useState } from "react";
+
+Observación: el cambio introduce un carácter '|' al inicio de la línea de importación (probable error de sintaxis). Debe preservarse para decisión humana y considerarse en la estrategia de integración.
+
+================================================================================
+6. EVALUACIÓN FINAL
+================================================================================
+
+A. ¿GitHub tiene código más reciente que el equipo local?
+- SÍ, parcialmente según rama.
+  - origin/main es más reciente y avanzado que main local por 21 commits (6638079, 2026-11-09 vs 249104f, 2026-11-03).
+  - integracion-main-ao-erp local está alineada con su remoto (0/0), pero origin/main está 15 commits por delante de esa línea de integración.
+  - No es superior en todos los aspectos: integración local contiene 2 commits exclusivos (507c83c, a3f174e) no presentes en origin/main.
+
+B. ¿La rama main de GitHub contiene funcionalidades que no están en la rama local de integración?
+- SÍ. Evidencia: 94 entradas en diff (integracion-main-ao-erp..origin/main) y 15 commits exclusivos en origin/main. Incluye:
+  - ERP: submódulo de gestión documental ampliado (archive-area-screen, archive-demo, 8 rutas en gestion-documental/*) y evolución de document-management-screen.
+  - SaaS: rediseño/completitud visual y funcional amplia (componentes/consolas, dominio/servicios/repositorio, rutas analítica/aprovisionamiento/auditoría/clientes/facturación-cartera/identidad-seguridad/infraestructura/productos-servicios/soporte con 9 subrutas/suscripciones/vercel-runtime, server function, pruebas, favicon).
+  - Documentación: arquitectura backend 01–15, auditoría bloqueo documental, integración Paperless-ngx 01–07.
+  - Archivo respaldo-cambios-locales.patch.
+
+C. ¿La rama local de integración tiene funcionalidades que no están en GitHub?
+- Respecto a origin/integracion-main-ao-erp: NO (alineadas, 0/0).
+- Respecto a origin/main: SÍ. Commits exclusivos 507c83c y a3f174e aportan trabajo no presente en origin/main (formularios ERP adicionales, paneles demo-crud/institution-operations/pastoral-planning-operations, refuerzos en múltiples pantallas ERP, datos/utilidades institutional-structure-demo.ts y local-repository.ts, base SaaS con admin-screen/data/demo y rutas de gestión, auditorías auditoria-local-completitud-2026-11.md e inventario-formularios-global-2026-11.md).
+- Trabajo local no publicado en GitHub: cambio pendiente no commiteado en apps/erp/src/components/modules/diocesan-management-screen.tsx.
+
+D. ¿Cuál rama contiene la versión más completa del ecosistema A&O?
+- origin/main (GitHub) es la versión más completa y reciente del ecosistema en conjunto (fecha más reciente 2026-11-09, mayor cobertura funcional SaaS/ERP documental y mayor corpus de documentación backend/integraciones).
+- Matiz: no es superset total del trabajo útil local, porque integracion-main-ao-erp/respaldo-traslado-ao-erp contienen 507c83c con desarrollos y auditorías no presentes en origin/main. La versión objetivo más completa debe consolidar esos aportes sobre origin/main.
+
+E. ¿Cuál debería ser nuestra rama principal de trabajo?
+- Recomendación basada en evidencia: adoptar origin/main como línea base canónica/principal y usar integracion-main-ao-erp/respaldo-traslado-ao-erp como fuentes de rescate para incorporar los cambios exclusivos de 507c83c y tratar el cambio local pendiente, en una rama de integración dedicada antes de promover a principal.
+- No se recomienda continuar solo sobre integracion-main-ao-erp sin reconciliar con origin/main (desfase de 15 commits y ausencia de funcionalidades/documentación presentes en origin/main).
+
+================================================================================
+7. PLAN DE SINCRONIZACIÓN SEGURO (PROPUESTO, NO EJECUTADO)
+================================================================================
+
+Objetivo: converger a una única versión coherente que conserve todos los desarrollos útiles (origin/main + exclusivos de 507c83c/respaldo + decisión sobre cambio local pendiente), sin pérdida de código.
+
+1. Preservar estado local actual (obligatorio, antes de cualquier integración)
+- Conservar el árbol de trabajo actual y el archivo apps/erp/src/components/modules/diocesan-management-screen.tsx (edición pendiente con '|import'). Documentar/respaldar externamente el diff si se autoriza más adelante una acción de preservación.
+- Mantener respaldo-traslado-ao-erp y origin/respaldo-traslado-ao-erp como referencias intactas del commit 507c83c.
+
+2. Usar origin/main como base de integración
+- Crear (cuando se autorice) una rama de trabajo nueva desde origin/main (ej. integracion/reconciliacion-main-2026-11) para aislar la reconciliación.
+- No usar checkout/reset sobre ramas existentes sin autorización explícita.
+
+3. Inventariar y portar aportes exclusivos de la línea de integración
+- Revisar commit por commit: 507c83c y, si aplica, el merge a3f174e.
+- Reaplicar/consolidar de forma selectiva los archivos de 507c83c (formularios ERP, demo-crud-panel, institution-operations-panel, pastoral-planning-operations-panel, institutional-structure-demo.ts, local-repository.ts, cambios en pantallas/datos ERP, auditorías docs/erp/auditorias/auditoria-local-completitud-2026-11.md e inventario-formularios-global-2026-11.md).
+- Tratar con especial cuidado los solapes SaaS (admin-screen, data/demo.ts, rutas configuracion/instituciones/organizaciones/planes-licencias/roles-permisos/usuarios, __root, index, styles, routeTree.gen) porque origin/main evolucionó esas áreas de forma distinta: comparar implementaciones y conservar funcionalidades útiles de ambas líneas.
+
+4. Revisar el cambio local pendiente
+- Evaluar apps/erp/src/components/modules/diocesan-management-screen.tsx: corregir o descartar conscientemente el '|import' solo cuando se autorice edición; no perder el archivo base.
+
+5. Validación antes de promover (cuando se autorice)
+- Ejecutar typecheck/lint/tests/build por app afectada (erp, saas, diocesano).
+- Revisión manual de rutas/pantallas impactadas (gestión documental ERP, consolas SaaS, formularios/paneles ERP).
+- Verificar coherencia de routeTree.gen.ts/assets/estilos generados por el flujo de build.
+
+6. Publicación y consolidación (solo con autorización explícita)
+- Publicar la rama reconciliada, abrir PR/revisión contra main remoto y, tras validación, promover como rama principal.
+- Mantener integracion-main-ao-erp y respaldo-traslado-ao-erp sin eliminar hasta confirmar que todo su contenido útil quedó incorporado.
+- Alinear origin/integracion-main-ao-erp y main local solo como paso final acordado.
+
+Riesgos a controlar: conflictos semánticos SaaS (dos evoluciones distintas), posibles regresiones en rutas ERP documentales y routeTree.gen.ts, pérdida del cambio local no commiteado y divergencia por trabajar sobre ramas desactualizadas.
+
+================================================================================
+FIN DEL INFORME
+================================================================================
