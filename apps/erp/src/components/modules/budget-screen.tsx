@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/select";
 import { budgetLines, type BudgetLine } from "@/data/economy-demo";
 import { useLocalCollection } from "@/data/local-repository";
+import { useAoCristianoSettings } from "@/lib/use-ao-cristiano";
+import { isChristianProfile } from "@/lib/ao-cristiano-profile";
 
 const fmt = (value: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -44,6 +46,8 @@ const fmt = (value: number) =>
 const areas = [...new Set(budgetLines.map((line) => line.area))];
 
 export function BudgetScreen() {
+  const { settings } = useAoCristianoSettings();
+  const christian = isChristianProfile(settings.profile);
   const [formOpen, setFormOpen] = useState(false);
   const { records, create } = useLocalCollection("ao-erp:budget:lines", budgetLines);
   const [tab, setTab] = useState("overview");

@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { SaasIcon } from "../components/saas-icons";
-import { saasStore, useSettings } from "../data/saas-repository";
+import { StatusBadge } from "../components/saas-ui";
+import { evaluateOrganizationLicensing } from "../data/commercial-service";
+import { repositories, saasStore, useRepositoryRows, useSettings } from "../data/saas-repository";
 
 type ModuleItem = { id: string; name: string; detail: string; enabled: boolean };
 type ModuleGroup = { id: string; name: string; detail: string; items: ModuleItem[] };
@@ -160,6 +162,7 @@ export const Route = createFileRoute("/configuracion")({ component: Configuratio
 
 function ConfigurationPage() {
   const settings = useSettings();
+  const organizations = useRepositoryRows(repositories.organizations);
   const [tab, setTab] = useState<"appearance" | "modules">("appearance");
   const [theme, setTheme] = useState(settings.theme);
   const [density, setDensity] = useState(settings.density);
@@ -176,14 +179,17 @@ function ConfigurationPage() {
   useEffect(() => {
     setTheme(settings.theme);
     setDensity(settings.density);
-  }, [settings.theme, settings.density]);
+    setScope(settings.scope);
+    setOrganization(settings.organization);
+    setGroups(groupsFromSettings(settings.enabledModuleIds));
+  }, [settings.theme, settings.density, settings.scope, settings.organization, settings.enabledModuleIds]);
 
   useEffect(() => {
     saasStore.updateSettings({
       theme,
       density,
       scope,
-      organization,
+      organization: scope === "organization" ? organization : "",
       enabledModuleIds: groups
         .flatMap((group) => group.items)
         .filter((item) => item.enabled)
@@ -191,7 +197,28 @@ function ConfigurationPage() {
     });
   }, [theme, density, scope, organization, groups]);
 
+  const selectedOrganization = organizations.find((item) => item.id === organization) ?? null;
+  const licensingEvaluation = useMemo(() => {
+    if (scope !== "organization" || !organization) return null;
+    return evaluateOrganizationLicensing(organization);
+  }, [scope, organization, organizations]);
+
+  const effectiveEnabledIds = useMemo(() => {
+    const globallyEnabled = groups
+      .flatMap((group) => group.items)
+      .filter((item) => item.enabled)
+      .map((item) => item.id);
+    if (!licensingEvaluation) return globallyEnabled;
+    return globallyEnabled.filter((id) => licensingEvaluation.enabledModuleIds.includes(id));
+  }, [groups, licensingEvaluation]);
+
   function toggle(groupId: string, itemId: string) {
+    if (scope === "organization" && licensingEvaluation && !licensingEvaluation.enabledModuleIds.includes(itemId)) {
+      setMessage(
+        "El módulo seleccionado no está contemplado en los entitlements/licencia efectiva de la organización. Revisa Planes y licencias antes de habilitarlo.",
+      );
+      return;
+    }
     setGroups((current) =>
       current.map((group) =>
         group.id !== groupId
@@ -213,15 +240,15 @@ function ConfigurationPage() {
         <div>
           <p className="eyebrow">A&amp;O SaaS / Administración central</p>
           <h1>Configuración</h1>
-          <p>Administra la experiencia visual y los módulos disponibles en A&amp;O ERP.</p>
+          <p>Administra la experiencia visual y el catálogo de módulos de la plataforma.</p>
         </div>
         <span className="demo-badge">Consola del operador</span>
       </header>
       <div className="notice">
-        <strong>Configuración centralizada.</strong> Los cambios definidos aquí corresponden al
-        operador de A&amp;O SaaS. La disponibilidad para cada entidad debe respetar su plan,
-        licencia y permisos. Esta pantalla es una interfaz inicial: todavía no guarda cambios en una
-        base de datos.
+        <strong>Configuración centralizada (demo local).</strong> Los cambios se guardan en el
+        repositorio local del navegador, no en una base de datos ni en producción. La habilitación
+        efectiva para una organización debe respetar su plan, contrato, licencia, entitlements y
+        permisos; al deshabilitar un módulo no se elimina información histórica.
       </div>
       <div className="settings-layout">
         <aside className="panel settings-nav">
@@ -253,8 +280,8 @@ function ConfigurationPage() {
             </span>
           </button>
           <div className="settings-hint">
-            La asignación por organización deberá estar vinculada al plan contratado y a la licencia
-            vigente.
+            Catálogo global de plataforma ≠ habilitación efectiva por organización. La disponibilidad
+            por entidad se valida con licenciamiento y aprovisionamiento.
           </div>
         </aside>
         <main className="settings-main">
@@ -273,8 +300,8 @@ function ConfigurationPage() {
                 <label className="settings-field">
                   <span>Ámbito de configuración</span>
                   <select value={scope} onChange={(event) => setScope(event.target.value)}>
-                    <option value="global">Predeterminado global</option>
-                    <option value="organization">Por organización</option>
+                    <option value="global">Predeterminado global (plataforma)</option>
+                    <option value="organization">Contexto por organización</option>
                   </select>
                 </label>
                 {scope === "organization" && (
@@ -285,8 +312,11 @@ function ConfigurationPage() {
                       onChange={(event) => setOrganization(event.target.value)}
                     >
                       <option value="">Selecciona una organización</option>
-                      <option value="diocese">Diócesis de demostración</option>
-                      <option value="parish">Parroquia de demostración</option>
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name} ({org.id})
+                        </option>
+                      ))}
                     </select>
                   </label>
                 )}
@@ -346,7 +376,10 @@ function ConfigurationPage() {
               <div className="section-heading">
                 <div>
                   <h2>Catálogo y disponibilidad de módulos</h2>
-                  <p>Define qué funcionalidades forman parte de la oferta de la plataforma.</p>
+                  <p>
+                    Catálogo de plataforma (global). La disponibilidad efectiva por organización se
+                    determina por plan, contrato, licencia y entitlements.
+                  </p>
                 </div>
                 <span className="section-symbol">
                   <SaasIcon name="plans" size={16} />
@@ -354,7 +387,7 @@ function ConfigurationPage() {
               </div>
               <div className="module-summary">
                 <div>
-                  <small>Módulos habilitados</small>
+                  <small>Módulos habilitados (catálogo)</small>
                   <strong>
                     {enabled} <em>/ {total}</em>
                   </strong>
@@ -364,16 +397,16 @@ function ConfigurationPage() {
                   <strong>{groups.length}</strong>
                 </div>
                 <div>
-                  <small>Ámbito</small>
-                  <strong>{scope === "global" ? "Global" : "Por entidad"}</strong>
+                  <small>Ámbito visualizado</small>
+                  <strong>{scope === "global" ? "Global" : "Organización"}</strong>
                 </div>
               </div>
               <div className="settings-fields module-scope">
                 <label className="settings-field">
-                  <span>Aplicar configuración</span>
+                  <span>Aplicar contexto</span>
                   <select value={scope} onChange={(event) => setScope(event.target.value)}>
-                    <option value="global">Catálogo global</option>
-                    <option value="organization">Por organización</option>
+                    <option value="global">Catálogo global de plataforma</option>
+                    <option value="organization">Por organización (verificación efectiva)</option>
                   </select>
                 </label>
                 {scope === "organization" && (
@@ -381,15 +414,37 @@ function ConfigurationPage() {
                     <span>Organización</span>
                     <select
                       value={organization}
-                      onChange={(event) => setOrganization(event.target.value)}
+                      onChange={(event) => {
+                        setOrganization(event.target.value);
+                        setMessage("");
+                      }}
                     >
                       <option value="">Selecciona una organización</option>
-                      <option value="diocese">Diócesis de demostración</option>
-                      <option value="parish">Parroquia de demostración</option>
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name} ({org.id}) · {org.plan}
+                        </option>
+                      ))}
                     </select>
                   </label>
                 )}
               </div>
+              {scope === "organization" && selectedOrganization && licensingEvaluation && (
+                <div className="notice">
+                  <strong>Contexto efectivo: {selectedOrganization.name}.</strong> Estado de licencia:{" "}
+                  <StatusBadge status={licensingEvaluation.licenseStatus} /> · Autorizada:{" "}
+                  {licensingEvaluation.isAuthorized ? "Sí" : "No"} · Módulos con entitlement:{" "}
+                  {licensingEvaluation.enabledModuleIds.length} · Habilitados en catálogo y
+                  efectivamente disponibles: {effectiveEnabledIds.length}. Esta validación usa el
+                  servicio centralizado de licenciamiento (demo local), sin persistencia backend.
+                </div>
+              )}
+              {scope === "organization" && !organization && (
+                <div className="notice">
+                  Selecciona una organización para contrastar el catálogo con su plan, licencia y
+                  entitlements efectivos.
+                </div>
+              )}
               <div className="module-list">
                 {groups.map((group) => (
                   <section className="module-group" key={group.id}>
@@ -402,26 +457,48 @@ function ConfigurationPage() {
                         {group.items.filter((item) => item.enabled).length}/{group.items.length}
                       </span>
                     </header>
-                    {group.items.map((item) => (
-                      <label className="module-item" key={item.id}>
-                        <span>
-                          <strong>{item.name}</strong>
-                          <small>{item.detail}</small>
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={item.enabled}
-                          onChange={() => toggle(group.id, item.id)}
-                          aria-label={"Habilitar " + item.name}
-                        />
-                      </label>
-                    ))}
+                    {group.items.map((item) => {
+                      const entitled =
+                        !licensingEvaluation || licensingEvaluation.enabledModuleIds.includes(item.id);
+                      const effectivelyAvailable = item.enabled && entitled;
+                      return (
+                        <label className="module-item" key={item.id}>
+                          <span>
+                            <strong>
+                              {item.name}{" "}
+                              {scope === "organization" && organization ? (
+                                <em style={{ fontStyle: "normal", marginLeft: 6 }}>
+                                  ({entitled ? "con entitlement" : "sin entitlement/licencia"})
+                                </em>
+                              ) : null}
+                            </strong>
+                            <small>
+                              {item.detail}
+                              {scope === "organization" && organization
+                                ? effectivelyAvailable
+                                  ? " · Disponible efectivamente."
+                                  : item.enabled
+                                    ? " · Habilitado en catálogo, pero no autorizado por licencia efectiva."
+                                    : " · Deshabilitado en catálogo de plataforma."
+                                : ""}
+                            </small>
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={item.enabled}
+                            onChange={() => toggle(group.id, item.id)}
+                            aria-label={"Habilitar " + item.name}
+                          />
+                        </label>
+                      );
+                    })}
                   </section>
                 ))}
               </div>
               <p className="settings-footnote">
                 Deshabilitar un módulo no elimina la información histórica de la organización. La
-                restricción de acceso debe validarse también en el servidor.
+                restricción de acceso y disponibilidad efectiva debe validarse también en el servidor
+                y en el aprovisionamiento del producto.
               </p>
             </section>
           )}
@@ -434,7 +511,7 @@ function ConfigurationPage() {
                 setDensity("comfortable");
                 setScope("global");
                 setOrganization("");
-                setMessage("Se restablecieron los valores de esta vista.");
+                setMessage("Se restablecieron los valores predeterminados de la vista.");
               }}
             >
               Restablecer
@@ -443,7 +520,7 @@ function ConfigurationPage() {
               className="button-primary"
               onClick={() =>
                 setMessage(
-                  "Configuración preparada como vista previa. La persistencia y aplicación real requieren conectar el servicio de configuración.",
+                  "Configuración guardada en el repositorio local de demostración (navegador). La aplicación real por organización requiere persistencia backend y validación de permisos/entitlements.",
                 )
               }
             >

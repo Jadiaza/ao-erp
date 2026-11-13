@@ -46,7 +46,12 @@ const currency = (amount: number) =>
     maximumFractionDigits: 0,
   }).format(amount);
 
+import { useAoCristianoSettings } from "@/lib/use-ao-cristiano";
+import { isChristianProfile } from "@/lib/ao-cristiano-profile";
+
 export function TreasuryScreen() {
+  const { settings } = useAoCristianoSettings();
+  const christian = isChristianProfile(settings.profile);
   const [tab, setTab] = useState("movements");
   const [query, setQuery] = useState("");
   const [account, setAccount] = useState("all");
@@ -114,10 +119,10 @@ export function TreasuryScreen() {
       breadcrumbs={[
         { label: "Dashboard", href: "/" },
         { label: "Finanzas y recursos" },
-        { label: "Finanzas y tesorería" },
+        { label: christian ? "Finanzas y tesorería congregacional" : "Finanzas y tesorería" },
       ]}
-      title="Finanzas y tesorería"
-      description="Lectura de saldos, ingresos, pagos y conciliación de una entidad contable de demostración."
+      title={christian ? "Finanzas y tesorería congregacional" : "Finanzas y tesorería"}
+      description={christian ? "Diezmos, ofrendas, donaciones, otros ingresos, egresos, caja/bancos, conciliación e informes básicos. Reutiliza tesorería existente sin contabilidad paralela (demo local)." : "Lectura de saldos, ingresos, pagos y conciliación de una entidad contable de demostración."}
       stats={
         <>
           <StatCard

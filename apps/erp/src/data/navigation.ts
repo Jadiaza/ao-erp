@@ -122,6 +122,13 @@ export const appModules: AppModule[] = [
     icon: HeartHandshake,
   },
   {
+    id: "acompanamiento-pastoral",
+    label: "Acompañamiento pastoral",
+    path: "/app/acompanamiento-pastoral",
+    group: "Comunidad y pastoral",
+    icon: HeartHandshake,
+  },
+  {
     id: "liturgia-celebraciones",
     label: "Liturgia y celebraciones",
     path: "/app/liturgia-celebraciones",

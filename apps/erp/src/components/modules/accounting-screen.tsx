@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/select";
 import { accountingAccounts, accountingEntities, journalEntries } from "@/data/economy-demo";
 import { useLocalCollection } from "@/data/local-repository";
+import { useAoCristianoSettings } from "@/lib/use-ao-cristiano";
+import { isChristianProfile } from "@/lib/ao-cristiano-profile";
 
 const money = (value: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -34,6 +36,8 @@ const money = (value: number) =>
   }).format(Math.abs(value));
 
 export function AccountingScreen() {
+  const { settings } = useAoCristianoSettings();
+  const christian = isChristianProfile(settings.profile);
   const [entity, setEntity] = useState(accountingEntities[0]?.id ?? "");
   const [tab, setTab] = useState("chart");
   const [formOpen, setFormOpen] = useState(false);

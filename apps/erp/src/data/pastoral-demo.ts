@@ -171,13 +171,23 @@ export const formationParticipants: FormationParticipant[] = [
   },
 ];
 
+export type GroupMember = { id: string; name: string; role: string; joinedAt: string; status: "Activo" | "En pausa" | "Retirado" };
+export type ServiceTeam = { id: string; name: string; leader: string; members: string[]; focus: string };
+export type AssignmentRecord = { id: string; date: string; person: string; role: string; scope: string; status: "Activa" | "Finalizada" };
+export type GroupHistoryEntry = { id: string; date: string; action: string; actor: string };
+
 export type ParishGroupDemo = {
   id: string;
   name: string;
   kind:
-    | "Grupo parroquial"
+    | "Ministerio"
+    | "Departamento"
+    | "Célula"
+    | "Grupo pequeño"
+    | "Equipo de servicio"
     | "Movimiento"
     | "Comunidad"
+    | "Grupo parroquial"
     | "Ministerio litúrgico"
     | "Asociación"
     | "Apostolado";
@@ -189,72 +199,119 @@ export type ParishGroupDemo = {
   status: RecordStatus;
   purpose: string;
   activities: string[];
+  organizationId?: string;
+  campusId?: string;
+  department?: string;
+  leader?: string;
+  memberList?: GroupMember[];
+  serviceTeams?: ServiceTeam[];
+  assignments?: AssignmentRecord[];
+  history?: GroupHistoryEntry[];
 };
 export const parishGroups: ParishGroupDemo[] = [
   {
     id: "GRP-DEMO-01",
-    name: "Coro de la Esperanza",
-    kind: "Ministerio litúrgico",
+    name: "Ministerio de Alabanza",
+    kind: "Ministerio",
+    department: "Música y adoración",
     coordinator: "Coordinación musical A",
+    leader: "Coordinación musical A",
     members: 22,
     schedule: "Jueves · 6:30 p. m.",
     nextActivity: "Ensayo comunitario · 5 nov.",
     participation: 91,
     status: "active",
-    purpose: "Servicio musical en las celebraciones comunitarias.",
+    purpose: "Servicio musical en los cultos y celebraciones comunitarias.",
     activities: ["Ensayo semanal", "Preparación de repertorio", "Servicio dominical"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+    memberList: [
+      { id: "GM-1", name: "Integrante de muestra 01", role: "Director musical", joinedAt: "2024-02-10", status: "Activo" },
+      { id: "GM-2", name: "Integrante de muestra 02", role: "Vocalista", joinedAt: "2024-06-01", status: "Activo" },
+    ],
+    serviceTeams: [{ id: "ST-1", name: "Equipo culto dominical", leader: "Coordinación musical A", members: ["Integrante 01", "Integrante 02"], focus: "Servicio dominical" }],
+    assignments: [{ id: "AS-1", date: "2026-11-03", person: "Integrante de muestra 01", role: "Dirección", scope: "Culto dominical", status: "Activa" }],
+    history: [{ id: "GH-1", date: "2026-10-01", action: "Integración de nuevos servidores", actor: "Coordinación musical A" }],
   },
   {
     id: "GRP-DEMO-02",
-    name: "Comunidad Emaús",
-    kind: "Comunidad",
-    coordinator: "Responsable de comunidad B",
+    name: "Célula Norte",
+    kind: "Célula",
+    department: "Grupos pequeños",
+    coordinator: "Responsable de célula B",
+    leader: "Responsable de célula B",
     members: 16,
     schedule: "Martes · 7:00 p. m.",
     nextActivity: "Encuentro fraterno · 10 nov.",
     participation: 86,
     status: "active",
-    purpose: "Espacio comunitario de encuentro, oración y servicio.",
-    activities: ["Encuentro semanal", "Lectura comunitaria", "Visita solidaria"],
+    purpose: "Espacio de discipulado, oración y cuidado mutuo en el sector Norte.",
+    activities: ["Encuentro semanal", "Lectura bíblica", "Visita solidaria"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+    memberList: [
+      { id: "GM-3", name: "Persona de muestra 02", role: "Anfitriona", joinedAt: "2025-03-15", status: "Activo" },
+      { id: "GM-4", name: "Integrante de muestra 03", role: "Integrante", joinedAt: "2025-08-20", status: "Activo" },
+    ],
+    assignments: [{ id: "AS-2", date: "2026-11-10", person: "Responsable de célula B", role: "Facilitador", scope: "Encuentro semanal", status: "Activa" }],
+    history: [{ id: "GH-2", date: "2026-09-20", action: "Multiplicación planificada del grupo", actor: "Coordinación de grupos" }],
   },
   {
     id: "GRP-DEMO-03",
-    name: "Movimiento Sembradores",
-    kind: "Movimiento",
+    name: "Ministerio Juvenil",
+    kind: "Ministerio",
+    department: "Juventud",
     coordinator: "Enlace pastoral C",
+    leader: "Enlace pastoral C",
     members: 31,
     schedule: "Sábados · 3:00 p. m.",
     nextActivity: "Jornada formativa · 7 nov.",
     participation: 79,
     status: "active",
-    purpose: "Acompañamiento juvenil y compromiso comunitario.",
+    purpose: "Acompañamiento juvenil, formación y servicio comunitario.",
     activities: ["Formación juvenil", "Campamento de servicio", "Encuentro mensual"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+    serviceTeams: [{ id: "ST-2", name: "Equipo de bienvenida", leader: "Enlace pastoral C", members: ["Joven 01", "Joven 02"], focus: "Recepción y seguimiento" }],
+    history: [{ id: "GH-3", date: "2026-08-05", action: "Inicio de ciclo formativo", actor: "Enlace pastoral C" }],
   },
   {
     id: "GRP-DEMO-04",
-    name: "Equipo de lectores",
-    kind: "Ministerio litúrgico",
-    coordinator: "Coordinación litúrgica D",
+    name: "Equipo de Ujieres y Bienvenida",
+    kind: "Equipo de servicio",
+    department: "Servicio dominical",
+    coordinator: "Coordinación de servicio D",
+    leader: "Coordinación de servicio D",
     members: 14,
-    schedule: "Primer lunes · 6:00 p. m.",
-    nextActivity: "Preparación dominical · 8 nov.",
+    schedule: "Domingos · 8:00 a. m.",
+    nextActivity: "Servicio dominical · 8 nov.",
     participation: 94,
     status: "active",
-    purpose: "Preparación y servicio de la proclamación de la Palabra.",
-    activities: ["Rota de servicio", "Lectio preparatoria", "Taller de proclamación"],
+    purpose: "Recepción, orden y acompañamiento a asistentes en reuniones y cultos.",
+    activities: ["Rota de servicio", "Preparación dominical", "Capacitación"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+    assignments: [{ id: "AS-3", date: "2026-11-08", person: "Servidor de muestra 01", role: "Ujier", scope: "Culto mañana", status: "Activa" }],
+    history: [{ id: "GH-4", date: "2026-10-10", action: "Actualización de rota de servicio", actor: "Coordinación de servicio D" }],
   },
   {
     id: "GRP-DEMO-05",
-    name: "Asociación Manos Abiertas",
-    kind: "Asociación",
+    name: "Departamento de Acción Social",
+    kind: "Departamento",
+    department: "Servicio y misericordia",
     coordinator: "Coordinación de servicio E",
+    leader: "Coordinación de servicio E",
     members: 19,
     schedule: "Miércoles · 5:00 p. m.",
     nextActivity: "Organización de donaciones · 11 nov.",
     participation: 72,
     status: "pending",
-    purpose: "Organización de apoyo solidario y acompañamiento a familias.",
+    purpose: "Organización de apoyo solidario y acompañamiento a familias vulnerables.",
     activities: ["Clasificación de aportes", "Acompañamiento familiar", "Jornada comunitaria"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-SECUNDARIA",
+    memberList: [{ id: "GM-5", name: "Voluntario de muestra 01", role: "Coordinador de jornadas", joinedAt: "2025-01-12", status: "Activo" }],
+    history: [{ id: "GH-5", date: "2026-10-25", action: "Revisión de plan de servicio", actor: "Coordinación de servicio E" }],
   },
 ];
 

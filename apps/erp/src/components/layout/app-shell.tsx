@@ -4,6 +4,8 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, LogOut, Menu, Palette, S
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { appModules, moduleGroupIcons, moduleGroups } from "@/data/navigation";
+import { useAoCristianoSettings } from "@/lib/use-ao-cristiano";
+import { isChristianProfile } from "@/lib/ao-cristiano-profile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -33,7 +35,22 @@ type PreferencesView = "main" | "appearance";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const activeModule = appModules.find((module) => module.path === pathname);
+  const { settings, canAccessPath } = useAoCristianoSettings();
+  const christian = isChristianProfile(settings.profile);
+  const terms = settings.terminology;
+  const visibleModules = appModules
+    .filter((module) => canAccessPath(module.path))
+    .map((module) => {
+      if (!christian) return module;
+      if (module.id === "feligreses-familias") return { ...module, label: `${terms.membersLabel} y familias` };
+      if (module.id === "grupos-ministerios") return { ...module, label: "Ministerios, grupos y células" };
+      if (module.id === "agenda-infraestructura") return { ...module, label: "Agenda, cultos e infraestructura" };
+      if (module.id === "accion-pastoral-social") return { ...module, label: "Acción pastoral, social y acompañamiento" };
+      if (module.id === "planificacion-pastoral") return { ...module, label: "Planificación y seguimiento" };
+      return module;
+    });
+  const visibleModuleGroups = [...new Set(visibleModules.map((module) => module.group))].filter((group) => group !== "General");
+  const activeModule = visibleModules.find((module) => module.path === pathname) ?? appModules.find((module) => module.path === pathname);
   const activeGroup = activeModule?.group === "General" ? undefined : activeModule?.group;
   const initialActiveGroup = useRef(activeGroup);
   const [open, setOpen] = useState(true);
@@ -86,21 +103,23 @@ export function AppShell({ children }: { children: ReactNode }) {
       const saved = window.localStorage.getItem("ao-erp:navigation:expanded-groups:v1");
       if (saved !== null) {
         const parsed: unknown = JSON.parse(saved);
-        const restored = Array.isArray(parsed) ? parsed.filter((group): group is string => typeof group === "string" && moduleGroups.includes(group)) : [];
-        if (fallbackGroup && !restored.includes(fallbackGroup)) restored.push(fallbackGroup);
+        const restored = Array.isArray(parsed)
+          ? parsed.filter((group): group is string => typeof group === "string" && moduleGroups.includes(group))
+          : [];
+        if (fallbackGroup && !restored.includes(fallbackGroup) && canAccessPath(appModules.find((m) => m.group === fallbackGroup)?.path ?? "/")) restored.push(fallbackGroup);
         setExpandedGroups(restored.length > 0 ? restored : fallbackGroup ? [fallbackGroup] : []);
       } else if (fallbackGroup) {
-        setExpandedGroups((current) => current.includes(fallbackGroup) ? current : [...current, fallbackGroup]);
+        setExpandedGroups((current) => (current.includes(fallbackGroup) ? current : [...current, fallbackGroup]));
       }
     } catch {
-      if (fallbackGroup) setExpandedGroups((current) => current.includes(fallbackGroup) ? current : [...current, fallbackGroup]);
+      if (fallbackGroup) setExpandedGroups((current) => (current.includes(fallbackGroup) ? current : [...current, fallbackGroup]));
     }
     setNavigationPreferencesLoaded(true);
   }, []);
 
   useEffect(() => {
     if (activeGroup) {
-      setExpandedGroups((current) => current.includes(activeGroup) ? current : [...current, activeGroup]);
+      setExpandedGroups((current) => (current.includes(activeGroup) ? current : [...current, activeGroup]));
     }
   }, [activeGroup]);
 
@@ -132,7 +151,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <nav aria-label="Navegación principal" className="flex-1 space-y-1 overflow-y-auto px-2.5 pb-3 pt-1">
         <ul className="mb-1 space-y-0.5">
-          {appModules.filter((module) => module.group === "General").map(({ id, label, path, icon: Icon }) => {
+          {visibleModules.filter((module) => module.group === "General").map(({ id, label, path, icon: Icon }) => {
             const active = pathname === path;
             return <li key={id}><Link to={path} title={!open ? label : undefined} aria-label={label} aria-current={active ? "page" : undefined} onClick={() => setMobileNavOpen(false)} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] leading-5 transition-colors ${active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"} ${open ? "" : "justify-center px-2"}`}>
               <Icon className="size-5 shrink-0" />
@@ -140,7 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link></li>;
           })}
         </ul>
-        {moduleGroups.map((group) => {
+        {visibleModuleGroups.map((group) => {
           const GroupIcon = moduleGroupIcons[group] ?? Settings2;
           const groupExpanded = expandedGroups.includes(group);
           const groupId = `navigation-group-${group.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
@@ -151,7 +170,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
             <div id={groupId} aria-hidden={!groupExpanded} inert={!groupExpanded} className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${groupExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
               <ul className={`min-h-0 overflow-hidden space-y-0.5 border-sidebar-border ${open ? "ml-3 border-l pl-1" : ""}`}>
-                {appModules.filter((module) => module.group === group).map(({ id, label, path, icon: Icon }) => {
+                {visibleModules.filter((module) => module.group === group).map(({ id, label, path, icon: Icon }) => {
                   const active = pathname === path;
                   return <li key={id}><Link to={path} title={!open ? label : undefined} aria-label={label} aria-current={active ? "page" : undefined} onClick={() => setMobileNavOpen(false)} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] leading-5 transition-colors ${active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"} ${open ? "" : "justify-center px-2"}`}>
                     <Icon className="size-5 shrink-0" />

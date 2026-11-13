@@ -8,13 +8,14 @@ export const treasuryAccounts = [
   { id: "CTA-DEMO-03", name: "Fondo pastoral · demo", kind: "Caja", balance: 1620000, entity: parishDemo.officialName },
 ];
 export const treasuryMovements: TreasuryMovement[] = [
+  { id: "MOV-DEMO-100", date: "31 oct. 2026", dateISO: "2026-10-31", concept: "Diezmos congregacionales", source: "Aportes de miembros", category: "Diezmos", account: "Cuenta corriente · demo", direction: "Ingreso", amount: 1850000, status: "approved", reference: "ING-DEMO-042" },
   { id: "MOV-DEMO-101", date: "30 oct. 2026", dateISO: "2026-10-30", concept: "Ofrenda dominical", source: "Colecta comunitaria", category: "Ofrendas", account: "Caja parroquial", direction: "Ingreso", amount: 845000, status: "approved", reference: "ING-DEMO-041" },
-  { id: "MOV-DEMO-102", date: "29 oct. 2026", dateISO: "2026-10-29", concept: "Aporte solidario", source: "Donación de muestra", category: "Donaciones", account: "Cuenta corriente · muestra", direction: "Ingreso", amount: 1200000, status: "approved", reference: "ING-DEMO-040" },
-  { id: "MOV-DEMO-103", date: "28 oct. 2026", dateISO: "2026-10-28", concept: "Actividad comunitaria", source: "Encuentro cultural", category: "Actividades", account: "Caja parroquial", direction: "Ingreso", amount: 460000, status: "pending", reference: "ING-DEMO-039" },
-  { id: "MOV-DEMO-104", date: "27 oct. 2026", dateISO: "2026-10-27", concept: "Servicios públicos", source: "Proveedor de muestra", category: "Servicios", account: "Cuenta corriente · muestra", direction: "Egreso", amount: 326500, status: "paid", reference: "EGR-DEMO-028" },
-  { id: "MOV-DEMO-105", date: "26 oct. 2026", dateISO: "2026-10-26", concept: "Material de formación", source: "Compra menor", category: "Pastoral", account: "Fondo pastoral", direction: "Egreso", amount: 148000, status: "approved", reference: "EGR-DEMO-027" },
-  { id: "MOV-DEMO-106", date: "24 oct. 2026", dateISO: "2026-10-24", concept: "Mantenimiento de sede", source: "Servicio contratado", category: "Mantenimiento", account: "Cuenta corriente · muestra", direction: "Egreso", amount: 780000, status: "pending", reference: "EGR-DEMO-026" },
-  { id: "MOV-DEMO-107", date: "22 oct. 2026", dateISO: "2026-10-22", concept: "Recaudo de actividad", source: "Inscripciones de muestra", category: "Actividades", account: "Caja parroquial", direction: "Ingreso", amount: 315000, status: "approved", reference: "ING-DEMO-038" },
+  { id: "MOV-DEMO-102", date: "29 oct. 2026", dateISO: "2026-10-29", concept: "Aporte solidario", source: "Donación de muestra", category: "Donaciones", account: "Cuenta corriente · demo", direction: "Ingreso", amount: 1200000, status: "approved", reference: "ING-DEMO-040" },
+  { id: "MOV-DEMO-103", date: "28 oct. 2026", dateISO: "2026-10-28", concept: "Actividad comunitaria", source: "Encuentro cultural", category: "Otros ingresos", account: "Caja parroquial", direction: "Ingreso", amount: 460000, status: "pending", reference: "ING-DEMO-039" },
+  { id: "MOV-DEMO-104", date: "27 oct. 2026", dateISO: "2026-10-27", concept: "Servicios públicos", source: "Proveedor de muestra", category: "Egresos operativos", account: "Cuenta corriente · demo", direction: "Egreso", amount: 326500, status: "paid", reference: "EGR-DEMO-028" },
+  { id: "MOV-DEMO-105", date: "26 oct. 2026", dateISO: "2026-10-26", concept: "Material de formación y ministerios", source: "Compra menor", category: "Egresos ministeriales", account: "Fondo pastoral", direction: "Egreso", amount: 148000, status: "approved", reference: "EGR-DEMO-027" },
+  { id: "MOV-DEMO-106", date: "24 oct. 2026", dateISO: "2026-10-24", concept: "Mantenimiento de sede", source: "Servicio contratado", category: "Egresos operativos", account: "Cuenta corriente · demo", direction: "Egreso", amount: 780000, status: "pending", reference: "EGR-DEMO-026" },
+  { id: "MOV-DEMO-107", date: "22 oct. 2026", dateISO: "2026-10-22", concept: "Recaudo de actividad", source: "Inscripciones de muestra", category: "Otros ingresos", account: "Caja parroquial", direction: "Ingreso", amount: 315000, status: "approved", reference: "ING-DEMO-038" },
 ];
 export const treasuryPeriodSummaryDemo = {
   income: treasuryMovements.filter((movement) => movement.direction === "Ingreso").reduce((sum, movement) => sum + movement.amount, 0),
@@ -60,12 +61,15 @@ export const journalEntries = [
 
 export type BudgetLine = { id: string; area: string; category: string; type: "Ingreso" | "Gasto"; budget: number; executed: number; period: string };
 export const budgetLines: BudgetLine[] = [
-  { id: "PRE-DEMO-01", area: "Pastoral", category: "Ofrendas ordinarias", type: "Ingreso", budget: 24000000, executed: 18600000, period: "Octubre" },
-  { id: "PRE-DEMO-02", area: "Pastoral", category: "Formación y catequesis", type: "Gasto", budget: 6800000, executed: 5120000, period: "Octubre" },
-  { id: "PRE-DEMO-03", area: "Administrativa", category: "Servicios y mantenimiento", type: "Gasto", budget: 9200000, executed: 10100000, period: "Octubre" },
+  { id: "PRE-DEMO-00", area: "Congregacional", category: "Diezmos", type: "Ingreso", budget: 22000000, executed: 18500000, period: "Octubre" },
+  { id: "PRE-DEMO-01", area: "Congregacional", category: "Ofrendas", type: "Ingreso", budget: 12000000, executed: 9800000, period: "Octubre" },
+  { id: "PRE-DEMO-01B", area: "Congregacional", category: "Donaciones", type: "Ingreso", budget: 8000000, executed: 6200000, period: "Octubre" },
+  { id: "PRE-DEMO-01C", area: "Congregacional", category: "Otros ingresos", type: "Ingreso", budget: 4500000, executed: 3200000, period: "Octubre" },
+  { id: "PRE-DEMO-02", area: "Ministerios", category: "Formación y ministerios", type: "Gasto", budget: 6800000, executed: 5120000, period: "Octubre" },
+  { id: "PRE-DEMO-03", area: "Administrativa", category: "Servicios, caja y bancos", type: "Gasto", budget: 9200000, executed: 10100000, period: "Octubre" },
   { id: "PRE-DEMO-04", area: "Acción social", category: "Aportes solidarios", type: "Ingreso", budget: 14500000, executed: 12300000, period: "Octubre" },
   { id: "PRE-DEMO-05", area: "Acción social", category: "Ayuda comunitaria", type: "Gasto", budget: 11800000, executed: 8900000, period: "Octubre" },
-  { id: "PRE-DEMO-06", area: "Administrativa", category: "Ingresos por actividades", type: "Ingreso", budget: 7500000, executed: 5940000, period: "Octubre" },
+  { id: "PRE-DEMO-06", area: "Operación", category: "Mantenimiento y egresos", type: "Gasto", budget: 7500000, executed: 5940000, period: "Octubre" },
 ];
 
 export type AssetDemo = { id: string; name: string; kind: string; location: string; responsible: string; condition: string; acquisitionValue: number; acquisitionDate: string; maintenance: string; accountingCategory: string; carryingAmount: number; support: string; status: RecordStatus };
