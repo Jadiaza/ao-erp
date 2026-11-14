@@ -1,0 +1,145 @@
+# INFORME DE CONSOLIDACIÓN DEFINITIVA EN MAIN Y ACTUALIZACIÓN DE GITHUB
+
+================================================================================
+1. DATOS GENERALES
+================================================================================
+- Fecha y hora de cierre: 2026-11-14 12:20 (UTC-5)
+- Repositorio local: D:\Proyectos\ao-erp
+- Repositorio remoto GitHub: https://github.com/Jadiaza/ao-erp.git (Jadiaza/ao-erp)
+- Rama principal definitiva: main
+- Commit base previo en main: 96046bd ("feat(saas): implement responsive shell and module launcher for tablet and mobile")
+- Commits consolidados en esta sesión sobre main:
+  * 27d062d — feat(saas): add PWA support, responsive polish, route guards and centralized table icon actions
+  * 669e00a — docs(backend): complete Level 2.1 infrastructure audit, D-14 portability and runtime evaluation
+  * Commit final de documentación: agrega este informe (informe-consolidacion-main-github.txt) y se sincroniza en origin/main sin push forzado.
+
+================================================================================
+2. ESTADO INICIAL DETECTADO ANTES DE CONSOLIDAR
+================================================================================
+- Rama inicial: main (commit 96046bd, sincronizado 0/0 con origin/main).
+- Rama comparada: integracion-final-ao-erp (commit 0259e04, sincronizado 0/0 con origin/integracion-final-ao-erp).
+- Auditoría entre ramas (git merge-base --is-ancestor integracion-final-ao-erp main = 0):
+  * integracion-final-ao-erp ya había sido fusionada completamente en main mediante el commit 8713a0f ("Merge branch 'integracion-final-ao-erp'").
+  * git log --oneline main..integracion-final-ao-erp devolvió 0 commits pendientes en integracion-final-ao-erp.
+  * main contenía 2 commits posteriores a integracion-final-ao-erp (8713a0f y 96046bd).
+- Cambios locales encontrados sin commit en main (preservados íntegros):
+  * 19 archivos modificados en apps/saas/src/ (PWA, mejoras responsive en encabezado de lanzador, Dashboard Ejecutivo y login, guardas de rutas y acciones visuales centralizadas en tablas).
+  * 17 archivos nuevos sin seguimiento: iconos PWA (4 PNG), manifest.webmanifest, sw.js, module-access.ts, table-actions.test.ts, 6 documentos en docs/arquitectura/backend/ y 3 informes .txt en la raíz.
+- Respaldo verificable creado antes de cualquier operación Git:
+  * Directorio temporal externo: C:\Users\LVJ\AppData\Local\Temp\opencode\backup-pre-consolidacion-20261114\
+  * local-modified.patch (164,726 bytes) + 17 archivos sin seguimiento copiados íntegramente.
+  * Se preservó intacto el respaldo histórico respaldo-cambios-locales.patch en la raíz del repositorio.
+
+================================================================================
+3. INTEGRACIÓN Y AUDITORÍA POR ÁREAS
+================================================================================
+- Commits incorporados desde integracion-final-ao-erp: ninguno adicional requerido, porque el 100% de integracion-final-ao-erp (0259e04) ya formaba parte del historial de main (8713a0f).
+- Archivos integrados y consolidados en main:
+  * Commit 27d062d (27 archivos en apps/saas):
+    - PWA completa: apps/saas/public/manifest.webmanifest (display: standalone), apps/saas/public/sw.js, iconos 192/512/maskable/apple-touch-icon en apps/saas/public/icons/, registro SW y viewport-fit=cover en apps/saas/src/routes/__root.tsx.
+    - Responsive y UX móvil/tableta: corrección de encabezado de ModuleLauncher (apps/saas/src/styles.css), Dashboard Ejecutivo en 1 columna <=767px + gráfico circular fluido con container queries + tablas adaptadas a tarjetas resumidas (apps/saas/src/routes/index.tsx, styles.css), y ajuste por altura/ancho del Login administrativo sin recortes.
+    - Seguridad de rutas: canAccessRoute/findModuleByPathname en apps/saas/src/data/navigation.ts, guard en __root.tsx y server function validateModuleRouteAccess en apps/saas/src/server-functions/module-access.ts.
+    - Acciones visuales centralizadas en tablas: TableRowActions y TableActionIconButton en apps/saas/src/components/saas-ui.tsx (iconos Lucide Eye, Pencil, Trash2, Settings con aria-label, tooltips y confirmación ModalDialog antes de eliminar en Instituciones, Organizaciones y Clientes), aplicado a los 12 componentes de pantallas administrativas de SaaS.
+  * Commit 669e00a (9 documentos Nivel 2.1):
+    - docs/arquitectura/backend/informe-nivel-2-1-auditoria-infraestructura.md
+    - docs/arquitectura/backend/decision-d14-portabilidad-proveedor.md
+    - docs/arquitectura/backend/cierre-decisiones-bloqueantes-d03-d12-d13.md
+    - docs/arquitectura/backend/evaluacion-runtime-vercel-node.md
+    - docs/arquitectura/backend/plan-infraestructura-inicial-ao.md
+    - docs/arquitectura/backend/informe-cierre-nivel-2-1.md
+    - informe-nivel-2-1-auditoria-infraestructura.txt
+    - informe-cierre-nivel-2-1.txt
+    - informe-situacion-nivel-2-2-postgresql-local.txt
+- Conflictos encontrados: 0 (no se requirió merge ciego ni sobrescritura).
+- Funcionalidades que no se integraron (y motivo):
+  * Docker, PostgreSQL local, migraciones SQL ejecutables, seeds y scripts pg_dump/pg_restore no se implementaron todavía por restricción explícita de alcance (§9 del plan de consolidación); quedan preparados para el Nivel 2.2.
+
+================================================================================
+4. PRUEBAS Y VALIDACIONES EJECUTADAS
+================================================================================
+Todas las validaciones siguientes fueron ejecutadas realmente sobre el código consolidado antes del push:
+
+- Tests unitarios y de integración (Vitest):
+  * @ao/saas (bun run test:saas): APROBADO — 6 archivos, 59 pruebas pasaron (incluye module-launcher.test.ts y table-actions.test.ts).
+  * @ao/erp (bun run test:erp): APROBADO — 4 archivos, 19 pruebas pasaron (incluye ao-cristiano-integrity.test.tsx y ordo/normalize.test.tsx).
+  * @ao/diocesano (bun run test:diocesano): APROBADO — 1 archivo, 1 prueba pasó.
+
+- Verificación de tipos TypeScript:
+  * typecheck:saas -> Exited with code 0.
+  * typecheck:erp -> Exited with code 0.
+  * typecheck:diocesano -> Exited with code 0.
+
+- Builds de producción (Vite + TanStack Start + SSR + Nitro):
+  * build:saas -> Exited with code 0 (incluye manifest.webmanifest, sw.js e iconos en .output/public).
+  * build:erp -> Exited with code 0.
+  * build:diocesano -> Exited with code 0.
+
+- ESLint y formato:
+  * ESLint dirigido sin regla prettier/prettier sobre los 19 archivos TypeScript/TSX modificados/nuevos de apps/saas -> 0 errores, 0 advertencias.
+  * Lint completo (lint:saas: 23,996 errores Prettier; lint:erp: 24,353 errores Prettier; lint:diocesano: 178 errores Prettier): falla exclusivamente por deuda preexistente de saltos de línea CRLF (Delete ␍) en Windows, coincidente con los informes previos del Nivel 1. No se ocultó este resultado ni se desactivaron reglas globalmente.
+
+- Verificación de secretos y runtime:
+  * Escaneo de git diff y archivos nuevos: 0 secretos, 0 claves privadas y 0 archivos .env incluidos.
+  * Pruebas previas en Chrome headless y spike aislado Vercel Node.js 24 documentadas en evaluacion-runtime-vercel-node.md (verificadas en sesiones previas sobre el mismo código consolidado).
+
+================================================================================
+5. GITHUB Y SINCRONIZACIÓN
+================================================================================
+- URL del repositorio: https://github.com/Jadiaza/ao-erp.git
+- Commits creados en main:
+  1. 27d062d — feat(saas): add PWA support, responsive polish, route guards and centralized table icon actions
+  2. 669e00a — docs(backend): complete Level 2.1 infrastructure audit, D-14 portability and runtime evaluation
+  3. Commit final con informe-consolidacion-main-github.txt.
+- Push a origin/main: ejecutado mediante `git push origin main` (sin --force).
+- Sincronización verificada después del push: main y origin/main alineados (0 adelante / 0 atrás), árbol de trabajo limpio.
+
+================================================================================
+6. RAMAS Y RESPALDOS
+================================================================================
+- Ramas locales preservadas intactas (sin eliminar ninguna):
+  * main (rama principal definitiva activa)
+  * integracion-final-ao-erp (0259e04)
+  * integracion-main-ao-erp (a3f174e)
+  * respaldo-traslado-ao-erp (507c83c)
+- Ramas remotas preservadas intactas: origin/design/saas-dashboard-refresh, origin/feature/ao-archivo-eclesiastico, origin/integracion-final-ao-erp, origin/integracion-main-ao-erp, origin/integration/ao-ecosystem-foundation, origin/main, origin/respaldo-traslado-ao-erp.
+- Respaldos conservados:
+  * Histórico en raíz: respaldo-cambios-locales.patch + 13 informes previos informe-*.txt.
+  * Respaldo externo previo a consolidación: C:\Users\LVJ\AppData\Local\Temp\opencode\backup-pre-consolidacion-20261114\.
+- Cambios locales pendientes después del cierre: ninguno (working tree limpio).
+
+================================================================================
+7. ARQUITECTURA Y ESTADO POR PRODUCTO
+================================================================================
+- Decisiones arquitectónicas confirmadas técnicamente (Nivel 2.1 cerrado):
+  * D-03 (scopes tenant|entity|campus y separación 5 roles plataforma vs 11 institucionales): definida y lista para DDL (pendiente aprobación final de firma si aplica junto a Nivel 2.2).
+  * D-12 (catálogo cerrado CHECK de estados, transiciones y triggers inmutables): definida y lista para DDL.
+  * D-13 (modelo operativo ERP compartido sin duplicar motores y con aislamiento pastoral/sacramental): definida y lista para DDL.
+  * D-14 (independencia del proveedor, PostgreSQL estándar, core.users, core.user_identities, AuthProviderPort, DocumentStoragePort, RLS portable): APROBADA.
+- Estado de A&O Cristiano: consolidado en modo demo local (6 áreas operativas, PLN-CRI desacoplado de MOD-COM/MOD-SAC/MOD-GOB, 19/19 pruebas ERP + 59/59 pruebas SaaS pasando).
+- Estado de A&O Católico: intacto y aislado de datos cristianos (datasets y rutas sacramentales/litúrgicas separados).
+- Estado de A&O Diocesano: scaffold independiente compilando y pasando pruebas, pendiente de integración backend sobre esquema diocesan y grants explícitos.
+- Pendientes del Nivel 2.2:
+  * Implementar entorno PostgreSQL 17 local doble (oficina/casa) mediante Docker Compose, migraciones SQL versionadas, seeds sintéticos, scripts pg_dump/pg_restore y batería de pruebas DDL/RLS/contables.
+  * Instalar Docker Desktop (o PostgreSQL 17 + cliente psql/pg_dump) en este equipo Windows para poder ejecutar realmente el motor de BD local (actualmente no está instalado en PATH ni Program Files).
+
+================================================================================
+8. FLUJO DE TRABAJO FUTURO (OFICINA Y CASA) Y PRÓXIMOS PASOS
+================================================================================
+Flujo estándar acordado para ambos computadores (oficina y casa):
+1. Rama de referencia única: `main` en GitHub (`Jadiaza/ao-erp`).
+2. Al iniciar jornada en oficina o en casa:
+   - Verificar rama `main` y ejecutar `git pull origin main`.
+   - Si hay nuevas migraciones SQL en Git, aplicarlas en el PostgreSQL local independiente de ese computador.
+3. Desarrollo local:
+   - Trabajar contra la base PostgreSQL local independiente (sin compartir carpeta de datos por nube/OneDrive/Dropbox).
+   - Mantener `.env` y respaldos `.dump`/`.sql` locales fuera de Git (`.gitignore`).
+4. Antes de consolidar cambios a GitHub:
+   - Ejecutar `bun run test:saas`, `bun run test:erp`, `bun run test:diocesano`, `typecheck` y `build`.
+   - Crear commits descriptivos (sin secretos) y subir con `git push origin main` (nunca `--force`).
+5. Traslado de datos entre oficina y casa (cuando sea necesario):
+   - Exportar con `pg_dump` en origen -> verificar tamaño/integridad -> transferir de forma segura -> respaldar base destino antes de sobrescribir -> restaurar con `pg_restore` -> validar integridad.
+
+Distinción de estado:
+- EJECUTADO Y VERIFICADO: auditoría main vs integracion-final-ao-erp, respaldo externo, pruebas Vitest (79/79 totales en las 3 apps), typecheck (3/3), builds de producción (3/3), ESLint lógico sin errores en cambios SaaS, commits organizados y actualización de GitHub sin push forzado.
+- PENDIENTE (siguiente etapa tras revisión): instalar Docker Desktop / PostgreSQL 17 local en el equipo y autorizar el inicio de Nivel 2.2 (Docker Compose, `.env.example`, migraciones SQL, seeds sintéticos, scripts de respaldo y pruebas en PostgreSQL 17 local).
+================================================================================
