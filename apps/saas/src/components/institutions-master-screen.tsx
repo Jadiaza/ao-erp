@@ -10,8 +10,11 @@ import {
   FilterToolbar,
   MasterFormModal,
   MasterFormSection,
+  ModalDialog,
   SummaryCard,
   StatusBadge,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type InstitutionTab =
@@ -115,6 +118,7 @@ export function InstitutionsMasterScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(institutions[0]?.id ?? null);
   const [activeTab, setActiveTab] = useState<InstitutionTab>("all");
   const [editingInst, setEditingInst] = useState<Institution | null>(null);
+  const [deletingInst, setDeletingInst] = useState<Institution | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState<InstitutionDraft>(() =>
     emptyInstitutionDraft(institutions.length + 40, organizations[0]?.id ?? "ORG-001"),
@@ -417,29 +421,23 @@ export function InstitutionsMasterScreen() {
                         <StatusBadge status={inst.status} />
                       </td>
                       <td>
-                        <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="action-link"
-                            type="button"
+                        <TableRowActions>
+                          <TableActionIconButton
+                            kind="view"
+                            label="Ver ficha"
                             onClick={() => setSelectedId(inst.id)}
-                          >
-                            Ver ficha
-                          </button>
-                          <button
-                            className="action-link"
-                            type="button"
+                          />
+                          <TableActionIconButton
+                            kind="edit"
+                            label="Editar"
                             onClick={() => openEdit(inst)}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            className="action-link danger"
-                            type="button"
-                            onClick={() => removeInstitution(inst.id)}
-                          >
-                            Eliminar
-                          </button>
-                        </div>
+                          />
+                          <TableActionIconButton
+                            kind="delete"
+                            label="Eliminar"
+                            onClick={() => setDeletingInst(inst)}
+                          />
+                        </TableRowActions>
                       </td>
                     </tr>
                   );
@@ -1115,6 +1113,30 @@ export function InstitutionsMasterScreen() {
             </label>
           </MasterFormSection>
         </MasterFormModal>
+      )}
+
+      {deletingInst && (
+        <ModalDialog
+          title="Eliminar institución"
+          description={`¿Confirmas eliminar “${deletingInst.name}” (${deletingInst.id}) de esta demostración local?`}
+          onClose={() => setDeletingInst(null)}
+        >
+          <div className="modal-actions">
+            <button type="button" className="button-muted" onClick={() => setDeletingInst(null)}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="button-primary danger-button"
+              onClick={() => {
+                removeInstitution(deletingInst.id);
+                setDeletingInst(null);
+              }}
+            >
+              Eliminar
+            </button>
+          </div>
+        </ModalDialog>
       )}
     </section>
   );

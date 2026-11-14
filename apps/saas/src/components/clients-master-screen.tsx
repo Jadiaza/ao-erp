@@ -20,8 +20,11 @@ import {
   FilterToolbar,
   MasterFormModal,
   MasterFormSection,
+  ModalDialog,
   SummaryCard,
   StatusBadge,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type ClientTab =
@@ -136,6 +139,7 @@ export function ClientsMasterScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(clients[0]?.id ?? null);
   const [activeTab, setActiveTab] = useState<ClientTab>("all");
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [deletingClient, setDeletingClient] = useState<Client | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState<ClientDraft>(() => emptyClientDraft(clients.length + 1));
   const [formError, setFormError] = useState("");
@@ -460,29 +464,23 @@ export function ClientsMasterScreen() {
                         <StatusBadge status={client.status} />
                       </td>
                       <td>
-                        <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="action-link"
-                            type="button"
+                        <TableRowActions>
+                          <TableActionIconButton
+                            kind="view"
+                            label="Ver ficha"
                             onClick={() => setSelectedId(client.id)}
-                          >
-                            Ver ficha
-                          </button>
-                          <button
-                            className="action-link"
-                            type="button"
+                          />
+                          <TableActionIconButton
+                            kind="edit"
+                            label="Editar"
                             onClick={() => openEdit(client)}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            className="action-link danger"
-                            type="button"
-                            onClick={() => removeClient(client.id)}
-                          >
-                            Eliminar
-                          </button>
-                        </div>
+                          />
+                          <TableActionIconButton
+                            kind="delete"
+                            label="Eliminar"
+                            onClick={() => setDeletingClient(client)}
+                          />
+                        </TableRowActions>
                       </td>
                     </tr>
                   );
@@ -1307,6 +1305,30 @@ export function ClientsMasterScreen() {
             </div>
           </form>
         </div>
+      )}
+
+      {deletingClient && (
+        <ModalDialog
+          title="Eliminar cliente"
+          description={`¿Confirmas eliminar “${deletingClient.name}” (${deletingClient.id}) de esta demostración local?`}
+          onClose={() => setDeletingClient(null)}
+        >
+          <div className="modal-actions">
+            <button type="button" className="button-muted" onClick={() => setDeletingClient(null)}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="button-primary danger-button"
+              onClick={() => {
+                removeClient(deletingClient.id);
+                setDeletingClient(null);
+              }}
+            >
+              Eliminar
+            </button>
+          </div>
+        </ModalDialog>
       )}
     </section>
   );

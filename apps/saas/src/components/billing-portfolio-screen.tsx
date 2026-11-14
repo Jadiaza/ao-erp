@@ -26,6 +26,8 @@ import {
   ModalDialog,
   StatusBadge,
   SummaryCard,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type BillingTab = "invoices" | "payments";
@@ -507,14 +509,12 @@ export function BillingPortfolioScreen() {
                           <StatusBadge status={pStatus} />
                         </td>
                         <td>
-                          <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              className="action-link"
-                              type="button"
+                          <TableRowActions>
+                            <TableActionIconButton
+                              kind="view"
+                              label="Ver ficha"
                               onClick={() => setSelectedInvoiceId(inv.id)}
-                            >
-                              Ver ficha
-                            </button>
+                            />
                             {inv.status !== "Anulada" && balance > 0 ? (
                               <button
                                 className="action-link"
@@ -525,15 +525,13 @@ export function BillingPortfolioScreen() {
                               </button>
                             ) : null}
                             {inv.status !== "Anulada" ? (
-                              <button
-                                className="action-link"
-                                type="button"
+                              <TableActionIconButton
+                                kind="edit"
+                                label="Editar"
                                 onClick={() => openEditInvoice(inv)}
-                              >
-                                Editar
-                              </button>
+                              />
                             ) : null}
-                          </div>
+                          </TableRowActions>
                         </td>
                       </tr>
                     );

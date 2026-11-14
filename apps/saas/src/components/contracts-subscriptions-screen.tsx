@@ -24,6 +24,8 @@ import {
   ModalDialog,
   StatusBadge,
   SummaryCard,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type CommercialTab = "contracts" | "subscriptions";
@@ -492,21 +494,17 @@ export function ContractsSubscriptionsScreen() {
                           <StatusBadge status={contract.status} />
                         </td>
                         <td>
-                          <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              className="action-link"
-                              type="button"
+                          <TableRowActions>
+                            <TableActionIconButton
+                              kind="view"
+                              label="Ver ficha"
                               onClick={() => setSelectedContractId(contract.id)}
-                            >
-                              Ver ficha
-                            </button>
-                            <button
-                              className="action-link"
-                              type="button"
+                            />
+                            <TableActionIconButton
+                              kind="edit"
+                              label="Editar"
                               onClick={() => openEditContract(contract)}
-                            >
-                              Editar
-                            </button>
+                            />
                             {contract.status !== "Suspendido" && (
                               <button
                                 className="action-link danger"
@@ -521,7 +519,7 @@ export function ContractsSubscriptionsScreen() {
                                 Suspender
                               </button>
                             )}
-                          </div>
+                          </TableRowActions>
                         </td>
                       </tr>
                     );
@@ -592,17 +590,15 @@ export function ContractsSubscriptionsScreen() {
                         <StatusBadge status={sub.status} />
                       </td>
                       <td>
-                        <div className="row-actions" onClick={(e) => e.stopPropagation()}>
+                        <TableRowActions>
                           {parentContract && (
-                            <button
-                              className="action-link"
-                              type="button"
+                            <TableActionIconButton
+                              kind="configure"
+                              label="Configurar contrato"
                               onClick={() => openEditContract(parentContract)}
-                            >
-                              Gestionar
-                            </button>
+                            />
                           )}
-                        </div>
+                        </TableRowActions>
                       </td>
                     </tr>
                   );

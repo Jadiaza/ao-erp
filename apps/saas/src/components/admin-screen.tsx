@@ -9,6 +9,8 @@ import {
   ModalDialog,
   StatusBadge,
   SummaryCard,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type Row = Organization | SaaSRecord;
@@ -246,28 +248,23 @@ export function AdminScreen({
                       <StatusBadge status={row.status} />
                     </td>
                     <td>
-                      <div className="row-actions">
-                        <button
-                          type="button"
-                          className="link-button"
+                      <TableRowActions stopPropagation={false}>
+                        <TableActionIconButton
+                          kind="view"
+                          label="Ver detalle"
                           onClick={() => setSelected(row)}
-                        >
-                          <SaasIcon name="eye" size={14} />
-                          Ver
-                        </button>
-                        <button type="button" className="link-button" onClick={() => openEdit(row)}>
-                          <SaasIcon name="edit" size={14} />
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="link-button danger-link"
+                        />
+                        <TableActionIconButton
+                          kind="edit"
+                          label="Editar"
+                          onClick={() => openEdit(row)}
+                        />
+                        <TableActionIconButton
+                          kind="delete"
+                          label="Eliminar"
                           onClick={() => setDeleting(row)}
-                        >
-                          <SaasIcon name="trash" size={14} />
-                          Eliminar
-                        </button>
-                      </div>
+                        />
+                      </TableRowActions>
                     </td>
                   </tr>
                 ))}

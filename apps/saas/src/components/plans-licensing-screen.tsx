@@ -23,6 +23,8 @@ import {
   MasterFormSection,
   StatusBadge,
   SummaryCard,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type PlansLicensingTab = "plans" | "licenses" | "evaluator";
@@ -500,14 +502,12 @@ export function PlansLicensingScreen() {
                             <StatusBadge status={plan.status} />
                           </td>
                           <td>
-                            <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                className="action-link"
-                                type="button"
+                            <TableRowActions>
+                              <TableActionIconButton
+                                kind="edit"
+                                label="Editar"
                                 onClick={() => openEditPlan(plan)}
-                              >
-                                Editar
-                              </button>
+                              />
                               <button
                                 className="action-link"
                                 type="button"
@@ -519,7 +519,7 @@ export function PlansLicensingScreen() {
                               >
                                 {plan.status === "Activo" ? "Desactivar" : "Activar"}
                               </button>
-                            </div>
+                            </TableRowActions>
                           </td>
                         </tr>
                       );
@@ -730,14 +730,12 @@ export function PlansLicensingScreen() {
                           <StatusBadge status={lic.status} />
                         </td>
                         <td>
-                          <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              className="action-link"
-                              type="button"
+                          <TableRowActions>
+                            <TableActionIconButton
+                              kind="edit"
+                              label="Editar"
                               onClick={() => openEditLicense(lic)}
-                            >
-                              Editar
-                            </button>
+                            />
                             <button
                               className="action-link"
                               type="button"
@@ -749,7 +747,7 @@ export function PlansLicensingScreen() {
                             >
                               {lic.status === "Activo" ? "Suspender" : "Reactivar"}
                             </button>
-                          </div>
+                          </TableRowActions>
                         </td>
                       </tr>
                     );

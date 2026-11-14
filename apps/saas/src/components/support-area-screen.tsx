@@ -10,6 +10,8 @@ import {
   ModalDialog,
   StatusBadge,
   SummaryCard,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 const supportLinks: Array<[SupportArea, string]> = [
@@ -186,14 +188,13 @@ export function SupportAreaScreen({ area }: { area: SupportArea }) {
                       <StatusBadge status={item.status} />
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className="link-button"
-                        onClick={() => setSelected(item)}
-                      >
-                        <SaasIcon name="eye" size={14} />
-                        Ver detalle
-                      </button>
+                      <TableRowActions stopPropagation={false}>
+                        <TableActionIconButton
+                          kind="view"
+                          label="Ver detalle"
+                          onClick={() => setSelected(item)}
+                        />
+                      </TableRowActions>
                     </td>
                   </tr>
                 ))}

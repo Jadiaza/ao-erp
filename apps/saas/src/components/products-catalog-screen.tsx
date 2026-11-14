@@ -23,6 +23,8 @@ import {
   MasterFormSection,
   StatusBadge,
   SummaryCard,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type CatalogView = "products" | "modules" | "features";
@@ -540,21 +542,17 @@ export function ProductsCatalogScreen() {
                           <StatusBadge status={app.status} />
                         </td>
                         <td>
-                          <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              className="action-link"
-                              type="button"
+                          <TableRowActions>
+                            <TableActionIconButton
+                              kind="view"
+                              label="Ver ficha"
                               onClick={() => setSelectedProductId(app.id)}
-                            >
-                              Ver ficha
-                            </button>
-                            <button
-                              className="action-link"
-                              type="button"
+                            />
+                            <TableActionIconButton
+                              kind="edit"
+                              label="Editar"
                               onClick={() => openEditProduct(app)}
-                            >
-                              Editar
-                            </button>
+                            />
                             <button
                               className="action-link"
                               type="button"
@@ -566,7 +564,7 @@ export function ProductsCatalogScreen() {
                             >
                               {app.status === "Activo" ? "Desactivar" : "Activar"}
                             </button>
-                          </div>
+                          </TableRowActions>
                         </td>
                       </tr>
                     );
@@ -656,14 +654,12 @@ export function ProductsCatalogScreen() {
                           <StatusBadge status={mod.status} />
                         </td>
                         <td>
-                          <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              className="action-link"
-                              type="button"
+                          <TableRowActions>
+                            <TableActionIconButton
+                              kind="edit"
+                              label="Editar"
                               onClick={() => openEditModule(mod)}
-                            >
-                              Editar
-                            </button>
+                            />
                             <button
                               className="action-link"
                               type="button"
@@ -675,7 +671,7 @@ export function ProductsCatalogScreen() {
                             >
                               {mod.status === "Activo" ? "Desactivar" : "Activar"}
                             </button>
-                          </div>
+                          </TableRowActions>
                         </td>
                       </tr>
                     );
@@ -739,14 +735,12 @@ export function ProductsCatalogScreen() {
                           <StatusBadge status={feat.status} />
                         </td>
                         <td>
-                          <div className="row-actions">
-                            <button
-                              className="action-link"
-                              type="button"
+                          <TableRowActions stopPropagation={false}>
+                            <TableActionIconButton
+                              kind="edit"
+                              label="Editar"
                               onClick={() => openEditFeature(feat)}
-                            >
-                              Editar
-                            </button>
+                            />
                             <button
                               className="action-link"
                               type="button"
@@ -758,7 +752,7 @@ export function ProductsCatalogScreen() {
                             >
                               {feat.status === "Activo" ? "Desactivar" : "Activar"}
                             </button>
-                          </div>
+                          </TableRowActions>
                         </td>
                       </tr>
                     );

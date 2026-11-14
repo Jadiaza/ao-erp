@@ -19,10 +19,12 @@ import {
 import { SaasBrandLogo } from "../components/saas-brand-logo";
 import { SaasIcon, type SaasIconName } from "../components/saas-icons";
 import {
+  canAccessRoute,
   getAccessibleGroupLinks,
   hasModuleAccess,
   SAAS_NAV_MODULES,
 } from "../data/navigation";
+import { validateModuleRouteAccess } from "../server-functions/module-access";
 import { useSettings } from "../data/saas-repository";
 import { AuthProvider, useAuth } from "../auth/auth-context";
 
@@ -30,12 +32,19 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "A&O SaaS" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { title: "A&O SAAS" },
       { name: "description", content: "Administración comercial y técnica del ecosistema A&O." },
+      { name: "theme-color", content: "#0c3670" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "A&O SAAS" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -86,6 +95,7 @@ function RootComponent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [launcherOpen, setLauncherOpen] = useState(false);
+  const [serverRouteDenied, setServerRouteDenied] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({
     platform: true,
     commercial: true,
@@ -93,11 +103,44 @@ function RootComponent() {
   });
 
   const isLoginPage = pathname === "/login";
+  const clientRouteAllowed = !isAuthenticated || canAccessRoute(session, pathname);
 
   useEffect(() => {
     setLauncherOpen(false);
     setSidebarOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || isLoginPage || !session) {
+      setServerRouteDenied(false);
+      return;
+    }
+    let cancelled = false;
+    setServerRouteDenied(false);
+    validateModuleRouteAccess({
+      data: {
+        pathname,
+        roles: session.roles ?? [],
+        permissions: session.permissions ?? [],
+      },
+    })
+      .then((res) => {
+        if (!cancelled && !res.allowed) {
+          setServerRouteDenied(true);
+        }
+      })
+      .catch(() => {
+        /* Mantener validación local si no hay runtime de servidor disponible. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, isLoginPage, pathname, session]);
 
   useEffect(() => {
     // Protección de rutas privadas: Si no está autenticado y no está en /login, redirigir
@@ -276,12 +319,33 @@ function RootComponent() {
       )}
       <main className="workspace">
         <AppTopbar onMenuToggle={toggleMenu} pathname={pathname} />
-        <Outlet />
+        {clientRouteAllowed && !serverRouteDenied ? (
+          <Outlet />
+        ) : (
+          <section className="page">
+            <div className="panel ao-restricted-panel" role="alert">
+              <span className="ao-restricted-icon" aria-hidden="true">
+                <SaasIcon name="lock" size={24} />
+              </span>
+              <h1>Acceso restringido</h1>
+              <p>
+                Tu rol o permisos asignados no autorizan el acceso directo a esta ruta ({pathname}
+                ).
+              </p>
+              <Link to="/" className="button-primary">
+                <SaasIcon name="arrow-left" size={15} />
+                Volver al Dashboard
+              </Link>
+            </div>
+          </section>
+        )}
       </main>
-      <FloatingLauncherButton
-        open={launcherOpen}
-        onToggle={() => setLauncherOpen((current) => !current)}
-      />
+      {!launcherOpen && (
+        <FloatingLauncherButton
+          open={launcherOpen}
+          onToggle={() => setLauncherOpen((current) => !current)}
+        />
+      )}
       <ModuleLauncher
         open={launcherOpen}
         onClose={() => setLauncherOpen(false)}

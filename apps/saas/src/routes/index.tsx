@@ -100,8 +100,10 @@ function DistributionChart({ data }: { data: Array<{ label: string; value: numbe
             })}
           </g>
         </svg>
-        <strong>{total}</strong>
-        <small>Asignaciones</small>
+        <span className="donut-center">
+          <strong>{total}</strong>
+          <small>Asignaciones</small>
+        </span>
       </div>
       <div className="chart-legend">
         {data.map((item, index) => (
@@ -667,22 +669,22 @@ function Dashboard() {
                 <tbody>
                   {licenseSchedule.map((item) => (
                     <tr key={item.id}>
-                      <td>
+                      <td data-label="Licencia">
                         <Link to="/planes-licencias">{item.id}</Link>
                         <small>{item.subscriptionId}</small>
                       </td>
-                      <td>
+                      <td data-label="Institución">
                         <strong>{item.institutionName}</strong>
                         <small>{item.clientName}</small>
                       </td>
-                      <td>
+                      <td data-label="Capacidad">
                         {item.seatsText} · {item.modulesCount} módulos
                       </td>
-                      <td>
+                      <td data-label="Vigencia">
                         <strong>{item.contractEndsAt}</strong>{" "}
                         <small className="inline-renewal">Renovación: {item.renewalAt}</small>
                       </td>
-                      <td>
+                      <td data-label="Estado">
                         <StatusBadge status={item.status} />
                       </td>
                     </tr>
@@ -847,12 +849,12 @@ function Dashboard() {
                 <tbody>
                   {priorityTickets.map((ticket) => (
                     <tr key={ticket.id}>
-                      <td>
+                      <td data-label="Ticket">
                         <Link to="/soporte/mesa-ayuda">{ticket.id}</Link>
                       </td>
-                      <td>{ticket.institution}</td>
-                      <td>{ticket.title}</td>
-                      <td>
+                      <td data-label="Institución">{ticket.institution}</td>
+                      <td data-label="Asunto">{ticket.title}</td>
+                      <td data-label="Prioridad">
                         <span
                           className={`priority-badge priority-${ticket.priority
                             .normalize("NFD")
@@ -862,7 +864,7 @@ function Dashboard() {
                           {ticket.priority}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Estado">
                         <StatusBadge status={ticket.status} />
                       </td>
                     </tr>

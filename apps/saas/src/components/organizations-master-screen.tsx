@@ -9,8 +9,11 @@ import {
   FilterToolbar,
   MasterFormModal,
   MasterFormSection,
+  ModalDialog,
   SummaryCard,
   StatusBadge,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type OrganizationTab =
@@ -124,6 +127,7 @@ export function OrganizationsMasterScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(organizations[0]?.id ?? null);
   const [activeTab, setActiveTab] = useState<OrganizationTab>("all");
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
+  const [deletingOrg, setDeletingOrg] = useState<Organization | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState<OrganizationDraft>(() =>
     emptyOrganizationDraft(organizations.length + 1, clients[0]?.id ?? "CLI-001"),
@@ -415,29 +419,23 @@ export function OrganizationsMasterScreen() {
                         <StatusBadge status={org.status} />
                       </td>
                       <td>
-                        <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="action-link"
-                            type="button"
+                        <TableRowActions>
+                          <TableActionIconButton
+                            kind="view"
+                            label="Ver ficha"
                             onClick={() => setSelectedId(org.id)}
-                          >
-                            Ver ficha
-                          </button>
-                          <button
-                            className="action-link"
-                            type="button"
+                          />
+                          <TableActionIconButton
+                            kind="edit"
+                            label="Editar"
                             onClick={() => openEdit(org)}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            className="action-link danger"
-                            type="button"
-                            onClick={() => removeOrganization(org.id)}
-                          >
-                            Eliminar
-                          </button>
-                        </div>
+                          />
+                          <TableActionIconButton
+                            kind="delete"
+                            label="Eliminar"
+                            onClick={() => setDeletingOrg(org)}
+                          />
+                        </TableRowActions>
                       </td>
                     </tr>
                   );
@@ -1095,6 +1093,30 @@ export function OrganizationsMasterScreen() {
             </label>
           </MasterFormSection>
         </MasterFormModal>
+      )}
+
+      {deletingOrg && (
+        <ModalDialog
+          title="Eliminar organización"
+          description={`¿Confirmas eliminar “${deletingOrg.name}” (${deletingOrg.id}) de esta demostración local?`}
+          onClose={() => setDeletingOrg(null)}
+        >
+          <div className="modal-actions">
+            <button type="button" className="button-muted" onClick={() => setDeletingOrg(null)}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="button-primary danger-button"
+              onClick={() => {
+                removeOrganization(deletingOrg.id);
+                setDeletingOrg(null);
+              }}
+            >
+              Eliminar
+            </button>
+          </div>
+        </ModalDialog>
       )}
     </section>
   );

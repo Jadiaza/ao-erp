@@ -29,6 +29,8 @@ import {
   ModalDialog,
   StatusBadge,
   SummaryCard,
+  TableActionIconButton,
+  TableRowActions,
 } from "./saas-ui";
 
 type ProvisioningDetailTab = "stages" | "config" | "modules" | "timeline";
@@ -540,14 +542,12 @@ export function ProvisioningConsoleScreen() {
                         <StatusBadge status={req.status} />
                       </td>
                       <td>
-                        <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="action-link"
-                            type="button"
+                        <TableRowActions>
+                          <TableActionIconButton
+                            kind="view"
+                            label="Ver ficha"
                             onClick={() => setSelectedRequestId(req.id)}
-                          >
-                            Ver ficha
-                          </button>
+                          />
                           {req.status === "Fallido" ? (
                             <button
                               className="action-link"
@@ -572,7 +572,7 @@ export function ProvisioningConsoleScreen() {
                           >
                             Trazabilidad
                           </button>
-                        </div>
+                        </TableRowActions>
                       </td>
                     </tr>
                   );

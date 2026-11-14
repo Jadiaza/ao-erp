@@ -10,6 +10,59 @@ function slugifyStatus(value: string): string {
     .replace(/\s+/g, "-");
 }
 
+export type TableActionKind = "view" | "edit" | "delete" | "configure";
+
+const TABLE_ACTION_META: Record<TableActionKind, { icon: SaasIconName; defaultLabel: string }> = {
+  view: { icon: "eye", defaultLabel: "Ver ficha" },
+  edit: { icon: "edit", defaultLabel: "Editar" },
+  delete: { icon: "trash", defaultLabel: "Eliminar" },
+  configure: { icon: "settings", defaultLabel: "Configurar" },
+};
+
+export function TableActionIconButton({
+  kind,
+  label,
+  onClick,
+  disabled,
+}: {
+  kind: TableActionKind;
+  label?: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  const meta = TABLE_ACTION_META[kind];
+  const resolvedLabel = label ?? meta.defaultLabel;
+  return (
+    <button
+      type="button"
+      className={`ao-table-action-btn ao-table-action-btn--${kind}`}
+      title={resolvedLabel}
+      aria-label={resolvedLabel}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <SaasIcon name={meta.icon} size={17} />
+    </button>
+  );
+}
+
+export function TableRowActions({
+  children,
+  stopPropagation = true,
+}: {
+  children: ReactNode;
+  stopPropagation?: boolean;
+}) {
+  return (
+    <div
+      className="row-actions"
+      onClick={stopPropagation ? (event) => event.stopPropagation() : undefined}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function StatusBadge({ status }: { status: string }) {
   const normalized = slugifyStatus(status);
   return <span className={`status status-${normalized}`}>{status}</span>;

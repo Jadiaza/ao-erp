@@ -159,6 +159,7 @@ export function ModuleLauncher({
                       <SaasIcon name={module.icon} size={22} />
                     </span>
                     <span className="ao-launcher-tile-label">{module.launcherLabel}</span>
+                    <span className="ao-launcher-tile-desc">{module.description}</span>
                   </button>
                 );
               })}

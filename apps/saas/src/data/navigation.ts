@@ -10,6 +10,7 @@ export interface SaasNavModule {
   to: string;
   label: string;
   launcherLabel: string;
+  description: string;
   group: NavGroupKey;
   icon: SaasIconName;
   tone: ModuleTileTone;
@@ -24,6 +25,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/",
     label: "Dashboard",
     launcherLabel: "Dashboard",
+    description: "Resumen ejecutivo del ecosistema.",
     group: "primary",
     icon: "dashboard",
     tone: "blue",
@@ -40,6 +42,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/organizaciones",
     label: "Organizaciones",
     launcherLabel: "Organizaciones",
+    description: "Diócesis, redes y gobiernos multi-tenant.",
     group: "platform",
     icon: "organizations",
     tone: "blue",
@@ -51,6 +54,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/instituciones",
     label: "Instituciones",
     launcherLabel: "Instituciones",
+    description: "Parroquias, capillas y sedes activas.",
     group: "platform",
     icon: "institutions",
     tone: "gold",
@@ -66,6 +70,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/aprovisionamiento",
     label: "Aprovisionamiento",
     launcherLabel: "Aprovisionamiento",
+    description: "Despliegue de entornos y altas guiadas.",
     group: "platform",
     icon: "provisioning",
     tone: "sky",
@@ -77,6 +82,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/usuarios",
     label: "Usuarios",
     launcherLabel: "Usuarios",
+    description: "Cuentas globales y operadores.",
     group: "platform",
     icon: "users",
     tone: "violet",
@@ -88,6 +94,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/roles-permisos",
     label: "Roles y permisos",
     launcherLabel: "Roles y permisos",
+    description: "Control granular de acceso por rol.",
     group: "platform",
     icon: "roles",
     tone: "blue",
@@ -99,6 +106,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/clientes",
     label: "Clientes",
     launcherLabel: "Clientes",
+    description: "Titulares contractuales y cuentas.",
     group: "commercial",
     icon: "clients",
     tone: "emerald",
@@ -110,6 +118,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/productos-servicios",
     label: "Productos y servicios",
     launcherLabel: "Productos y servicios",
+    description: "Catálogo de aplicaciones A&O.",
     group: "commercial",
     icon: "products",
     tone: "emerald",
@@ -121,6 +130,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/planes-licencias",
     label: "Planes y licencias",
     launcherLabel: "Planes y licencias",
+    description: "Ediciones, cupos y vigencias.",
     group: "commercial",
     icon: "plans",
     tone: "blue",
@@ -132,6 +142,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/suscripciones",
     label: "Suscripciones y licencias",
     launcherLabel: "Suscripciones",
+    description: "Contratos recurrentes y renovaciones.",
     group: "commercial",
     icon: "subscriptions",
     tone: "violet",
@@ -143,6 +154,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/facturacion-cartera",
     label: "Facturación y cartera",
     launcherLabel: "Facturación y cartera",
+    description: "Cobros, facturas y recaudo por divisa.",
     group: "commercial",
     icon: "billing",
     tone: "rose",
@@ -154,6 +166,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/identidad-seguridad",
     label: "Identidad y seguridad",
     launcherLabel: "Identidad y seguridad",
+    description: "Sesiones, políticas y resguardo.",
     group: "control",
     icon: "security",
     tone: "amber",
@@ -165,6 +178,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/soporte",
     label: "Soporte y asistencia",
     launcherLabel: "Soporte y asistencia",
+    description: "Mesa de ayuda y diagnóstico técnico.",
     group: "control",
     icon: "support",
     tone: "violet",
@@ -180,6 +194,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/infraestructura",
     label: "Infraestructura",
     launcherLabel: "Infraestructura",
+    description: "Entornos, nodos y salud operativa.",
     group: "control",
     icon: "infrastructure",
     tone: "sky",
@@ -191,6 +206,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/auditoria-cumplimiento",
     label: "Auditoría y cumplimiento",
     launcherLabel: "Auditoría y cumplimiento",
+    description: "Bitácora de eventos y trazabilidad.",
     group: "control",
     icon: "audit",
     tone: "amber",
@@ -202,6 +218,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/analitica-reportes",
     label: "Analítica y reportes",
     launcherLabel: "Analítica y reportes",
+    description: "Indicadores y reportes ejecutivos.",
     group: "control",
     icon: "analytics",
     tone: "blue",
@@ -217,6 +234,7 @@ export const SAAS_NAV_MODULES: SaasNavModule[] = [
     to: "/configuracion",
     label: "Configuración",
     launcherLabel: "Configuración",
+    description: "Preferencias globales y tema visual.",
     group: "primary",
     icon: "settings",
     tone: "blue",
@@ -271,6 +289,23 @@ export function hasModuleAccess(session: AuthSession | null, module: SaasNavModu
   }
 
   return false;
+}
+
+export function findModuleByPathname(pathname: string): SaasNavModule | undefined {
+  if (pathname === "/") {
+    return SAAS_NAV_MODULES.find((module) => module.to === "/");
+  }
+  return SAAS_NAV_MODULES.find(
+    (module) =>
+      module.to !== "/" && (pathname === module.to || pathname.startsWith(`${module.to}/`)),
+  );
+}
+
+export function canAccessRoute(session: AuthSession | null, pathname: string): boolean {
+  if (pathname === "/login" || pathname === "/vercel-runtime") return true;
+  const targetModule = findModuleByPathname(pathname);
+  if (!targetModule) return Boolean(session);
+  return hasModuleAccess(session, targetModule);
 }
 
 export function getAccessibleLauncherModules(session: AuthSession | null): SaasNavModule[] {

@@ -27,7 +27,14 @@ import {
 } from "../data/provisioning-service";
 import type { InfrastructureIncident, TenantEnvironment } from "../data/saas-domain";
 import { repositories, useRepositoryRows } from "../data/saas-repository";
-import { DetailDrawer, MasterFormModal, MasterFormSection, StatusBadge } from "./saas-ui";
+import {
+  DetailDrawer,
+  MasterFormModal,
+  MasterFormSection,
+  StatusBadge,
+  TableActionIconButton,
+  TableRowActions,
+} from "./saas-ui";
 
 type InfraTab = "environments" | "versions" | "incidents";
 
@@ -531,18 +538,16 @@ export function InfrastructureConsoleScreen() {
                         <div className="cell-strong">{enabledModules} activos</div>
                         <div className="cell-muted">Solicitud {env.provisioningRequestId}</div>
                       </td>
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <div className="action-row">
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
+                      <td>
+                        <TableRowActions>
+                          <TableActionIconButton
+                            kind="view"
+                            label="Ver ficha"
                             onClick={() => {
                               setSelectedEnvId(env.id);
                               setDrawerOpen(true);
                             }}
-                          >
-                            Ficha
-                          </button>
+                          />
                           {env.status === "Operativo" && (
                             <button
                               type="button"
@@ -561,7 +566,7 @@ export function InfrastructureConsoleScreen() {
                               <PlayCircle size={13} /> Reactivar
                             </button>
                           )}
-                        </div>
+                        </TableRowActions>
                       </td>
                     </tr>
                   );
