@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../auth/auth-context";
+import { ROUTE_TITLES } from "../data/navigation";
 import {
   getSupportRepository,
   repositories,
@@ -9,27 +10,8 @@ import {
   useSettings,
   useSupportRows,
 } from "../data/saas-repository";
+import { AoErpBrandLogo } from "./ao-erp-brand-logo";
 import { SaasIcon } from "./saas-icons";
-
-const routeTitles: Record<string, string> = {
-  "/": "Dashboard Ejecutivo",
-  "/configuracion": "Configuración Global",
-  "/organizaciones": "Organizaciones",
-  "/instituciones": "Instituciones",
-  "/usuarios": "Usuarios Globales",
-  "/roles-permisos": "Roles y Permisos",
-  "/planes-licencias": "Planes y Licencias",
-  "/clientes": "Clientes Comerciales",
-  "/productos-servicios": "Productos y Servicios",
-  "/suscripciones": "Suscripciones y Licencias",
-  "/facturacion-cartera": "Facturación y Cartera",
-  "/identidad-seguridad": "Identidad y Seguridad",
-  "/aprovisionamiento": "Aprovisionamiento",
-  "/soporte": "Centro de Soporte",
-  "/infraestructura": "Infraestructura",
-  "/auditoria-cumplimiento": "Auditoría y Cumplimiento",
-  "/analitica-reportes": "Analítica y Reportes",
-};
 
 const themeLabels: Record<string, string> = {
   institutional: "Institucional",
@@ -52,6 +34,7 @@ export function AppTopbar({
   const [query, setQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const topbarRef = useRef<HTMLElement>(null);
 
@@ -73,6 +56,7 @@ export function AppTopbar({
         setQuery("");
         setShowNotifications(false);
         setShowProfile(false);
+        setMobileSearchOpen(false);
       }
     };
 
@@ -138,7 +122,7 @@ export function AppTopbar({
 
   const currentSectionTitle = useMemo(() => {
     if (pathname.startsWith("/soporte/")) return "Centro de Soporte";
-    return routeTitles[pathname] ?? "Consola SaaS";
+    return ROUTE_TITLES[pathname] ?? "Consola SaaS";
   }, [pathname]);
 
   const cycleTheme = () => {
@@ -160,7 +144,10 @@ export function AppTopbar({
           : "palette";
 
   return (
-    <header className="topbar" ref={topbarRef}>
+    <header
+      className={`topbar${mobileSearchOpen ? " is-mobile-search-open" : ""}`}
+      ref={topbarRef}
+    >
       <div className="topbar-left">
         <button
           className="topbar-menu"
@@ -170,6 +157,15 @@ export function AppTopbar({
         >
           <SaasIcon name="menu" size={18} />
         </button>
+        <Link to="/" className="topbar-brand-mobile" aria-label="A&O SaaS Inicio">
+          <AoErpBrandLogo
+            variant="light"
+            brandSuffix="SAAS"
+            showAppBadge={false}
+            showSubtitle
+            subtitleText="CONSOLA DEL ECOSISTEMA"
+          />
+        </Link>
         <div className="topbar-breadcrumb" aria-label="Ubicación actual">
           <span>A&amp;O SaaS</span>
           <SaasIcon name="chevron-right" size={13} />
@@ -192,7 +188,10 @@ export function AppTopbar({
                   <Link
                     key={`${result.type}-${result.id}`}
                     to={result.to as never}
-                    onClick={() => setQuery("")}
+                    onClick={() => {
+                      setQuery("");
+                      setMobileSearchOpen(false);
+                    }}
                   >
                     <span className="search-result-icon">{result.type.slice(0, 1)}</span>
                     <span>
@@ -226,6 +225,25 @@ export function AppTopbar({
           <span>{themeLabels[currentTheme] ?? "Institucional"}</span>
         </button>
         <button
+          className="topbar-icon topbar-search-toggle"
+          type="button"
+          aria-label="Buscar en el ecosistema"
+          aria-expanded={mobileSearchOpen}
+          onClick={() => {
+            setShowNotifications(false);
+            setShowProfile(false);
+            setMobileSearchOpen((prev) => {
+              const next = !prev;
+              if (next) {
+                window.setTimeout(() => searchInputRef.current?.focus(), 60);
+              }
+              return next;
+            });
+          }}
+        >
+          <SaasIcon name="search" size={17} />
+        </button>
+        <button
           className="topbar-icon"
           type="button"
           aria-label="Notificaciones"
@@ -237,7 +255,7 @@ export function AppTopbar({
           <SaasIcon name="bell" size={17} />
           <span className="notification-count">3</span>
         </button>
-        <Link className="topbar-icon" to="/soporte" aria-label="Centro de ayuda">
+        <Link className="topbar-icon topbar-help-link" to="/soporte" aria-label="Centro de ayuda">
           <SaasIcon name="help" size={17} />
         </Link>
         <div className="profile-wrap">

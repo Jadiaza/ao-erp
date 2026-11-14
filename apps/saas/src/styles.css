@@ -2898,7 +2898,7 @@ td:first-child small {
   }
 }
 
-@media (min-width: 821px) {
+@media (min-width: 1025px) {
   .sidebar-is-collapsed .sidebar {
     width: 76px;
     padding-inline: 10px;
@@ -2933,14 +2933,30 @@ td:first-child small {
   }
 }
 
-@media (max-width: 820px) {
+@media (max-width: 1024px) {
   .sidebar {
-    width: 240px;
+    width: 256px;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.22s ease;
+  }
+
+  .sidebar-is-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: block;
+    border: 0;
+    background: var(--backdrop-bg);
   }
 
   .workspace {
-    margin-left: 240px;
-    padding: 0 22px 32px;
+    margin-left: 0;
+    padding: 0 20px 96px;
   }
 
   .settings-layout {
@@ -2948,8 +2964,8 @@ td:first-child small {
   }
 
   .topbar {
-    margin-inline: -22px;
-    padding-inline: 22px;
+    margin-inline: -20px;
+    padding-inline: 20px;
   }
 
   .topbar-breadcrumb {
@@ -2977,59 +2993,25 @@ td:first-child small {
 }
 
 @media (max-width: 620px) {
-  .sidebar {
-    transform: translateX(-100%);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .sidebar-is-open .sidebar {
-    transform: translateX(0);
-  }
-
-  .sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 20;
-    display: block;
-    border: 0;
-    background: var(--backdrop-bg);
-  }
-
   .workspace {
     margin-left: 0;
-    padding: 0 15px 28px;
+    padding: 0 14px 96px;
   }
 
   .topbar {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 10px;
-    margin: 0 -15px 22px;
-    padding: 12px 15px;
-  }
-
-  .topbar-left {
-    width: 100%;
-  }
-
-  .global-search {
-    width: 100%;
-  }
-
-  .topbar-actions {
-    justify-content: space-between;
-  }
-
-  .topbar-actions select {
-    min-width: 0;
-    flex: 1;
+    margin: 0 -14px 18px;
+    padding: 10px 14px;
   }
 
   .profile-button>span:nth-child(2) {
     display: none;
   }
 
-  .kpi-grid,
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
   .executive-grid,
   .mid-grid,
   .lower-grid {
@@ -3038,11 +3020,12 @@ td:first-child small {
 
   .ecosystem-panel {
     grid-column: auto;
+    order: -1;
   }
 
   .page-header {
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
 
   .page-header>.button-primary {
@@ -4792,5 +4775,907 @@ td:first-child small {
 
   .ao-login-card {
     padding: 28px 24px 24px;
+  }
+}
+
+/* ==========================================================================
+   LANZADOR DE MÓDULOS, BOTÓN FLOTANTE Y SHELL RESPONSIVE (TABLET & MÓVIL)
+   ========================================================================== */
+
+/* Elementos visibles únicamente en Tablet y Móvil (<= 1024px) */
+.topbar-brand-mobile,
+.topbar-search-toggle,
+.dashboard-hero-backdrop,
+.dashboard-subtitle-compact,
+.dashboard-ecosystem-pill,
+.ecosystem-item-status,
+.ao-bottom-nav,
+.ao-profile-sheet-backdrop {
+  display: none;
+}
+
+.ecosystem-item-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Botón Flotante de Acceso Rápido (FAB) */
+.ao-fab-launcher {
+  position: fixed;
+  right: 26px;
+  bottom: 24px;
+  z-index: 45;
+  display: inline-grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.ao-fab-launcher:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.ao-fab-launcher:active {
+  transform: scale(0.96);
+}
+
+.ao-fab-launcher-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(250 204 21 / 52%) 0%,
+    rgb(230 167 46 / 28%) 62%,
+    rgb(230 167 46 / 0%) 74%
+  );
+  pointer-events: none;
+}
+
+.ao-fab-launcher-core {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2.5px solid #f5b71a;
+  background: linear-gradient(155deg, #0e3d7d 0%, #092754 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgb(9 35 68 / 38%);
+}
+
+.ao-fab-launcher.is-active .ao-fab-launcher-core {
+  border-color: #fde047;
+  background: linear-gradient(155deg, #1551a1 0%, #0b3574 100%);
+}
+
+/* Panel Superpuesto / Portal del Lanzador de Módulos */
+.ao-launcher-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(8 23 43 / 54%);
+  backdrop-filter: blur(5px);
+}
+
+.ao-launcher-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 880px);
+  max-height: min(88dvh, 760px);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 22px;
+  background: #f2f6fb;
+  box-shadow: 0 28px 64px rgb(6 20 39 / 42%);
+}
+
+.ao-launcher-header {
+  position: relative;
+  padding: 18px 24px 20px;
+  background: linear-gradient(145deg, #071e3d 0%, #0d3a78 52%, #1969c7 100%);
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.ao-launcher-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 20%, rgb(250 204 21 / 16%), transparent 45%);
+  pointer-events: none;
+}
+
+.ao-launcher-header-top {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+}
+
+.ao-launcher-brand-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.ao-launcher-brand-svg svg {
+  width: 210px !important;
+}
+
+.ao-launcher-back-btn,
+.ao-launcher-close-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 11px;
+  background: rgb(255 255 255 / 10%);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ao-launcher-back-btn:hover,
+.ao-launcher-close-btn:hover {
+  background: rgb(255 255 255 / 20%);
+}
+
+.ao-launcher-hero-copy {
+  position: relative;
+  z-index: 1;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.ao-launcher-hero-copy h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.ao-launcher-hero-copy p {
+  margin: 4px 0 0;
+  color: rgb(226 238 252 / 90%);
+  font-size: 13px;
+}
+
+.ao-launcher-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 20px 22px 18px;
+}
+
+.ao-launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ao-launcher-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 112px;
+  padding: 14px 10px;
+  border: 1px solid #e1eaf4;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #0b294d;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgb(15 41 75 / 6%);
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.ao-launcher-tile:hover {
+  transform: translateY(-2px);
+  border-color: #9dc2eb;
+  box-shadow: 0 10px 22px rgb(15 41 75 / 11%);
+}
+
+.ao-launcher-tile.is-active {
+  border: 1.5px solid #1769b0;
+  background: linear-gradient(180deg, #ffffff 0%, #eef5fd 100%);
+  box-shadow: 0 6px 18px rgb(23 105 176 / 15%);
+}
+
+.ao-launcher-tile-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+}
+
+.ao-launcher-tile-icon--blue {
+  background: #e6f0fc;
+  color: #1558a6;
+}
+
+.ao-launcher-tile-icon--gold,
+.ao-launcher-tile-icon--amber {
+  background: #fef3d6;
+  color: #b87308;
+}
+
+.ao-launcher-tile-icon--sky {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.ao-launcher-tile-icon--violet {
+  background: #f1e9fe;
+  color: #7c3aed;
+}
+
+.ao-launcher-tile-icon--emerald {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.ao-launcher-tile-icon--rose {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.ao-launcher-tile-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #102a43;
+}
+
+.ao-launcher-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #475569;
+  text-align: center;
+}
+
+.ao-launcher-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #dde6f0;
+  color: #486581;
+  font-size: 12px;
+}
+
+.ao-launcher-role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e2ecf7;
+  color: #102a43;
+  font-weight: 600;
+}
+
+.ao-launcher-count-chip {
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   SHELL RESPONSIVE TABLET Y MÓVIL (<= 1024px) — FIEL A REFERENCIAS VISUALES
+   ========================================================================== */
+@media (max-width: 1024px) {
+  /* Topbar azul institucional con logo centrado/izquierdo y acciones limpias */
+  .topbar {
+    position: relative;
+    min-height: 62px;
+    margin-bottom: 0;
+    padding: 10px 18px;
+    border-bottom: 1px solid rgb(255 255 255 / 12%);
+    background: linear-gradient(125deg, #071e3d 0%, #0c3670 55%, #165bb0 100%);
+    color: #ffffff;
+  }
+
+  .topbar-menu {
+    border-color: rgb(255 255 255 / 18%);
+    background: rgb(255 255 255 / 10%);
+    color: #ffffff;
+  }
+
+  .topbar-menu:hover {
+    background: rgb(255 255 255 / 20%);
+  }
+
+  .topbar-brand-mobile {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  .topbar-brand-mobile svg {
+    width: 175px !important;
+  }
+
+  .topbar .global-search,
+  .topbar-actions select,
+  .theme-toggle-button,
+  .profile-button > span:nth-child(2),
+  .profile-button > svg {
+    display: none;
+  }
+
+  .topbar.is-mobile-search-open {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .topbar.is-mobile-search-open .global-search {
+    display: flex;
+    order: 3;
+    width: 100%;
+    flex: 1 0 100%;
+    margin-top: 4px;
+    background: #ffffff;
+  }
+
+  .topbar-search-toggle {
+    display: inline-grid;
+  }
+
+  .topbar-icon {
+    border-color: rgb(255 255 255 / 16%);
+    background: rgb(255 255 255 / 10%);
+    color: #ffffff;
+  }
+
+  .topbar-icon:hover {
+    background: rgb(255 255 255 / 20%);
+  }
+
+  .profile-button {
+    padding: 3px;
+    border-radius: 999px;
+    border: 1.5px solid rgb(255 255 255 / 32%);
+    background: rgb(255 255 255 / 12%);
+  }
+
+  .profile-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #1769b0;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  /* Hero Azul del Dashboard Ejecutivo fiel a pantalla_tablet.png */
+  .dashboard-page {
+    padding-top: 0;
+  }
+
+  .dashboard-header {
+    position: relative;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin: 0 -20px 18px;
+    padding: 18px 20px 22px;
+    background: linear-gradient(135deg, #082347 0%, #0e3d7d 52%, #1968c4 100%);
+    color: #ffffff;
+    overflow: hidden;
+  }
+
+  .dashboard-hero-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .dashboard-hero-church {
+    position: absolute;
+    right: -12px;
+    top: -14px;
+    width: 240px;
+    height: 195px;
+    object-fit: cover;
+    object-position: center 22%;
+    opacity: 0.42;
+    mask-image: radial-gradient(ellipse at 65% 45%, #000 32%, transparent 74%);
+    -webkit-mask-image: radial-gradient(ellipse at 65% 45%, #000 32%, transparent 74%);
+  }
+
+  .dashboard-hero-wave {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 65%;
+    height: 110px;
+  }
+
+  .dashboard-header-copy {
+    position: relative;
+    z-index: 1;
+  }
+
+  .dashboard-header .eyebrow {
+    color: #dbeafe;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .dashboard-header h1 {
+    color: #ffffff;
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+
+  .dashboard-header p:not(.eyebrow) {
+    color: rgb(226 238 252 / 92%);
+    font-size: 13.5px;
+  }
+
+  .dashboard-actions {
+    position: relative;
+    z-index: 1;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .dashboard-quick-actions {
+    display: none;
+  }
+
+  .dashboard-ecosystem-pill {
+    display: inline-flex;
+  }
+
+  .dashboard-actions select {
+    min-width: 155px;
+    height: 36px;
+    border: 1px solid rgb(255 255 255 / 40%);
+    border-radius: 999px;
+    background: #ffffff;
+    color: #102a43;
+    font-weight: 600;
+    font-size: 13px;
+    padding-inline: 14px;
+    box-shadow: 0 4px 12px rgb(7 26 51 / 18%);
+  }
+
+  .dashboard-actions .demo-badge {
+    margin-left: auto;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #0c4a6e;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .executive-notice {
+    display: none;
+  }
+
+  /* Tarjetas KPI compactas (icono izquierdo + valor/etiqueta a la derecha) */
+  .kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .metric-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 2px;
+    min-height: 78px;
+    padding: 13px 14px;
+    border-radius: 16px;
+  }
+
+  .metric-card-top,
+  .metric-card-body {
+    display: contents;
+  }
+
+  .metric-icon {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .metric-card strong {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 22px;
+    line-height: 1.1;
+  }
+
+  .metric-label {
+    grid-column: 2;
+    grid-row: 2;
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .metric-card span.metric-detail {
+    display: none;
+  }
+
+  .executive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ecosystem-panel {
+    grid-column: span 2;
+  }
+
+  .ecosystem-item-status {
+    display: inline-flex;
+  }
+
+  .mid-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Barra de navegación inferior fija */
+  .ao-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 35;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    min-height: 64px;
+    padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: 0 -6px 20px rgb(15 39 68 / 8%);
+  }
+
+  .ao-bottom-nav-item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 60px;
+    padding: 4px 10px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #486581;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .ao-bottom-nav-item.is-active {
+    color: #0b4fa3;
+    font-weight: 700;
+  }
+
+  .ao-bottom-nav-item.is-active .ao-bottom-nav-icon {
+    background: #dbeafe;
+    color: #0b4fa3;
+  }
+
+  .ao-bottom-nav-icon {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 28px;
+    border-radius: 10px;
+  }
+
+  .ao-bottom-nav-dot {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid #ffffff;
+    background: #ef4444;
+  }
+
+  /* Hoja rápida de perfil en tablet y móvil */
+  .ao-profile-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px 16px 80px;
+    background: rgb(8 23 43 / 42%);
+  }
+
+  .ao-profile-sheet {
+    width: min(100%, 420px);
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .ao-profile-sheet-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line-subtle);
+  }
+
+  .ao-profile-sheet-avatar {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #0d3a78;
+    color: #ffffff;
+    font-weight: 800;
+  }
+
+  .ao-profile-sheet-head strong {
+    display: block;
+    color: var(--ink);
+    font-size: 15px;
+  }
+
+  .ao-profile-sheet-head small {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .ao-profile-sheet-role {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--blue-50);
+    color: var(--navy-700);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .ao-profile-sheet-actions {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .ao-profile-sheet-actions button,
+  .ao-profile-sheet-actions a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line-subtle);
+    border-radius: 11px;
+    background: var(--surface-subtle);
+    color: var(--ink);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .ao-profile-sheet-logout {
+    color: var(--danger) !important;
+  }
+
+  /* Tableta horizontal (821px - 1024px): lanzador adaptable */
+  .ao-fab-launcher {
+    right: 20px;
+    bottom: 78px;
+  }
+
+  .ao-launcher-dialog {
+    width: min(92vw, 760px);
+  }
+}
+
+/* Tableta vertical (621px - 820px): cuadrícula de aplicaciones */
+@media (max-width: 820px) and (min-width: 621px) {
+  .ao-launcher-dialog {
+    width: min(94vw, 660px);
+    max-height: 86dvh;
+  }
+
+  .ao-launcher-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mid-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Móvil (<= 620px): fiel a pantalla_movil.png y portal de módulos a pantalla completa */
+@media (max-width: 620px) {
+  .topbar {
+    padding: 10px 14px;
+  }
+
+  .topbar-left {
+    flex: 1;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .topbar-brand-mobile svg {
+    width: 152px !important;
+  }
+
+  .topbar-help-link,
+  .topbar-search-toggle {
+    display: none;
+  }
+
+  .dashboard-header {
+    margin: 0 -14px 16px;
+    padding: 10px 16px 18px;
+    gap: 10px;
+  }
+
+  .dashboard-header .eyebrow {
+    display: none;
+  }
+
+  .dashboard-header h1 {
+    font-size: 24px;
+  }
+
+  .dashboard-subtitle-full {
+    display: none;
+  }
+
+  .dashboard-subtitle-compact {
+    display: block;
+    color: rgb(226 238 252 / 94%);
+    font-size: 13px;
+    margin: 0;
+  }
+
+  .dashboard-actions {
+    display: none;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .metric-card {
+    padding: 12px 11px;
+    column-gap: 10px;
+    row-gap: 2px;
+    min-height: 70px;
+  }
+
+  .metric-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .metric-card strong {
+    font-size: 20px;
+  }
+
+  .metric-label {
+    font-size: 11.5px;
+  }
+
+  .mid-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Botón flotante en esquina inferior izquierda sobre la barra inferior */
+  .ao-fab-launcher {
+    left: 16px;
+    right: auto;
+    bottom: 76px;
+  }
+
+  /* Barra inferior móvil con 4 accesos (Inicio, Reportes, Alertas, Perfil) */
+  .ao-bottom-nav-modules {
+    display: none;
+  }
+
+  /* Portal de módulos a pantalla completa */
+  .ao-launcher-backdrop {
+    padding: 0;
+    background: #f2f6fb;
+  }
+
+  .ao-launcher-dialog {
+    width: 100%;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .ao-launcher-header {
+    padding: 14px 16px 18px;
+  }
+
+  .ao-launcher-close-btn {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .ao-launcher-body {
+    padding: 16px 14px 28px;
+  }
+
+  .ao-launcher-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .ao-launcher-tile {
+    min-height: 104px;
+    padding: 12px 8px;
+    gap: 8px;
+    border-radius: 15px;
+  }
+
+  .ao-launcher-tile-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .ao-launcher-tile-label {
+    font-size: 11.5px;
   }
 }

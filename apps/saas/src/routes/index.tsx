@@ -394,10 +394,33 @@ function Dashboard() {
   return (
     <div className="page dashboard-page">
       <header className="page-header dashboard-header">
-        <div>
+        <div className="dashboard-hero-backdrop" aria-hidden="true">
+          <img src="/church-hero.jpg" alt="" className="dashboard-hero-church" />
+          <svg
+            className="dashboard-hero-wave"
+            viewBox="0 0 600 180"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="ao-dash-gold-wave" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ca8a04" stopOpacity="0" />
+                <stop offset="45%" stopColor="#e5a01b" stopOpacity="0.92" />
+                <stop offset="100%" stopColor="#fde047" stopOpacity="1" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 180 175 C 330 165, 470 120, 600 32 L 600 62 C 470 142, 330 178, 180 180 Z"
+              fill="url(#ao-dash-gold-wave)"
+            />
+          </svg>
+        </div>
+        <div className="dashboard-header-copy">
           <p className="eyebrow">A&amp;O SaaS · Centro de Control Ejecutivo</p>
           <h1>Dashboard Ejecutivo</h1>
-          <p>Administración comercial y técnica del ecosistema de productos A&amp;O.</p>
+          <p className="dashboard-subtitle-full">
+            Administración comercial y técnica del ecosistema de productos A&amp;O.
+          </p>
+          <p className="dashboard-subtitle-compact">Administración del ecosistema A&amp;O</p>
         </div>
         <div className="dashboard-actions">
           <div className="dashboard-quick-actions">
@@ -410,6 +433,13 @@ function Dashboard() {
               Aprovisionamiento
             </Link>
           </div>
+          <select
+            className="dashboard-ecosystem-pill"
+            aria-label="Ecosistema activo"
+            defaultValue="ecosistema"
+          >
+            <option value="ecosistema">Ecosistema A&amp;O</option>
+          </select>
           <select
             aria-label="Periodo del dashboard"
             value={period}
@@ -559,8 +589,13 @@ function Dashboard() {
                 <strong>A&amp;O ERP</strong>
                 <small>Estado demostrativo · sin conexión real</small>
               </span>
-              <span className="ecosystem-chevron">
-                <SaasIcon name="chevron-right" size={16} />
+              <span className="ecosystem-item-right">
+                <span className="ecosystem-item-status">
+                  <StatusBadge status="Operativo" />
+                </span>
+                <span className="ecosystem-chevron">
+                  <SaasIcon name="chevron-right" size={16} />
+                </span>
               </span>
             </Link>
             <Link to="/productos-servicios" className="ecosystem-item">
@@ -569,8 +604,13 @@ function Dashboard() {
                 <strong>A&amp;O Diocesano</strong>
                 <small>Estado demostrativo · sin conexión real</small>
               </span>
-              <span className="ecosystem-chevron">
-                <SaasIcon name="chevron-right" size={16} />
+              <span className="ecosystem-item-right">
+                <span className="ecosystem-item-status">
+                  <StatusBadge status="Operativo" />
+                </span>
+                <span className="ecosystem-chevron">
+                  <SaasIcon name="chevron-right" size={16} />
+                </span>
               </span>
             </Link>
             <Link to="/soporte/diagnostico-documental" className="ecosystem-item">
@@ -579,8 +619,13 @@ function Dashboard() {
                 <strong>Servicios documentales</strong>
                 <small>No conectado · Paperless no configurado</small>
               </span>
-              <span className="ecosystem-chevron">
-                <SaasIcon name="chevron-right" size={16} />
+              <span className="ecosystem-item-right">
+                <span className="ecosystem-item-status">
+                  <StatusBadge status="Inactivo" />
+                </span>
+                <span className="ecosystem-chevron">
+                  <SaasIcon name="chevron-right" size={16} />
+                </span>
               </span>
             </Link>
           </div>
@@ -653,7 +698,7 @@ function Dashboard() {
           )}
         </article>
 
-        <article className="panel alerts-panel">
+        <article id="alertas-operativas" className="panel alerts-panel">
           <div className="section-heading">
             <div className="section-heading-title">
               <span className="section-heading-icon section-heading-icon--gold">

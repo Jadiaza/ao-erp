@@ -22,10 +22,12 @@ import {
   FileText,
   Filter,
   Headset,
+  Home,
   Info,
   Landmark,
   Layers,
   LayoutDashboard,
+  LayoutGrid,
   Lock,
   LogIn,
   LogOut,
@@ -48,6 +50,7 @@ import {
   Sun,
   Terminal,
   Trash2,
+  User,
   Users,
   X,
   type LucideProps,
@@ -55,6 +58,9 @@ import {
 
 export type SaasIconName =
   | "dashboard"
+  | "home"
+  | "layout-grid"
+  | "user"
   | "settings"
   | "organizations"
   | "institutions"
@@ -115,6 +121,9 @@ export type SaasIconName =
 
 const iconMap = {
   dashboard: LayoutDashboard,
+  home: Home,
+  "layout-grid": LayoutGrid,
+  user: User,
   settings: Settings,
   organizations: Network,
   institutions: Landmark,

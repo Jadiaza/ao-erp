@@ -11,30 +11,20 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import styles from "../styles.css?url";
 import { AppTopbar } from "../components/app-topbar";
+import {
+  FloatingLauncherButton,
+  MobileBottomNav,
+  ModuleLauncher,
+} from "../components/module-launcher";
 import { SaasBrandLogo } from "../components/saas-brand-logo";
 import { SaasIcon, type SaasIconName } from "../components/saas-icons";
+import {
+  getAccessibleGroupLinks,
+  hasModuleAccess,
+  SAAS_NAV_MODULES,
+} from "../data/navigation";
 import { useSettings } from "../data/saas-repository";
 import { AuthProvider, useAuth } from "../auth/auth-context";
-
-const routeIconMap: Record<string, SaasIconName> = {
-  "/": "dashboard",
-  "/configuracion": "settings",
-  "/organizaciones": "organizations",
-  "/instituciones": "institutions",
-  "/usuarios": "users",
-  "/roles-permisos": "roles",
-  "/planes-licencias": "plans",
-  "/clientes": "clients",
-  "/productos-servicios": "products",
-  "/suscripciones": "subscriptions",
-  "/facturacion-cartera": "billing",
-  "/identidad-seguridad": "security",
-  "/aprovisionamiento": "provisioning",
-  "/soporte": "support",
-  "/infraestructura": "infrastructure",
-  "/auditoria-cumplimiento": "audit",
-  "/analitica-reportes": "analytics",
-};
 
 export const Route = createRootRoute({
   head: () => ({
@@ -82,30 +72,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const platformLinks: Array<[string, string]> = [
-  ["/organizaciones", "Organizaciones"],
-  ["/instituciones", "Instituciones"],
-  ["/aprovisionamiento", "Aprovisionamiento"],
-  ["/usuarios", "Usuarios"],
-  ["/roles-permisos", "Roles y permisos"],
-];
-
-const commercialLinks: Array<[string, string]> = [
-  ["/clientes", "Clientes"],
-  ["/productos-servicios", "Productos y servicios"],
-  ["/planes-licencias", "Planes y licencias"],
-  ["/suscripciones", "Suscripciones y licencias"],
-  ["/facturacion-cartera", "Facturación y cartera"],
-];
-
-const controlLinks: Array<[string, string]> = [
-  ["/identidad-seguridad", "Identidad y seguridad"],
-  ["/soporte", "Soporte y asistencia"],
-  ["/infraestructura", "Infraestructura"],
-  ["/auditoria-cumplimiento", "Auditoría y cumplimiento"],
-  ["/analitica-reportes", "Analítica y reportes"],
-];
-
 function isRouteActive(pathname: string, target: string): boolean {
   if (target === "/") return pathname === "/";
   return pathname === target || pathname.startsWith(`${target}/`);
@@ -114,11 +80,12 @@ function isRouteActive(pathname: string, target: string): boolean {
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, session } = useAuth();
   const settings = useSettings();
   const [systemDark, setSystemDark] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [launcherOpen, setLauncherOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({
     platform: true,
     commercial: true,
@@ -126,6 +93,11 @@ function RootComponent() {
   });
 
   const isLoginPage = pathname === "/login";
+
+  useEffect(() => {
+    setLauncherOpen(false);
+    setSidebarOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     // Protección de rutas privadas: Si no está autenticado y no está en /login, redirigir
@@ -192,9 +164,21 @@ function RootComponent() {
     setExpandedGroups((current) => ({ ...current, [group]: !current[group] }));
 
   const toggleMenu = () => {
-    if (typeof window !== "undefined" && window.innerWidth <= 620) setSidebarOpen(true);
+    if (typeof window !== "undefined" && window.innerWidth <= 1024) setSidebarOpen((open) => !open);
     else setSidebarCollapsed((current) => !current);
   };
+
+  const platformLinks = getAccessibleGroupLinks(session, "platform").map(
+    (item) => [item.to, item.label, item.icon] as [string, string, SaasIconName],
+  );
+  const commercialLinks = getAccessibleGroupLinks(session, "commercial").map(
+    (item) => [item.to, item.label, item.icon] as [string, string, SaasIconName],
+  );
+  const controlLinks = getAccessibleGroupLinks(session, "control").map(
+    (item) => [item.to, item.label, item.icon] as [string, string, SaasIconName],
+  );
+  const configModule = SAAS_NAV_MODULES.find((item) => item.id === "configuracion");
+  const canAccessConfig = !session || !configModule || hasModuleAccess(session, configModule);
 
   // Si estamos en la página de login, renderizamos directamente sin barra lateral ni topbar
   if (isLoginPage) {
@@ -236,34 +220,42 @@ function RootComponent() {
         <nav aria-label="Navegación principal" onClick={() => setSidebarOpen(false)}>
           <div className="nav-primary-list">
             <SidebarNavLink to="/" label="Dashboard" icon="dashboard" pathname={pathname} />
-            <SidebarNavLink
-              to="/configuracion"
-              label="Configuración"
-              icon="settings"
+            {canAccessConfig && (
+              <SidebarNavLink
+                to="/configuracion"
+                label="Configuración"
+                icon="settings"
+                pathname={pathname}
+              />
+            )}
+          </div>
+          {platformLinks.length > 0 && (
+            <NavGroup
+              title="TENANTS Y GOBIERNO"
+              links={platformLinks}
+              expanded={expandedGroups.platform || sidebarCollapsed}
+              onToggle={() => toggleGroup("platform")}
               pathname={pathname}
             />
-          </div>
-          <NavGroup
-            title="TENANTS Y GOBIERNO"
-            links={platformLinks}
-            expanded={expandedGroups.platform || sidebarCollapsed}
-            onToggle={() => toggleGroup("platform")}
-            pathname={pathname}
-          />
-          <NavGroup
-            title="ECOSISTEMA COMERCIAL"
-            links={commercialLinks}
-            expanded={expandedGroups.commercial || sidebarCollapsed}
-            onToggle={() => toggleGroup("commercial")}
-            pathname={pathname}
-          />
-          <NavGroup
-            title="CONTROL Y SOPORTE"
-            links={controlLinks}
-            expanded={expandedGroups.control || sidebarCollapsed}
-            onToggle={() => toggleGroup("control")}
-            pathname={pathname}
-          />
+          )}
+          {commercialLinks.length > 0 && (
+            <NavGroup
+              title="ECOSISTEMA COMERCIAL"
+              links={commercialLinks}
+              expanded={expandedGroups.commercial || sidebarCollapsed}
+              onToggle={() => toggleGroup("commercial")}
+              pathname={pathname}
+            />
+          )}
+          {controlLinks.length > 0 && (
+            <NavGroup
+              title="CONTROL Y SOPORTE"
+              links={controlLinks}
+              expanded={expandedGroups.control || sidebarCollapsed}
+              onToggle={() => toggleGroup("control")}
+              pathname={pathname}
+            />
+          )}
         </nav>
         <div className="sidebar-operator">
           <span className="operator-avatar">AO</span>
@@ -286,6 +278,21 @@ function RootComponent() {
         <AppTopbar onMenuToggle={toggleMenu} pathname={pathname} />
         <Outlet />
       </main>
+      <FloatingLauncherButton
+        open={launcherOpen}
+        onToggle={() => setLauncherOpen((current) => !current)}
+      />
+      <ModuleLauncher
+        open={launcherOpen}
+        onClose={() => setLauncherOpen(false)}
+        pathname={pathname}
+      />
+      <MobileBottomNav
+        pathname={pathname}
+        launcherOpen={launcherOpen}
+        onOpenLauncher={() => setLauncherOpen(true)}
+        onCloseLauncher={() => setLauncherOpen(false)}
+      />
     </div>
   );
 }
@@ -325,7 +332,7 @@ function NavGroup({
   pathname,
 }: {
   title: string;
-  links: Array<[string, string]>;
+  links: Array<[string, string, SaasIconName]>;
   expanded: boolean;
   onToggle: () => void;
   pathname: string;
@@ -340,12 +347,12 @@ function NavGroup({
       </button>
       {expanded && (
         <div className="nav-group-items">
-          {links.map(([to, label]) => (
+          {links.map(([to, label, icon]) => (
             <SidebarNavLink
               key={to}
               to={to}
               label={label}
-              icon={routeIconMap[to] ?? "dashboard"}
+              icon={icon}
               pathname={pathname}
             />
           ))}

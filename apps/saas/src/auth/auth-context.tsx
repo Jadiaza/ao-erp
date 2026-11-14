@@ -19,9 +19,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<AuthSession | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function AuthProvider({
+  children,
+  initialSession = null,
+}: {
+  children: ReactNode;
+  initialSession?: AuthSession | null;
+}) {
+  const [session, setSession] = useState<AuthSession | null>(initialSession);
+  const [isLoading, setIsLoading] = useState(initialSession === null);
 
   useEffect(() => {
     // Restaurar sesión activa si existe y no ha expirado
