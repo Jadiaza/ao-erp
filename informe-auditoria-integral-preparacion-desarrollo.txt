@@ -1,0 +1,195 @@
+# INFORME DE AUDITORÍA INTEGRAL DE PREPARACIÓN PARA DESARROLLO — A&O SAAS / A&O ERP
+
+Repositorio: D:\Proyectos\ao-erp
+Rama de trabajo: integracion-final-ao-erp
+Commit base (HEAD): 6f8b1dc ("docs: add implementation and audit reports")
+Estado de trabajo previo conservado: Fase 1 y Fase 2 de A&O Cristiano completadas localmente (sin commit, sin push, sin cambios en producción ni Supabase).
+Fecha: 2026-11-13
+Alcance: auditoría integral de preparación para desarrollo de backend y base de datos. No se modificó código fuente, rutas, dependencias, migraciones, SQL ni Supabase. Este archivo fue creado únicamente por solicitud expresa del usuario.
+
+================================================================================
+1. AUDITORÍA DE A&O SAAS (apps/saas)
+================================================================================
+1.1 Revisión por dominio
+- Clientes y Organizaciones (clients-master-screen.tsx, organizations-master-screen.tsx, saas-domain.ts, saas-repository.ts):
+  * Estado: CRUD completo en localStorage ("ao-saas:domain:v1") vía EntityRepository.
+  * Brecha: falta entidad canónica parties (party_persons / party_organizations, decisión D-04 en Docs 13 y 15).
+- Instituciones y Sedes (institutions-master-screen.tsx, saas-domain.ts):
+  * Estado: CRUD local de Institution ligada a organizationId y clientId, diferenciando taxIdNumber de canonicalId.
+  * Brecha: el modelo canónico de BD (Docs 12, 13 y 15) exige ecclesial_entities + organization_entities (relación N:M). Además, las sedes (campuses) NO existen como entidad en SaaS (solo como campusId en apps/erp).
+- Usuarios, Roles y Permisos (routes/usuarios.tsx, roles-permisos.tsx, admin-screen.tsx, saas-domain.ts):
+  * Estado: AdminScreen opera CRUD local sobre users y roles básicos. En initialSaasState (saas-domain.ts:2021,2023), memberships: [] y permissions: [] están declarados pero vacíos y sin UI de gestión.
+  * Brecha: no existe Supabase Auth, membership_scopes, role_permissions, membership_roles ni catálogo granular de permisos (decisión D-03).
+- Catálogo de Módulos y Planes (products-catalog-screen.tsx, plans-licensing-screen.tsx, saas-domain.ts, commercial-service.ts):
+  * Estado: APP-ERP y APP-DIO; 11 módulos (MOD-CORE, MOD-COM, MOD-SAC, MOD-DOC, MOD-FIN, MOD-GOB, MOD-CRI-COM/GRP/CUL/ADM/PAS); 12 features; 4 planes (PLAN-01..03, PLN-CRI); resolveModuleDependencies() verificado (36/36 tests).
+  * Brecha: falta versionado formal de planes en BD y desagregación granular de features internas en MOD-COM / MOD-CRI-ADM.
+- Suscripciones, Contratos, Licencias y Entitlements (contracts-subscriptions-screen.tsx, commercial-service.ts):
+  * Estado: lógica comercial en memoria/localStorage con snapshot inmutable (createPlanSnapshot), novaciones trazables, propagación transitionContractStatus -> suscripción -> licencia -> entitlements, evaluateOrganizationLicensing() y validateOrganizationCapacity().
+  * Brecha: sin persistencia SQL transaccional, sin contract_entities multi-beneficiario (D-01), sin license_assignments y sin consumo real (D-10).
+- Facturación y Pagos (billing-portfolio-screen.tsx, commercial-service.ts):
+  * Estado: saveCommercialInvoice, registerCommercialPayment (pagos parciales, mora, bloqueo sobrepago), reverseCommercialPayment, MRR separado por divisa.
+  * Brecha: faltan invoice_taxes, invoice_discounts, payment_allocations, credit_notes y definición fiscal/emisor/serie por país (D-09).
+- Aprovisionamiento e Infraestructura (provisioning-console-screen.tsx, infrastructure-console-screen.tsx, provisioning-service.ts):
+  * Estado: workflow de 5 etapas idempotentes + validación comercial previa + TenantInfrastructureAdapter lógico.
+  * Brecha: sin ejecución contra PostgreSQL/Supabase ni creación real de tenants/seeds.
+- Configuración Global (routes/configuracion.tsx):
+  * Estado: alineada con IDs reales MOD-* y contrastada contra evaluateOrganizationLicensing(); persiste solo en localStorage.
+- Panel Administrativo, Identidad, Auditoría, Analítica y Notificaciones (saas-module-screen.tsx, app-topbar.tsx, support-area-screen.tsx):
+  * Estado: identidad-seguridad, auditoria-cumplimiento y analitica-reportes usan el componente genérico SaasModuleScreen (CRUD de EcosystemRecord sintéticos). Las notificaciones en app-topbar.tsx:268-270 son un popover estático ("Notificaciones demo", contador fijo "3").
+  * Brecha: sin auditoría append-only real, sin analítica real ni sistema de notificaciones.
+
+================================================================================
+2. AUDITORÍA DE A&O ERP (apps/erp)
+================================================================================
+- Mapa actual: 29 entradas en apps/erp/src/data/navigation.ts (Dashboard + 28 rutas) + 2 rutas de transición fuera de menú (/app/administracion-plataforma, /app/gestion-diocesana) + 8 subrutas archivísticas (/app/gestion-documental/*).
+- Módulos con CRUD local operativo (useLocalCollection en localStorage):
+  * Dashboard (/, adaptativo por perfil sin notas confidenciales)
+  * Miembros y familias (/app/feligreses-familias)
+  * Ministerios y grupos (/app/grupos-ministerios)
+  * Cultos, eventos y asistencia (/app/agenda-infraestructura)
+  * Tesorería, Contabilidad y Presupuestos (/app/finanzas-tesoreria, /contabilidad, /presupuestos)
+  * Inventarios y patrimonio (/app/inventarios-patrimonio)
+  * Institución (/app/institucion)
+  * Administración institucional + Actas, Correspondencia y Tareas (/app/administracion-institucional)
+  * Gestión documental y 8 subrutas (/app/gestion-documental/*)
+  * Acompañamiento pastoral (/app/acompanamiento-pastoral)
+  * Compras (/app/compras-obligaciones, alta básica local), Documentos/certificados (/app/documentos-certificados, solicitud local), Portal del feligrés (/app/portal-feligres, solicitud local).
+- Integración HTTP externa real:
+  * Liturgia (/app/liturgia-celebraciones) consume OrdoCalendarView vía apps/erp/src/lib/ordo/client.ts.
+- Módulos únicamente demostrativos / consulta estática sin persistencia operativa real:
+  * Gestión sacramental, Libros sacramentales, Catequesis y formación, Acción pastoral y social, Planificación pastoral, Gobierno y normativa, Informe anual parroquial, Estructura eclesiástica, Comunicaciones, Usuarios y permisos, Auditoría y trazabilidad, Inteligencia artificial, Administración de plataforma, Gestión diocesana.
+- Formularios (AGENTS.md / docs/erp/estandar-formularios.md):
+  * components/forms/* (FormModal, FormDrawer, FormSection, FormWizard, campos RHF) implementado y usado en Comunidad, Grupos, Inventarios, Institución, Gestión documental y Archivo; Finanzas, Agenda, Administración y Pastoral aún conservan FormDialog heredado (migración gradual pendiente).
+
+================================================================================
+3. AUDITORÍA DE A&O CRISTIANO (POS-FASE 2)
+================================================================================
+- Las 6 áreas funcionales completaron su consolidación local en Fase 2 (verificada por 19/19 pruebas en @ao/erp):
+  1. Miembros, visitantes en integración, familias formales, participación y bautismos congregacionales (community-screen.tsx).
+  2. Ministerios, grupos, células, equipos y asignaciones vinculados a personId reales sin duplicidad (groups-screen.tsx).
+  3. Cultos recurrentes, detección de conflictos de horario/espacio, infraestructura y asistencia vinculada a personId/groupId con exportación CSV (institutional-agenda-screen.tsx).
+  4. Tesorería (diezmos, ofrendas, donaciones, egresos) conectada con partida doble equilibrada en Contabilidad y ejecución dinámica en Presupuestos + informes CSV (treasury-screen.tsx, accounting-screen.tsx, budget-screen.tsx).
+  5. Institución/sedes, Actas, Correspondencia, Tareas administrativas, Gestión documental parametrizada sin categorías sacramentales e Inventarios con edición y baja controlada (institution-screen.tsx, institutional-administration-screen.tsx, document-management-screen.tsx, assets-screen.tsx).
+  6. Acompañamiento pastoral con validación de authorizedRoles por registro, aislamiento estricto por organizationId/campusId, enlace a miembros de Área 1 e IA desactivada por defecto (pastoral-care-screen.tsx).
+- Activación por suscripción sin módulos católicos:
+  * En SaaS, PLN-CRI incluye MOD-CORE, MOD-CRI-COM/GRP/CUL/ADM/PAS, MOD-FIN y MOD-DOC, y nunca activa MOD-COM, MOD-SAC ni MOD-GOB (36/36 pruebas en @ao/saas).
+  * En ERP, CATHOLIC_ONLY_ROUTE_PATHS bloquea visualmente las 8 rutas católicas exclusivas en perfil "cristiano".
+  * Brecha pendiente para Fase 3: reemplazar el selector manual en /app/configuracion por resolución autoritativa desde SaaS en servidor.
+
+================================================================================
+4. AUDITORÍA DE A&O CATÓLICO Y A&O DIOCESANO
+================================================================================
+- A&O Católico: conserva intactas todas sus rutas, lógica y datasets propios (parishioners, parishGroups, treasuryMovements, budgetLines, institutionalEvents, assets, institutionalDocuments) completamente separados de los datasets cristianos. PLN-PAR-2026, PLN-INS-2026 y PLN-DIO-2026 mantienen MOD-CORE -> MOD-COM -> MOD-SAC (y MOD-GOB en Diocesano) sin contaminación cristiana.
+- A&O Diocesano (apps/diocesano): permanece como scaffold independiente sin acceso cruzado a ERP. Su modelo futuro (informes institucionales, comunicaciones, institutional_access_grants) está definido en Docs 09, 12, 13 y 15, sujeto a cierre de D-05, D-06, D-08 y D-11.
+
+================================================================================
+5. ARQUITECTURA Y BASE DE DATOS
+================================================================================
+5.1 Estado de especificación física en docs/arquitectura/backend/13 y 15
+- Listo técnicamente para Fase 1 física (11 tablas de Identidad y Organización):
+  profiles, organizations, ecclesial_entities, organization_entities, entity_relationships, memberships, membership_scopes, roles, permissions, role_permissions, membership_roles (+ institutional_access_grants bloqueada por D-06).
+- Definido lógicamente pero bloqueado por decisiones abiertas D-01..D-12:
+  * Comercial/Licenciamiento (D-01, D-04, D-10): parties, party_persons, party_organizations, clients, applications, modules, plans, contracts, contract_entities, contract_terms, subscriptions, licenses, license_assignments, entitlements, usage_limits.
+  * Facturación (D-09): invoices, invoice_items, invoice_taxes, invoice_discounts, payments, payment_allocations, credit_notes, credit_note_items, receivable_adjustments.
+  * CRM IA (D-04): leads, lead_events, contacts, contact_accounts, pipelines, pipeline_stages, opportunities, activities, products_services, quotations, quotation_items, campaigns, campaign_members, conversations, conversation_messages, ai_agents.
+  * Informes y Comunicaciones (D-05, D-06, D-08, D-11): report_templates, report_template_versions, report_template_sections, report_template_fields, report_template_attachments, report_requests, report_request_recipients, report_submissions, report_field_values, report_submission_files, report_reviews, report_review_events, communication_threads, communications, communication_recipients, communication_attachments, communication_events, communication_read_receipts.
+  * Archivos y Auditoría (D-07, D-11): document_file_metadata, security_events, commercial_audit_events, institutional_audit_events, sensitive_access_events.
+- Excluido explícitamente hasta diseño propio (Decisión D-13):
+  * NO existe diseño relacional ni físico SQL para el dominio operativo de A&O ERP (sedes/campuses, miembros/familias/bautismos, ministerios/grupos, cultos/espacios/asistencia, contabilidad/tesorería/presupuestos/inventarios/compras, actas/correspondencia/tareas/documentos ERP, acompañamiento pastoral ni sacramentos/libros católicos).
+
+5.2 Qué está en localStorage vs. qué requiere persistencia real
+- En localStorage actual: ao-saas:domain:v1 (todo SaaS), ao-erp:ao-cristiano:settings:v1, ao-erp:institution:profile y ~20 colecciones ao-erp:* (con variantes :cristiano/:combinado).
+- Debe quedarse en navegador: preferencias visuales no sensibles (tema ao-erp-theme, estado de sidebar).
+- Requiere persistencia real en PostgreSQL + RLS + Storage privado + auditoría append-only: todas las entidades comerciales, identidad/autorización, operación ERP (6 áreas + católico), documentos binarios (sin exponer storage_key) y eventos de auditoría.
+
+================================================================================
+6. SEGURIDAD Y MULTITENENCIA
+================================================================================
+- Autenticación: inexistente en las 3 apps; requiere Supabase Auth SSR con cookies httpOnly y PKCE.
+- Multitenencia (organizaciones, instituciones y sedes): actualmente solo filtros React en memoria sobre localStorage. En BD requerirá contexto derivado de sesión en servidor, FKs compuestas (organization_id, id) y políticas PostgreSQL RLS en todas las tablas expuestas.
+- Permisos y roles: actualmente el usuario cambia libremente su pastoralAccessRole y perfil en /app/configuracion. En producción deben resolverse vía memberships + membership_scopes + membership_roles + role_permissions en servidor.
+- Datos pastorales y sacramentales sensibles: requieren tablas separadas con RLS estricto (p. ej. pastoral_care_confidential_notes), nunca incluirse en queries de Dashboard/reportes generales ni enviarse a IA sin consentimiento explícito, y registrar cada lectura/escritura en sensitive_access_events (append-only sin UPDATE/DELETE).
+- Aislamiento interinstitucional: ninguna relación canónica (entity_relationships) ni rol de soporte SaaS puede otorgar acceso automático a registros operativos ERP sin institutional_access_grants vigente y auditado.
+
+================================================================================
+7. INTEGRACIÓN SAAS <-> ERP
+================================================================================
+- Situación actual: nula (silos separados en localStorage).
+- Contrato requerido antes de programar backend:
+  1. Resolución server-side tras login: Auth -> profiles/memberships -> context(organization_id, ecclesial_entity_id, campus_id).
+  2. Evaluación de entitlements: servicio autorizado consulta licenses + entitlements + usage_limits vigentes de la organización/entidad y devuelve enabledModuleIds, enabledFeatureIds, subscriptionStatus (Activo | Suspendido | Vencido | Cancelado) y perfil derivado (catolico | cristiano | combinado).
+  3. Aplicación en 3 niveles: navegación (app-shell), guard de rutas SSR/cliente (ModuleAccessGuard) y bloqueo transaccional en server functions + RLS ante suspensión o vencimiento, conservando íntegros todos los datos históricos.
+
+================================================================================
+8. MATRIZ DE PREPARACIÓN POR MÓDULO
+================================================================================
+(Estado: completo = backend+UI listos; parcial = UI y/o lógica local en localStorage sin BD/Auth/RLS; pendiente = solo consulta/vista previa o vacío; inexistente = no construido)
+
+8.1 Módulos de A&O SaaS
+- Clientes y Organizaciones | Finalidad: cuentas comerciales y tenants | Requerido: alta/edición, vínculo N:M entidades | Pantallas: clients-master-screen, organizations-master-screen | Ops: CRUD localStorage | BD: parties, party_persons, party_organizations, clients, organizations, organization_entities | Rel: Contratos, Membresías | Roles: Admin plataforma, Comercial | Deps: Auth, D-02, D-04 | Estado: PARCIAL | Acción: resolver D-04 y alinear Institution con ecclesial_entities.
+- Instituciones y Sedes | Finalidad: catálogo eclesial y sedes | Pantallas: institutions-master-screen | Ops: CRUD localStorage | BD: ecclesial_entities, organization_entities, campuses (falta) | Rel: Organizaciones, Scopes, ERP | Roles: Admin plataforma/tenant | Deps: D-02, D-13 | Estado: PARCIAL | Acción: separar ecclesial_entities (SaaS/canónico) de campuses (sedes operativas).
+- Productos, Módulos y Planes | Finalidad: catálogo comercial y dependencias | Pantallas: products-catalog-screen, plans-licensing-screen, configuracion | Ops: CRUD local + resolveModuleDependencies | BD: applications, modules, features, plans | Rel: Contratos, Entitlements | Roles: Comercial, Plataforma | Deps: Ninguna | Estado: PARCIAL | Acción: versionado de planes en BD y features granulares.
+- Contratos, Suscripciones, Licencias y Entitlements | Finalidad: contratación, vigencia y habilitación de módulos | Pantallas: contracts-subscriptions-screen, plans-licensing-screen | Ops: snapshot, novación, transitionContractStatus, evaluateOrganizationLicensing | BD: contracts, contract_entities, contract_terms, subscriptions, licenses, license_assignments, entitlements, usage_limits | Rel: Clientes, Planes, ERP | Roles: Comercial, Plataforma | Deps: D-01, D-10 | Estado: PARCIAL | Acción: cerrar D-01/D-10 y exponer servicio server-side a ERP.
+- Facturación y Cartera | Finalidad: facturas, pagos y mora | Pantallas: billing-portfolio-screen | Ops: facturas, pagos parciales, reversión, MRR por divisa | BD: invoices, invoice_items/taxes/discounts, payments, payment_allocations, credit_notes, receivable_adjustments | Rel: Contratos | Roles: Cartera, Plataforma | Deps: D-09 | Estado: PARCIAL | Acción: cerrar D-09 (emisor/serie/impuestos).
+- Aprovisionamiento e Infraestructura | Finalidad: alta idempotente de tenants y suspensión | Pantallas: provisioning-console-screen, infrastructure-console-screen | Ops: workflow 5 etapas local | BD: provisioning_requests, tenant_environments (por definir) | Rel: Contratos, Licencias | Deps: Licencias | Estado: PARCIAL | Acción: definir persistencia real vs proyección de estado.
+- Usuarios, Roles, Permisos y Seguridad | Finalidad: Auth, membresías, scopes y RBAC | Pantallas: usuarios, roles-permisos, identidad-seguridad | Ops: AdminScreen básico (users/roles); SaasModuleScreen genérico | BD: profiles, memberships, membership_scopes, roles, permissions, role_permissions, membership_roles | Rel: Todo el ecosistema | Deps: Supabase Auth, D-03, D-12 | Estado: PENDIENTE | Acción: construir flujos reales de membresías, scopes y permisos (hoy arrays vacíos).
+- Auditoría, Analítica, Soporte y Notificaciones | Finalidad: trazabilidad, métricas, tickets y avisos | Pantallas: auditoria-cumplimiento, analitica-reportes, soporte/*, app-topbar | Ops: SaasModuleScreen genérico, SupportRepository local, notificaciones estáticas | BD: security_events, commercial_audit_events, institutional_audit_events, sensitive_access_events, tickets | Rel: Transversal | Deps: Server functions | Estado: PENDIENTE / INEXISTENTE (notificaciones y analítica real) | Acción: implementar bitácoras append-only y alertas reales.
+
+8.2 Módulos de A&O ERP
+- Dashboard (/) | Finalidad: resumen contextual por perfil | Pantallas: routes/index.tsx | Ops: lectura agregada local | BD: proyección derivada | Rel: Áreas 1–4 | Roles: todos (filtrado) | Deps: Entitlements | Estado: PARCIAL | Acción: consultar vistas agregadas server-side.
+- Institución y Sedes (/app/institucion) | Finalidad: identidad institucional, sedes, responsables | Pantallas: institution-screen, institution-operations-panel | Ops: CRUD local sedes/responsables/dependencias | BD: campuses, institution_profiles, departments, institutional_responsibles | Rel: Todas las áreas | Roles: Admin institucional | Deps: MOD-CORE, D-13 | Estado: PARCIAL | Acción: diseño SQL ERP.
+- Administración, Actas, Correspondencia y Tareas (/app/administracion-institucional) | Finalidad: operación administrativa | Pantallas: institutional-administration-screen | Ops: CRUD local responsables, actas, correspondencia, tareas | BD: meeting_minutes, correspondence_items, admin_tasks | Rel: Responsables, Sedes, Documentos | Roles: Admin, Secretaría | Deps: MOD-CORE/MOD-CRI-ADM, D-13 | Estado: PARCIAL | Acción: diseño SQL y migración a FormModal.
+- Miembros, Familias y Bautismos (/app/feligreses-familias) | Finalidad: directorio congregacional/parroquial | Pantallas: community-screen | Ops: CRUD local miembros/visitantes/familias/bautismos/participación + CSV | BD: persons, families, family_memberships, congregational_baptisms, participation_events | Rel: Áreas 2, 3 y 6 | Roles: Secretaría, Pastoral | Deps: MOD-CRI-COM/MOD-COM, D-13 | Estado: PARCIAL | Acción: diseño SQL + RLS estricto.
+- Ministerios, Grupos y Células (/app/grupos-ministerios) | Finalidad: organización ministerial y servicio | Pantallas: groups-screen | Ops: CRUD/desactivación local + enlace personId sin duplicados | BD: ministries_groups, group_members, service_teams, service_assignments | Rel: Área 1, Área 3 | Roles: Coordinación, Líderes | Deps: MOD-CRI-GRP/MOD-COM, Área 1 | Estado: PARCIAL | Acción: diseño SQL.
+- Cultos, Eventos y Asistencia (/app/agenda-infraestructura) | Finalidad: agenda recurrente, espacios y asistencia | Pantallas: institutional-agenda-screen | Ops: CRUD + conflictos + asistencia vinculada + CSV | BD: facilities, worship_events, event_attendance | Rel: Áreas 1 y 2 | Roles: Coordinación, Secretaría | Deps: MOD-CRI-CUL/MOD-CORE | Estado: PARCIAL | Acción: diseño SQL.
+- Tesorería, Contabilidad y Presupuestos (/finanzas-tesoreria, /contabilidad, /presupuestos) | Finalidad: gestión económica integral | Pantallas: treasury-screen, accounting-screen, budget-screen | Ops: CRUD local + partida doble + ejecución dinámica + CSV | BD: accounting_entities, chart_of_accounts, financial_categories, treasury_accounts, treasury_movements, journal_vouchers, journal_lines, budget_lines | Rel: Entre sí y con Sedes | Roles: Tesorería, Contabilidad, Admin | Deps: MOD-FIN, MOD-CRI-ADM | Estado: PARCIAL | Acción: diseñar esquema contable SQL y reglas de cierre/conciliación.
+- Inventarios y Activos (/app/inventarios-patrimonio) | Finalidad: inventario físico y bajas | Pantallas: assets-screen | Ops: CRUD + baja lógica controlada | BD: assets, asset_movements, asset_maintenances | Rel: Sedes, Documentos | Roles: Custodio, Admin | Deps: MOD-FIN/MOD-CRI-ADM | Estado: PARCIAL | Acción: diseño SQL y movimientos/mantenimiento reales.
+- Compras y Obligaciones (/app/compras-obligaciones) | Finalidad: adquisiciones y cuentas por pagar | Pantallas: procurement-screen | Ops: alta básica local | BD: vendors, procurement_requests, purchase_orders, payables | Rel: Finanzas | Roles: Compras, Tesorería | Deps: MOD-FIN | Estado: PENDIENTE | Acción: flujo operativo completo y SQL.
+- Gestión Documental y Archivo (/app/gestion-documental/*) | Finalidad: repositorio documental y archivística | Pantallas: document-management-screen, archive-area-screen | Ops: CRUD local de metadatos | BD: document_file_metadata, erp_documents, archive_series | Rel: Actas, Correspondencia, Contabilidad | Roles: Custodia documental, Admin | Deps: MOD-DOC, D-07, D-11, Storage privado | Estado: PARCIAL | Acción: integrar Storage privado y ACL.
+- Acompañamiento Pastoral (/app/acompanamiento-pastoral) | Finalidad: cuidado pastoral confidencial | Pantallas: pastoral-care-screen | Ops: CRUD local + authorizedRoles + sede estricta | BD: pastoral_care_cases, pastoral_care_confidential_notes, pastoral_care_commitments, sensitive_access_events | Rel: Área 1 (unidireccional) | Roles: pastor_principal, lider_pastoral, consejero_autorizado | Deps: MOD-CRI-PAS, Auth, RLS estricto | Estado: PARCIAL (riesgo crítico en cliente) | Acción: tabla separada con RLS y bitácora append-only en Fase 3.
+- Comunicaciones e IA (/comunicaciones, /inteligencia-artificial) | Finalidad: difusión y asistente IA | Pantallas: communications-screen, ai-assistant-screen | Ops: vista previa / respuestas estáticas | BD: communication_threads, communications, communication_recipients | Rel: Área 1/2 | Roles: Comunicaciones, Admin | Deps: MOD-CORE, D-06, D-08 | Estado: PENDIENTE | Acción: definir mensajería real y políticas IA.
+- Usuarios/Permisos y Auditoría ERP (/usuarios-permisos, /auditoria-trazabilidad) | Finalidad: gestión usuarios internos y bitácora | Pantallas: users-permissions-screen, audit-trail-screen | Ops: solo vista estática | BD: memberships, membership_roles, institutional_audit_events | Rel: Transversal | Roles: Admin institucional, Auditoría | Deps: Auth, D-03 | Estado: PENDIENTE | Acción: conectar a identidad/auditoría backend.
+- Módulos Católicos Exclusivos (7 módulos: sacramental, libros, certificados, liturgia, catequesis, estructura eclesiástica, informe anual) | Finalidad: gestión parroquial y sacramental católica | Pantallas: 7 pantallas propias | Ops: consulta local + ORDO externo en Liturgia | BD: por diseñar (D-13) | Rel: Comunidad, Documentos, Diocesano | Roles: Párroco, Secretaría sacramental, Catequesis | Deps: MOD-COM, MOD-SAC | Estado: PENDIENTE (operativo) / COMPLETO (consulta ORDO) | Acción: diseñar modelo sacramental SQL manteniendo bloqueo en PLN-CRI.
+- Transición SaaS/Diocesano en ERP (/administracion-plataforma, /gestion-diocesana) | Finalidad: pantallas heredadas fuera de menú | Pantallas: platform-admin-screen, diocesan-management-screen | Ops: consulta estática | BD: SaaS / Diocesano | Roles: Plataforma / Curia | Deps: MOD-GOB | Estado: PENDIENTE | Acción: retirar de ERP en fase de transición.
+
+================================================================================
+9. INFORME DE BRECHAS
+================================================================================
+1. Ausencia del modelo relacional y físico SQL de A&O ERP (Decisión D-13): Docs 12, 13 y 15 cubren SaaS/Identidad/CRM/Diocesano, pero excluyen por completo las tablas operativas de ERP (6 áreas cristianas + módulos católicos).
+2. Decisiones D-01 a D-13 aún pendientes de aprobación formal en Doc 15: especialmente D-03 (catálogo scopes/roles) y D-12 (estados cerrados) que bloquean la primera migración de Identidad, más D-01/D-02/D-04/D-09/D-10 para SaaS y D-05/D-06/D-07/D-08/D-11 para Documentos/Diocesano.
+3. Desalineación entre el modelo Institution (SaaS) / campusId (ERP) y el modelo canónico ecclesial_entities + organization_entities (Docs 12/13/15).
+4. Pantallas pendientes en SaaS y ERP: memberships/permissions vacíos en SaaS; identidad-seguridad, auditoria-cumplimiento y analitica-reportes usan tabla genérica SaasModuleScreen; notificaciones del topbar estáticas; en ERP faltan backends de Compras, Comunicaciones, Usuarios/Auditoría y 7 módulos católicos; persisten FormDialog heredados en algunas pantallas.
+5. Seguridad exclusivamente visual en cliente: sin Auth SSR ni RLS, cualquier control actual (pastoralAccessRole, ModuleAccessGuard, filtros organizationId) es demostración local y no protege datos reales.
+
+================================================================================
+10. DICTAMEN FINAL Y ORDEN DE IMPLEMENTACIÓN
+================================================================================
+DICTAMEN: APTO CON OBSERVACIONES
+
+Justificación:
+- La arquitectura funcional del ecosistema (límites SaaS / ERP / Diocesano, modelo de paquete comercializable A&O Cristiano en MOD-CORE + MOD-CRI-*, separación de datos católicos y cristianos, y relaciones entre las 6 áreas) está consolidada y verificada con pruebas (36/36 SaaS, 19/19 ERP, 1/1 Diocesano) y builds limpios.
+- Además, la Fase 1 de Identidad y Autorización en PostgreSQL (11 tablas + RLS + pruebas de aislamiento) ya está diseñada técnicamente en Doc 15.
+- Sin embargo, NO debe iniciarse la creación de migraciones SQL ni la conexión a Supabase hasta resolver los bloqueos previos indicados abajo.
+
+Qué debemos resolver ANTES de comenzar a programar backend/BD:
+1. Aprobar formalmente en Doc 15 las decisiones bloqueantes de Fase 1: D-03 (catálogo de scopes y roles globales vs tenant), D-12 (estados y transiciones mínimas) y D-01/D-02 (alineación exacta entre organizations, ecclesial_entities, campuses/sedes, contracts y licenses).
+2. Diseñar y aprobar el Modelo Relacional y Especificación Física PostgreSQL del dominio operativo de A&O ERP (cerrando D-13), incluyendo explícitamente la tabla separada de notas pastorales confidenciales y el modelo contable/tesorero/sacramental.
+3. Congelar el contrato TypeScript compartido SaaS <-> ERP (en packages/) para resolución server-side de sesión, tenant, campus y entitlements.
+4. Aprobar proveedor, región, política de almacenamiento privado (Storage), secretos fuera de Git y reemplazo de pantallas genéricas pendientes en SaaS (identidad-seguridad, auditoria-cumplimiento, usuarios/membresías).
+
+Orden recomendado de implementación:
+1. Cierre del diseño arquitectónico y de BD (D-01..D-13 + ERD/SQL de ERP + contrato SaaS<->ERP).
+2. Backend Fase 1 — Supabase Auth SSR + 11 tablas base de Identidad/Organizaciones/Membresías/Roles + security_events + pruebas negativas de aislamiento multi-tenant (org_a vs org_b).
+3. Backend Fase 2 — Catálogo SaaS, Contratos, Suscripciones, Licencias, Entitlements, Facturación/Pagos + puente autoritativo SaaS -> ERP (eliminando el selector manual de perfil de producción).
+4. Backend Fase 3 — Migración gradual de persistencia de las 6 áreas de A&O Cristiano a PostgreSQL + RLS + Storage privado (Área 5 base/Storage -> Área 1 -> Área 2 -> Área 3 -> Área 4 transaccional -> Área 5 Actas/Correspondencia/Tareas -> Área 6 con notas confidenciales aisladas y auditoría append-only).
+5. Backend Fase 4 — Persistencia de módulos católicos (sacramentos, libros, certificados) y habilitación de A&O Diocesano (informes, comunicaciones, grants).
+
+================================================================================
+CONFIRMACIÓN DE RESTRICCIONES
+================================================================================
+- Rama actual: integracion-final-ao-erp.
+- No se modificó ningún archivo de código fuente ni configuración.
+- No se creó ni ejecutó SQL ni migraciones.
+- No se conectó ni modificó Supabase ni producción.
+- No se ejecutaron commits, push, merge, rebase ni cherry-pick.
+- Todos los cambios previos de Fase 1, Fase 2 y respaldos permanecen intactos.

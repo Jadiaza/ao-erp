@@ -1,0 +1,147 @@
+# INFORME DE IMPLEMENTACIÓN — FASE 1: CORRECCIÓN DE INTEGRIDAD FUNCIONAL DE A&O CRISTIANO
+
+Repositorio: D:\Proyectos\ao-erp
+Rama de trabajo autorizada: integracion-final-ao-erp
+Commit base (HEAD): 6f8b1dc ("docs: add implementation and audit reports")
+Base de auditoría: informe-auditoria-ao-cristiano-etapas-1-y-2.txt
+Fecha: 2026-11-13
+Alcance: correcciones locales de integridad funcional en A&O SaaS y A&O ERP (Fase 1), sin commit, push, merge, rebase, cherry-pick, migraciones ni cambios sobre Supabase o producción.
+
+================================================================================
+1. ARCHIVOS MODIFICADOS Y CREADOS (FASE 1)
+================================================================================
+A. A&O SaaS (apps/saas):
+- apps/saas/src/data/saas-domain.ts
+- apps/saas/src/routes/configuracion.tsx (conservando el grupo local "cristiano")
+- apps/saas/src/test/saas-consolidation.test.ts
+
+B. A&O ERP (apps/erp):
+- apps/erp/src/data/local-repository.ts
+- apps/erp/src/lib/ao-cristiano-profile.ts
+- apps/erp/src/data/community-demo.ts
+- apps/erp/src/data/pastoral-demo.ts
+- apps/erp/src/data/economy-demo.ts
+- apps/erp/src/data/institutional-demo.ts
+- apps/erp/src/routes/index.tsx
+- apps/erp/src/components/layout/app-shell.tsx
+- apps/erp/src/components/modules/community-screen.tsx
+- apps/erp/src/components/modules/groups-screen.tsx
+- apps/erp/src/components/modules/institutional-agenda-screen.tsx
+- apps/erp/src/components/modules/treasury-screen.tsx
+- apps/erp/src/components/modules/accounting-screen.tsx
+- apps/erp/src/components/modules/budget-screen.tsx
+- apps/erp/src/components/modules/pastoral-care-screen.tsx
+- apps/erp/src/components/modules/settings-center-screen.tsx
+- apps/erp/src/components/modules/archive-area-screen.tsx
+- apps/erp/src/components/modules/users-permissions-screen.tsx
+- apps/erp/src/test/ao-cristiano-integrity.test.tsx (nuevo archivo de pruebas)
+
+C. Informes:
+- informe-fase-1-correccion-integridad-ao-cristiano.txt (este informe, creado a solicitud del usuario)
+
+================================================================================
+2. CAMBIOS REALIZADOS
+================================================================================
+2.1 A&O SaaS (sin sustituir EntityRepository ni commercial-service.ts / provisioning-service.ts)
+- Evaluación e incorporación de MOD-CORE como módulo base neutro:
+  * En apps/saas/src/data/saas-domain.ts se incorporó MOD-CORE (code: "ERP-CORE", applicationId: "APP-ERP", requiredModuleIds: []) junto con su feature MOD-CORE-CORE (FT-CORE-INSTITUCION).
+  * Se desacoplaron MOD-DOC y MOD-FIN de MOD-COM: ahora ambos dependen de ["MOD-CORE"] en lugar de ["MOD-COM"].
+  * MOD-COM depende de ["MOD-CORE"]; MOD-SAC mantiene dependencia ["MOD-COM"]; MOD-GOB depende de ["MOD-COM", "MOD-DOC", "MOD-FIN"]; MOD-CRI-COM depende de ["MOD-CORE"].
+  * Se incluyó MOD-CORE en los planes Parroquial (PLN-PAR-2026), Institucional (PLN-INS-2026), Diocesano (PLN-DIO-2026) y Cristiano Esencial (PLN-CRI / PLN-CRI-ESS-2026).
+  * Resultado garantizado: PLN-CRI y cualquier licencia cristiana resuelven MOD-CORE, MOD-CRI-COM, MOD-CRI-GRP, MOD-CRI-CUL, MOD-CRI-ADM, MOD-CRI-PAS, MOD-FIN y MOD-DOC, y nunca habilitan MOD-COM, MOD-SAC ni MOD-GOB.
+- Alineación de apps/saas/src/routes/configuracion.tsx e initialSaasState.settings.enabledModuleIds:
+  * Se conservaron los ítems del grupo "cristiano" (MOD-CRI-COM..MOD-CRI-PAS) añadidos localmente y se alinearon los demás grupos con los identificadores reales del dominio (MOD-CORE, MOD-COM, MOD-SAC, MOD-FIN, MOD-DOC, MOD-GOB), permitiendo la verificación 1:1 contra evaluateOrganizationLicensing().
+
+2.2 A&O ERP — Separación de datos y aislamiento local
+- useLocalCollection (apps/erp/src/data/local-repository.ts):
+  * Se corrigió el cambio dinámico de storageKey para recargar desde el almacenamiento destino sin sobrescribir la colección del nuevo perfil con los registros del perfil anterior.
+- getProfileStorageKey (apps/erp/src/lib/ao-cristiano-profile.ts):
+  * Aísla las claves de localStorage por perfil (p. ej. "ao-erp:treasury:movements" para católico vs "ao-erp:treasury:movements:cristiano" para cristiano).
+- Separación de datasets de demostración:
+  * community-demo.ts: parishioners queda estrictamente católico/parroquial (sin MBR-*, sin bautismos congregacionales ni células); christianMembers concentra los miembros y visitantes congregacionales. Se corrigió el mojibake en todo el archivo.
+  * pastoral-demo.ts: parishGroups restaurado a grupos católicos parroquiales originales; christianGroups exporta los ministerios, células, departamentos y equipos cristianos.
+  * economy-demo.ts: treasuryAccounts, treasuryMovements, accountingEntities, accountingAccounts, journalEntries y budgetLines quedan limpios para perfil católico; se exportan christianTreasuryAccounts, christianTreasuryMovements, christianAccountingEntities, christianAccountingAccounts, christianJournalEntries y christianBudgetLines con organizationId y campusId.
+  * institutional-demo.ts: se mantienen institutionalEvents y facilities católicos y se exportan christianEvents y christianFacilities.
+- Protección de rutas católicas (ao-cristiano-profile.ts):
+  * Se amplió CATHOLIC_ONLY_ROUTE_PATHS agregando /app/documentos-certificados, /app/estructura-eclesiastica y /app/informe-anual-parroquial, evitando que aparezcan en perfil exclusivamente cristiano.
+
+2.3 A&O ERP — Dashboard, módulos, cálculos y filtros
+- Dashboard (apps/erp/src/routes/index.tsx):
+  * Se adaptó usando useAoCristianoSettings() para mostrar contexto parroquial/católico en perfil católico y contexto congregacional en perfil cristiano/combinado (miembros, familias, ministerios/células, cultos programados, resumen financiero de tesorería cristiana y tareas sin referencias parroquiales ni datos pastorales confidenciales). Se corrigió el mojibake de tareas.
+- Sidebar (apps/erp/src/components/layout/app-shell.tsx):
+  * Adapta el subtítulo a "Gestión congregacional" cuando el perfil cristiano está activo.
+- Comunidad (community-screen.tsx):
+  * Filtra registros, familias, sedes y contadores por settings.organizationId; implementa exportación CSV real en "Exportar vista"; reutiliza FormModal compartido.
+- Grupos (groups-screen.tsx):
+  * Usa dataset y clave por perfil y filtra por settings.organizationId.
+- Agenda y asistencia (institutional-agenda-screen.tsx):
+  * Usa eventos/espacios por perfil, incorpora organizationId en AttendanceRecord y filtra eventos y asistencia por organizationId y selector de sede (campusFilter).
+- Tesorería (treasury-screen.tsx):
+  * Usa cuentas, movimientos y clave por perfil; filtra por organizationId y campusFilter; recalcula dinámicamente ingresos, egresos, disponible y fuentes de ingreso; amplía el diálogo de registro con selector de tipo (Ingreso/Egreso), cuenta, categoría (incluyendo Diezmos, Ofrendas, Donaciones, etc.), sede, fecha, concepto y fuente.
+- Contabilidad (accounting-screen.tsx):
+  * Usa entidades, cuentas, comprobantes y clave por perfil; corrige el cálculo de créditos del período (antes imprimía periodDebits en lugar de periodCredits), calcula la diferencia real entre débitos y créditos y refleja estado Balanceado/Descuadrado; corrige el uso de currentEntity al registrar comprobantes; aplica terminología cristiana y corrige mojibake.
+- Presupuestos (budget-screen.tsx):
+  * Usa líneas y clave por perfil; elimina la prop actions duplicada y el mojibake; calcula dinámicamente ingresos proyectados, gastos previstos, porcentaje de ejecución, alertas y áreas; permite elegir área y tipo (Ingreso/Gasto) en el diálogo de creación.
+- Mojibake menor corregido en archive-area-screen.tsx y users-permissions-screen.tsx.
+
+2.4 Acompañamiento pastoral (pastoral-care-screen.tsx y settings-center-screen.tsx)
+- Validación por registro:
+  * Se implementó canAccessPastoralRecord(role, record.authorizedRoles) en ao-cristiano-profile.ts y se aplicó tanto en el filtrado visible como en la apertura/edición en DetailDrawer (por ejemplo, lider_pastoral ya no accede a registros de consejería restringidos a pastor_principal y consejero_autorizado).
+- Aislamiento estricto por organización y sede:
+  * Se eliminó la excepción que permitía ver todas las sedes cuando campusId era "SEDE-PRINCIPAL".
+- Transparencia de alcance demo:
+  * Se actualizó DemoNotice en pastoral-care-screen.tsx y settings-center-screen.tsx indicando explícitamente que es demostración local en navegador (localStorage), no seguridad productiva ni simulación de seguridad de servidor.
+  * El análisis IA (allowPastoralAiAnalysis) se mantiene desactivado por defecto (false) y la información confidencial no se traslada al Dashboard ni a reportes generales.
+
+================================================================================
+3. PRUEBAS EJECUTADAS Y RESULTADOS
+================================================================================
+1. @ao/saas:
+   - bun run typecheck:saas -> Exited with code 0
+   - bun run test:saas -> 3 test files passed, 36 passed (36/36), incluyendo escenarios nuevos de PLN-CRI, rechazo de MOD-SAC/MOD-COM/MOD-GOB y suspensión no destructiva de contrato cristiano.
+   - bun run build:saas -> Exited with code 0 (client + ssr + nitro)
+
+2. @ao/erp:
+   - bun run typecheck:erp -> Exited with code 0
+   - bun run test:erp -> 4 test files passed, 17 passed (17/17), incluyendo 7 pruebas nuevas en apps/erp/src/test/ao-cristiano-integrity.test.tsx (separación de datos, protección de rutas, Dashboard adaptativo, filtro por organizationId, ingresos/egresos en Tesorería, coherencia débitos/créditos/diferencia en Contabilidad y validación de authorizedRoles + sede estricta en Acompañamiento pastoral).
+   - bun run build:erp -> Exited with code 0 (client + ssr + nitro)
+
+3. @ao/diocesano:
+   - bun run typecheck:diocesano -> Exited with code 0
+   - bun run test:diocesano -> 1 test file passed, 1 passed (1/1)
+   - bun run build:diocesano -> Exited with code 0 (client + ssr + nitro)
+
+================================================================================
+4. PROBLEMAS PENDIENTES (PARA FASES POSTERIORES)
+================================================================================
+1. Conexión autoritativa SaaS -> ERP: actualmente el perfil y los entitlements en ERP siguen seleccionándose en configuración local (localStorage) y no consumen aún un servicio backend compartido desde A&O SaaS.
+2. Enlace operativo completo entre áreas en ERP: faltan altas/ediciones completas de integrantes reales desde Área 1 hacia Área 2 (groups-screen) y asistencia nominativa vinculada en Área 3 (institutional-agenda-screen), así como recurrencia de cultos.
+3. Submódulos faltantes de Área 5: faltan los módulos operativos de Actas, Correspondencia y Tareas administrativas con responsables y seguimiento, además de adaptar textos restantes de institution-screen.tsx y document-management-screen.tsx en perfil cristiano.
+4. Estandarización completa de formularios: aunque community-screen y groups-screen usan FormModal de components/forms/*, las pantallas financieras y de agenda conservan FormDialog heredado (pendiente de migración gradual según docs/erp/estandar-formularios.md en Fase 2).
+
+================================================================================
+5. RIESGOS QUE SIGUEN ABIERTOS
+================================================================================
+1. Seguridad y confidencialidad en producción (CRÍTICO): hasta implementar Supabase Auth, PostgreSQL + RLS y bitácora append-only en servidor (Fase 3), los datos demo siguen en el cliente (localStorage / bundle JS) y el rol pastoral es configurable localmente.
+2. Ausencia de almacenamiento privado real para documentos e informes exportables en servidor.
+3. Si el navegador conserva datos previos en las claves antiguas de localStorage antes de esta actualización, podrían mantenerse registros demo anteriores hasta limpiar/reiniciar el almacenamiento local del navegador.
+
+================================================================================
+6. CONFIRMACIÓN DE NO MODIFICACIÓN DE PRODUCCIÓN NI SUPABASE
+================================================================================
+- Se confirma que NO se modificó ningún entorno de producción.
+- Se confirma que NO se creó ni modificó ningún proyecto, esquema, tabla, política RLS, migración ni dato en Supabase.
+- Se confirma que no se ejecutaron commits, push, merge, rebase, cherry-pick ni eliminación de ramas o respaldos.
+
+================================================================================
+7. ESTADO DE GIT Y CAMBIOS LOCALES PRESERVADOS
+================================================================================
+- Rama activa: integracion-final-ao-erp
+- Cambios locales previos preservados intactos:
+  * apps/saas/src/styles.css (scrollbar oculto en .sidebar nav)
+  * informe-plan-integracion-507c83c.txt (conservado sin alteración adicional)
+  * apps/saas/src/routes/configuracion.tsx (grupo "cristiano" preservado y alineado con el dominio)
+- Respaldos e informes previos preservados: respaldo-cambios-locales.patch y todos los archivos informe-*.txt previos.
+- Estado pendiente para revisión (sin commit): 23 archivos modificados y 3 archivos nuevos no rastreados (apps/erp/src/test/ao-cristiano-integrity.test.tsx, informe-auditoria-ao-cristiano-etapas-1-y-2.txt, informe-fase-1-correccion-integridad-ao-cristiano.txt).
+
+Quedo a la espera de autorización expresa antes de iniciar la Fase 2.

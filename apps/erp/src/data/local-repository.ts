@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type DemoEntity = { id: string };
 
@@ -42,8 +42,51 @@ export function createDemoRepository<T extends DemoEntity>(storageKey: string, i
   };
 }
 
+export function appendDemoCollectionRecord<T extends DemoEntity>(
+  storageKey: string,
+  initial: T[],
+  record: T,
+): T[] {
+  const current = readDemoCollection(storageKey, initial);
+  const next = [...current, record];
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(next));
+  } catch {
+    /* Estado de sesión */
+  }
+  notifyCollection(storageKey, next);
+  return next;
+}
+
+export function appendDemoCollectionRecords<T extends DemoEntity>(
+  storageKey: string,
+  initial: T[],
+  recordsToAdd: T[],
+): T[] {
+  const current = readDemoCollection(storageKey, initial);
+  const next = [...current, ...recordsToAdd];
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(next));
+  } catch {
+    /* Estado de sesión */
+  }
+  notifyCollection(storageKey, next);
+  return next;
+}
+
 export function useLocalCollection<T extends DemoEntity>(storageKey: string, initial: T[]) {
+  const initialRef = useRef(initial);
+  initialRef.current = initial;
+  const activeKeyRef = useRef(storageKey);
   const [records, setRecords] = useState<T[]>(() => readDemoCollection(storageKey, initial));
+
+  useEffect(() => {
+    if (activeKeyRef.current !== storageKey) {
+      activeKeyRef.current = storageKey;
+      setRecords(readDemoCollection(storageKey, initialRef.current));
+    }
+  }, [storageKey]);
+
   useEffect(() => {
     const handleCollectionChange = (event: Event) => {
       const detail = (event as CustomEvent<{ storageKey?: string; records?: T[] }>).detail;
@@ -65,6 +108,7 @@ export function useLocalCollection<T extends DemoEntity>(storageKey: string, ini
     };
   }, [storageKey]);
   useEffect(() => {
+    if (activeKeyRef.current !== storageKey) return;
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(records));
     } catch {

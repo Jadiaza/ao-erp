@@ -171,9 +171,33 @@ export const formationParticipants: FormationParticipant[] = [
   },
 ];
 
-export type GroupMember = { id: string; name: string; role: string; joinedAt: string; status: "Activo" | "En pausa" | "Retirado" };
-export type ServiceTeam = { id: string; name: string; leader: string; members: string[]; focus: string };
-export type AssignmentRecord = { id: string; date: string; person: string; role: string; scope: string; status: "Activa" | "Finalizada" };
+export type GroupMember = {
+  id: string;
+  personId?: string | undefined;
+  name: string;
+  role: string;
+  joinedAt: string;
+  status: "Activo" | "En pausa" | "Retirado";
+};
+export type ServiceTeam = {
+  id: string;
+  name: string;
+  leader: string;
+  leaderPersonId?: string | undefined;
+  members: string[];
+  memberIds?: string[] | undefined;
+  focus: string;
+};
+export type AssignmentRecord = {
+  id: string;
+  date: string;
+  personId?: string | undefined;
+  person: string;
+  role: string;
+  scope: string;
+  campusId?: string | undefined;
+  status: "Activa" | "Finalizada";
+};
 export type GroupHistoryEntry = { id: string; date: string; action: string; actor: string };
 
 export type ParishGroupDemo = {
@@ -192,6 +216,7 @@ export type ParishGroupDemo = {
     | "Asociación"
     | "Apostolado";
   coordinator: string;
+  leaderPersonId?: string | undefined;
   members: number;
   schedule: string;
   nextActivity: string;
@@ -199,18 +224,98 @@ export type ParishGroupDemo = {
   status: RecordStatus;
   purpose: string;
   activities: string[];
-  organizationId?: string;
-  campusId?: string;
-  department?: string;
-  leader?: string;
-  memberList?: GroupMember[];
-  serviceTeams?: ServiceTeam[];
-  assignments?: AssignmentRecord[];
-  history?: GroupHistoryEntry[];
+  organizationId?: string | undefined;
+  campusId?: string | undefined;
+  department?: string | undefined;
+  leader?: string | undefined;
+  memberList?: GroupMember[] | undefined;
+  serviceTeams?: ServiceTeam[] | undefined;
+  assignments?: AssignmentRecord[] | undefined;
+  history?: GroupHistoryEntry[] | undefined;
 };
+/** Grupos demostrativos exclusivos del perfil católico parroquial. */
 export const parishGroups: ParishGroupDemo[] = [
   {
     id: "GRP-DEMO-01",
+    name: "Coro de la Esperanza",
+    kind: "Ministerio litúrgico",
+    coordinator: "Coordinación musical A",
+    members: 22,
+    schedule: "Jueves · 6:30 p. m.",
+    nextActivity: "Ensayo comunitario · 5 nov.",
+    participation: 91,
+    status: "active",
+    purpose: "Servicio musical en las celebraciones comunitarias.",
+    activities: ["Ensayo semanal", "Preparación de repertorio", "Servicio dominical"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+  },
+  {
+    id: "GRP-DEMO-02",
+    name: "Comunidad Emaús",
+    kind: "Comunidad",
+    coordinator: "Responsable de comunidad B",
+    members: 16,
+    schedule: "Martes · 7:00 p. m.",
+    nextActivity: "Encuentro fraterno · 10 nov.",
+    participation: 86,
+    status: "active",
+    purpose: "Espacio comunitario de encuentro, oración y servicio.",
+    activities: ["Encuentro semanal", "Lectura comunitaria", "Visita solidaria"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+  },
+  {
+    id: "GRP-DEMO-03",
+    name: "Movimiento Sembradores",
+    kind: "Movimiento",
+    coordinator: "Enlace pastoral C",
+    members: 31,
+    schedule: "Sábados · 3:00 p. m.",
+    nextActivity: "Jornada formativa · 7 nov.",
+    participation: 79,
+    status: "active",
+    purpose: "Acompañamiento juvenil y compromiso comunitario.",
+    activities: ["Formación juvenil", "Campamento de servicio", "Encuentro mensual"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+  },
+  {
+    id: "GRP-DEMO-04",
+    name: "Equipo de lectores",
+    kind: "Ministerio litúrgico",
+    coordinator: "Coordinación litúrgica D",
+    members: 14,
+    schedule: "Primer lunes · 6:00 p. m.",
+    nextActivity: "Preparación dominical · 8 nov.",
+    participation: 94,
+    status: "active",
+    purpose: "Preparación y servicio de la proclamación de la Palabra.",
+    activities: ["Rota de servicio", "Lectio preparatoria", "Taller de proclamación"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+  },
+  {
+    id: "GRP-DEMO-05",
+    name: "Asociación Manos Abiertas",
+    kind: "Asociación",
+    coordinator: "Coordinación de servicio E",
+    members: 19,
+    schedule: "Miércoles · 5:00 p. m.",
+    nextActivity: "Organización de donaciones · 11 nov.",
+    participation: 72,
+    status: "pending",
+    purpose: "Organización de apoyo solidario y acompañamiento a familias.",
+    activities: ["Clasificación de aportes", "Acompañamiento familiar", "Jornada comunitaria"],
+    organizationId: "ORG-DEMO-001",
+    campusId: "SEDE-PRINCIPAL",
+  },
+];
+
+/** Ministerios, células y equipos demostrativos exclusivos del paquete A&O Cristiano. */
+export const christianGroups: ParishGroupDemo[] = [
+  {
+    id: "GRP-CRI-01",
     name: "Ministerio de Alabanza",
     kind: "Ministerio",
     department: "Música y adoración",
@@ -226,15 +331,15 @@ export const parishGroups: ParishGroupDemo[] = [
     organizationId: "ORG-DEMO-001",
     campusId: "SEDE-PRINCIPAL",
     memberList: [
-      { id: "GM-1", name: "Integrante de muestra 01", role: "Director musical", joinedAt: "2024-02-10", status: "Activo" },
-      { id: "GM-2", name: "Integrante de muestra 02", role: "Vocalista", joinedAt: "2024-06-01", status: "Activo" },
+      { id: "GM-1", personId: "MBR-DEMO-001", name: "Miembro de muestra 01", role: "Director musical", joinedAt: "2024-02-10", status: "Activo" },
+      { id: "GM-2", personId: "MBR-DEMO-002", name: "Miembro de muestra 02", role: "Vocalista", joinedAt: "2024-06-01", status: "Activo" },
     ],
-    serviceTeams: [{ id: "ST-1", name: "Equipo culto dominical", leader: "Coordinación musical A", members: ["Integrante 01", "Integrante 02"], focus: "Servicio dominical" }],
-    assignments: [{ id: "AS-1", date: "2026-11-03", person: "Integrante de muestra 01", role: "Dirección", scope: "Culto dominical", status: "Activa" }],
+    serviceTeams: [{ id: "ST-1", name: "Equipo culto dominical", leader: "Coordinación musical A", members: ["Miembro de muestra 01", "Miembro de muestra 02"], memberIds: ["MBR-DEMO-001", "MBR-DEMO-002"], focus: "Servicio dominical" }],
+    assignments: [{ id: "AS-1", date: "2026-11-03", personId: "MBR-DEMO-001", person: "Miembro de muestra 01", role: "Dirección", scope: "Culto dominical", campusId: "SEDE-PRINCIPAL", status: "Activa" }],
     history: [{ id: "GH-1", date: "2026-10-01", action: "Integración de nuevos servidores", actor: "Coordinación musical A" }],
   },
   {
-    id: "GRP-DEMO-02",
+    id: "GRP-CRI-02",
     name: "Célula Norte",
     kind: "Célula",
     department: "Grupos pequeños",
@@ -250,14 +355,14 @@ export const parishGroups: ParishGroupDemo[] = [
     organizationId: "ORG-DEMO-001",
     campusId: "SEDE-PRINCIPAL",
     memberList: [
-      { id: "GM-3", name: "Persona de muestra 02", role: "Anfitriona", joinedAt: "2025-03-15", status: "Activo" },
-      { id: "GM-4", name: "Integrante de muestra 03", role: "Integrante", joinedAt: "2025-08-20", status: "Activo" },
+      { id: "GM-3", personId: "MBR-DEMO-002", name: "Miembro de muestra 02", role: "Anfitriona", joinedAt: "2025-03-15", status: "Activo" },
+      { id: "GM-4", personId: "MBR-DEMO-003", name: "Miembro de muestra 03", role: "Integrante", joinedAt: "2025-08-20", status: "Activo" },
     ],
     assignments: [{ id: "AS-2", date: "2026-11-10", person: "Responsable de célula B", role: "Facilitador", scope: "Encuentro semanal", status: "Activa" }],
     history: [{ id: "GH-2", date: "2026-09-20", action: "Multiplicación planificada del grupo", actor: "Coordinación de grupos" }],
   },
   {
-    id: "GRP-DEMO-03",
+    id: "GRP-CRI-03",
     name: "Ministerio Juvenil",
     kind: "Ministerio",
     department: "Juventud",
@@ -276,7 +381,7 @@ export const parishGroups: ParishGroupDemo[] = [
     history: [{ id: "GH-3", date: "2026-08-05", action: "Inicio de ciclo formativo", actor: "Enlace pastoral C" }],
   },
   {
-    id: "GRP-DEMO-04",
+    id: "GRP-CRI-04",
     name: "Equipo de Ujieres y Bienvenida",
     kind: "Equipo de servicio",
     department: "Servicio dominical",
@@ -291,11 +396,11 @@ export const parishGroups: ParishGroupDemo[] = [
     activities: ["Rota de servicio", "Preparación dominical", "Capacitación"],
     organizationId: "ORG-DEMO-001",
     campusId: "SEDE-PRINCIPAL",
-    assignments: [{ id: "AS-3", date: "2026-11-08", person: "Servidor de muestra 01", role: "Ujier", scope: "Culto mañana", status: "Activa" }],
+    assignments: [{ id: "AS-3", date: "2026-11-08", person: "Miembro de muestra 05", role: "Ujier", scope: "Culto mañana", status: "Activa" }],
     history: [{ id: "GH-4", date: "2026-10-10", action: "Actualización de rota de servicio", actor: "Coordinación de servicio D" }],
   },
   {
-    id: "GRP-DEMO-05",
+    id: "GRP-CRI-05",
     name: "Departamento de Acción Social",
     kind: "Departamento",
     department: "Servicio y misericordia",

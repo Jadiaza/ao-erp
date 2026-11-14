@@ -1,4 +1,4 @@
-# PLAN TÉCNICO DE INTEGRACIÓN — origin/main (base) vs aportes exclusivos de 507c83c (SOLO LECTURA)
+ # PLAN TÉCNICO DE INTEGRACIÓN — origin/main (base) vs aportes exclusivos de 507c83c (SOLO LECTURA)
 
 Repositorio local: D:\Proyectos\ao-erp
 Repositorio remoto: https://github.com/Jadiaza/ao-erp.git (Jadiaza/ao-erp)

@@ -106,7 +106,10 @@ export function isCatholicProfile(profile: ErpProductProfile) {
 export const CATHOLIC_ONLY_ROUTE_PATHS = new Set([
   "/app/gestion-sacramental",
   "/app/libros-sacramentales",
+  "/app/documentos-certificados",
   "/app/gestion-diocesana",
+  "/app/estructura-eclesiastica",
+  "/app/informe-anual-parroquial",
   "/app/liturgia-celebraciones",
   "/app/catequesis-formacion",
 ]);
@@ -115,6 +118,12 @@ export const CATHOLIC_ONLY_ROUTE_PATHS = new Set([
 export const CHRISTIAN_PACKAGE_ROUTE_PATHS = new Set([
   "/app/acompanamiento-pastoral",
 ]);
+
+export function getProfileStorageKey(baseKey: string, profile: ErpProductProfile): string {
+  if (profile === "cristiano") return `${baseKey}:cristiano`;
+  if (profile === "combinado") return `${baseKey}:combinado`;
+  return baseKey;
+}
 
 export function isRouteAllowedForProfile(path: string, profile: ErpProductProfile): boolean {
   if (profile === "cristiano" && CATHOLIC_ONLY_ROUTE_PATHS.has(path)) return false;
@@ -137,11 +146,20 @@ export function canAccessPastoralCare(role: PastoralAccessRole): boolean {
   return role === "pastor_principal" || role === "lider_pastoral" || role === "consejero_autorizado";
 }
 
+export function canAccessPastoralRecord(
+  role: PastoralAccessRole,
+  authorizedRoles?: readonly string[],
+): boolean {
+  if (!canAccessPastoralCare(role)) return false;
+  if (!authorizedRoles || authorizedRoles.length === 0) return true;
+  return authorizedRoles.includes(role);
+}
+
 export function canWritePastoralCare(role: PastoralAccessRole): boolean {
   return role === "pastor_principal" || role === "lider_pastoral" || role === "consejero_autorizado";
 }
 
 export function maskPastoralSensitive(allowed: boolean, value: string): string {
   if (allowed) return value;
-  return "Reservado · acceso pastoral autorizado requerido";
+  return "Reservado · acceso pastoral autorizado requerido (demo local)";
 }

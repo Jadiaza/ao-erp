@@ -1041,6 +1041,20 @@ const applications: Application[] = [
 const modules: Module[] = [
   {
     ...dates(),
+    id: "MOD-CORE",
+    code: "ERP-CORE",
+    applicationId: "APP-ERP",
+    name: "Núcleo institucional y administración base",
+    description:
+      "Identidad institucional, sedes, configuración regional, usuarios/permisos y trazabilidad base compartida sin dependencia confesional.",
+    category: "Plataforma Base",
+    requiredModuleIds: [],
+    commercialAvailability: "Incluido en base",
+    featureIds: [],
+    status: "Activo",
+  },
+  {
+    ...dates(),
     id: "MOD-COM",
     code: "ERP-COM",
     applicationId: "APP-ERP",
@@ -1048,7 +1062,7 @@ const modules: Module[] = [
     description:
       "Directorio de feligreses, familias, grupos apostólicos, catequesis, agenda parroquial y comunicaciones.",
     category: "Pastoral y Comunidad",
-    requiredModuleIds: [],
+    requiredModuleIds: ["MOD-CORE"],
     commercialAvailability: "Incluido en base",
     featureIds: [],
     status: "Activo",
@@ -1074,9 +1088,9 @@ const modules: Module[] = [
     applicationId: "APP-ERP",
     name: "Gestión documental",
     description:
-      "Archivo eclesiástico digital, expedientes canónicos, correspondencia oficial y conservación documental.",
+      "Archivo institucional digital, expedientes, correspondencia oficial y conservación documental.",
     category: "Archivo y Cumplimiento",
-    requiredModuleIds: ["MOD-COM"],
+    requiredModuleIds: ["MOD-CORE"],
     commercialAvailability: "Incluido en base",
     featureIds: [],
     status: "Activo",
@@ -1088,9 +1102,9 @@ const modules: Module[] = [
     applicationId: "APP-ERP",
     name: "Finanzas y recursos",
     description:
-      "Tesorería, estipendios, ofrendas, contabilidad institucional, presupuestos, activos fijos y reportes al economato.",
+      "Tesorería, ingresos, ofrendas, contabilidad institucional, presupuestos, activos fijos y reportes.",
     category: "Administración y Economato",
-    requiredModuleIds: ["MOD-COM"],
+    requiredModuleIds: ["MOD-CORE"],
     commercialAvailability: "Incluido en base",
     featureIds: [],
     status: "Activo",
@@ -1104,7 +1118,7 @@ const modules: Module[] = [
     description:
       "Supervisión de parroquias, decretos episcopales, clero, aportes diocesanos y consolidación financiera de la curia.",
     category: "Gobierno Diocesano",
-    requiredModuleIds: ["MOD-DOC", "MOD-FIN"],
+    requiredModuleIds: ["MOD-COM", "MOD-DOC", "MOD-FIN"],
     commercialAvailability: "Bajo contrato institucional",
     featureIds: [],
     status: "Activo",
@@ -1118,7 +1132,7 @@ const modules: Module[] = [
     description:
       "Registro de miembros, familias y relaciones, visitantes, contacto, membresía, ingreso, participación y bautismos según prácticas de la congregación.",
     category: "Paquete A&O Cristiano",
-    requiredModuleIds: [],
+    requiredModuleIds: ["MOD-CORE"],
     commercialAvailability: "Paquete A&O Cristiano (suscripción)",
     featureIds: [],
     status: "Activo",
@@ -1182,6 +1196,16 @@ const modules: Module[] = [
 ];
 
 const features: Feature[] = [
+  {
+    ...dates(),
+    id: "MOD-CORE-CORE",
+    code: "FT-CORE-INSTITUCION",
+    moduleId: "MOD-CORE",
+    name: "Núcleo institucional · identidad, sedes, configuración y usuarios",
+    description: "Operación institucional base, sedes, responsables, configuración regional y control interno.",
+    commercialAvailability: "Disponible general (GA)",
+    status: "Activo",
+  },
   {
     ...dates(),
     id: "MOD-COM-CORE",
@@ -1332,7 +1356,7 @@ const planEnrichment: Record<
     currency: "COP",
     billingPeriod: "Mensual",
     storageLimitGb: 25,
-    moduleIds: ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"],
+    moduleIds: ["MOD-CORE", "MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"],
     conditions:
       "Licencia para una sede parroquial o santuario, hasta 10 usuarios concurrentes y 25 GB de archivo.",
   },
@@ -1343,7 +1367,7 @@ const planEnrichment: Record<
     currency: "COP",
     billingPeriod: "Mensual",
     storageLimitGb: 150,
-    moduleIds: ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"],
+    moduleIds: ["MOD-CORE", "MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"],
     conditions:
       "Cobertura para congregaciones, fundaciones o colegios con hasta 10 sedes y 30 usuarios.",
   },
@@ -1354,7 +1378,7 @@ const planEnrichment: Record<
     currency: "COP",
     billingPeriod: "Mensual",
     storageLimitGb: 1000,
-    moduleIds: ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN", "MOD-GOB"],
+    moduleIds: ["MOD-CORE", "MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN", "MOD-GOB"],
     conditions:
       "Cobertura multiinstitucional para diócesis, arquidiócesis o provincias religiosas con curia y parroquias.",
   },
@@ -1365,7 +1389,7 @@ const planEnrichment: Record<
     currency: "COP",
     billingPeriod: "Mensual",
     storageLimitGb: 30,
-    moduleIds: ["MOD-CRI-COM", "MOD-CRI-GRP", "MOD-CRI-CUL", "MOD-CRI-ADM", "MOD-CRI-PAS", "MOD-FIN", "MOD-DOC"],
+    moduleIds: ["MOD-CORE", "MOD-CRI-COM", "MOD-CRI-GRP", "MOD-CRI-CUL", "MOD-CRI-ADM", "MOD-CRI-PAS", "MOD-FIN", "MOD-DOC"],
     conditions:
       "Paquete A&O Cristiano para congregaciones independientes o sedes: miembros, ministerios, cultos/eventos, finanzas congregacionales, administración documental y acompañamiento pastoral. No incluye sacramentos católicos, libros sacramentales, gestión parroquial/diocesana, liturgia ni catequesis sacramental católica.",
   },
@@ -1392,7 +1416,7 @@ const extraChristianPlans: CommercialPlan[] = [
     version: 1,
     conditions:
       "Activable por suscripción/entitlements en A&O ERP. Compatible con módulos genéricos contratados y combinable con módulos católicos solo cuando el plan/contrato los incluya explícitamente. La desactivación bloquea acceso sin eliminar datos.",
-    moduleIds: ["MOD-CRI-COM", "MOD-CRI-GRP", "MOD-CRI-CUL", "MOD-CRI-ADM", "MOD-CRI-PAS", "MOD-FIN", "MOD-DOC"],
+    moduleIds: ["MOD-CORE", "MOD-CRI-COM", "MOD-CRI-GRP", "MOD-CRI-CUL", "MOD-CRI-ADM", "MOD-CRI-PAS", "MOD-FIN", "MOD-DOC"],
     userLimit: 15,
     institutionLimit: 3,
   },
@@ -2042,22 +2066,17 @@ export const initialSaasState: SaasDomainState = {
     scope: "global",
     organization: "",
     enabledModuleIds: [
-      "parishioners",
-      "sacraments",
-      "certificates",
-      "catechesis",
-      "pastoral-action",
-      "liturgy",
-      "treasury",
-      "accounting",
-      "budgets",
-      "assets",
-      "governance",
-      "documents",
-      "reports",
-      "agenda",
-      "portal",
-      "communications",
+      "MOD-CORE",
+      "MOD-COM",
+      "MOD-SAC",
+      "MOD-FIN",
+      "MOD-DOC",
+      "MOD-GOB",
+      "MOD-CRI-COM",
+      "MOD-CRI-GRP",
+      "MOD-CRI-CUL",
+      "MOD-CRI-ADM",
+      "MOD-CRI-PAS",
     ],
   },
   moduleRecords: Object.fromEntries(

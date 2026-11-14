@@ -39,7 +39,7 @@ export function SettingsCenterScreen() {
       description="Preferencias institucionales, perfil de producto y controles demostrativos de suscripción/entitlements locales."
       actions={<Button className="gap-2" onClick={() => setSavedPreview(true)}><Save className="size-4" />Aplicar cambios locales</Button>}
     >
-      <DemoNotice>Configuración en modo demostrativo local (navegador). El perfil A&O Cristiano/Católico simula activación por suscripción/entitlements sin backend productivo. Al desactivar el paquete cristiano se bloquea acceso funcional sin eliminar datos.</DemoNotice>
+      <DemoNotice>Configuración en modo demostrativo local (navegador). Estos selectores simulan contexto visual de perfil/sede/rol únicamente para demostración; no equivalen a autenticación real, seguridad de servidor ni control productivo de producción. Al desactivar el paquete cristiano se bloquea acceso funcional en interfaz sin eliminar datos locales.</DemoNotice>
       <div className="grid gap-5 xl:grid-cols-[270px_minmax(0,1fr)]">
         <Card className="h-fit shadow-none">
           <CardHeader className="pb-3"><CardTitle className="text-sm">Categorías de configuración</CardTitle><p className="text-xs text-muted-foreground">Elige un ámbito institucional.</p></CardHeader>
@@ -122,7 +122,7 @@ export function SettingsCenterScreen() {
                     <Switch checked={settings.allowPastoralAiAnalysis} onCheckedChange={(v) => updateSettings({ allowPastoralAiAnalysis: !!v })} aria-label="Autorizar análisis IA sobre información pastoral sensible" />
                   </div>
                   <div className="rounded-lg border border-primary/15 bg-primary/[0.03] p-4 text-xs text-muted-foreground space-y-1">
-                    <p><strong>Control de acceso:</strong> el perfil cristiano bloquea rutas católico-exclusivas (sacramentos, libros sacramentales, gestión parroquial/diocesana, liturgia/catequesis sacramental católica). El perfil católico bloquea acompañamiento pastoral del paquete cristiano. El perfil combinado permite coexistencia.</p>
+                    <p><strong>Control de acceso:</strong> el perfil cristiano bloquea rutas católico-exclusivas (sacramentos, libros sacramentales, certificados sacramentales, estructura eclesiástica, informe anual parroquial, gestión diocesana, liturgia y catequesis católica). El perfil católico bloquea acompañamiento pastoral del paquete cristiano. El perfil combinado permite coexistencia.</p>
                     <p><strong>Datos:</strong> desactivar un paquete bloquea acceso funcional; no elimina ni destruye información histórica (persistencia local demo).</p>
                   </div>
                 </>

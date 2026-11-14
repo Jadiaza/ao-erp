@@ -13,8 +13,10 @@ export type PastoralCareRecord = {
   organizationId: string;
   campusId: string;
   type: PastoralCareType;
+  personId?: string | undefined;
   person: string;
-  family?: string;
+  familyId?: string | undefined;
+  family?: string | undefined;
   responsible: string;
   date: string;
   status: RecordStatus | "Abierto" | "En seguimiento" | "Cerrado";
@@ -32,7 +34,10 @@ export const pastoralCareRecords: PastoralCareRecord[] = [
     organizationId: "ORG-DEMO-001",
     campusId: "SEDE-PRINCIPAL",
     type: "Seguimiento a nuevo miembro",
-    person: "Persona de muestra 04",
+    personId: "VIS-DEMO-004",
+    person: "Visitante de muestra 04",
+    familyId: "FAM-CRI-03",
+    family: "Familia de muestra C",
     responsible: "Líder de integración · demo",
     date: "2026-10-24",
     status: "En seguimiento",
@@ -51,7 +56,9 @@ export const pastoralCareRecords: PastoralCareRecord[] = [
     organizationId: "ORG-DEMO-001",
     campusId: "SEDE-PRINCIPAL",
     type: "Visita pastoral",
+    personId: "MBR-DEMO-003",
     person: "Familia de muestra B",
+    familyId: "FAM-CRI-02",
     family: "Familia de muestra B",
     responsible: "Pastor responsable · demo",
     date: "2026-10-22",
@@ -68,7 +75,10 @@ export const pastoralCareRecords: PastoralCareRecord[] = [
     organizationId: "ORG-DEMO-001",
     campusId: "SEDE-SECUNDARIA",
     type: "Petición de oración",
-    person: "Persona de muestra 06",
+    personId: "MBR-DEMO-006",
+    person: "Miembro de muestra 06",
+    familyId: "FAM-CRI-02",
+    family: "Familia de muestra B",
     responsible: "Equipo de intercesión · demo",
     date: "2026-10-28",
     status: "Abierto",
@@ -84,7 +94,10 @@ export const pastoralCareRecords: PastoralCareRecord[] = [
     organizationId: "ORG-DEMO-001",
     campusId: "SEDE-PRINCIPAL",
     type: "Consejería",
-    person: "Persona de muestra 05",
+    personId: "MBR-DEMO-002",
+    person: "Miembro de muestra 02",
+    familyId: "FAM-CRI-01",
+    family: "Familia de muestra A",
     responsible: "Consejero autorizado · demo",
     date: "2026-10-26",
     status: "En seguimiento",

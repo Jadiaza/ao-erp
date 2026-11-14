@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BookCheck, BookOpen, Calculator, FileSpreadsheet, Landmark, Scale } from "lucide-react";
 import {
   DataTable,
@@ -23,10 +23,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { accountingAccounts, accountingEntities, journalEntries } from "@/data/economy-demo";
+import {
+  accountingAccounts,
+  accountingEntities,
+  christianAccountingAccounts,
+  christianAccountingEntities,
+  christianJournalEntries,
+  journalEntries,
+  type JournalEntryDemo,
+} from "@/data/economy-demo";
 import { useLocalCollection } from "@/data/local-repository";
 import { useAoCristianoSettings } from "@/lib/use-ao-cristiano";
-import { isChristianProfile } from "@/lib/ao-cristiano-profile";
+import { getProfileStorageKey, isChristianProfile } from "@/lib/ao-cristiano-profile";
 
 const money = (value: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -38,53 +46,76 @@ const money = (value: number) =>
 export function AccountingScreen() {
   const { settings } = useAoCristianoSettings();
   const christian = isChristianProfile(settings.profile);
-  const [entity, setEntity] = useState(accountingEntities[0]?.id ?? "");
+  const activeEntities = christian ? christianAccountingEntities : accountingEntities;
+  const activeAccounts = christian ? christianAccountingAccounts : accountingAccounts;
+  const defaultJournal = christian ? christianJournalEntries : journalEntries;
+
+  const [entity, setEntity] = useState(activeEntities[0]?.id ?? "");
+  useEffect(() => {
+    if (!activeEntities.some((item) => item.id === entity)) {
+      setEntity(activeEntities[0]?.id ?? "");
+    }
+  }, [activeEntities, entity]);
+
   const [tab, setTab] = useState("chart");
   const [formOpen, setFormOpen] = useState(false);
-  const [selected, setSelected] = useState<(typeof journalEntries)[number] | null>(null);
-  const { records, create } = useLocalCollection("ao-erp:accounting:journal", journalEntries);
+  const [selected, setSelected] = useState<JournalEntryDemo | null>(null);
+  const { records, create } = useLocalCollection<JournalEntryDemo>(
+    getProfileStorageKey("ao-erp:accounting:journal", settings.profile),
+    defaultJournal,
+  );
   const currentEntity =
-    accountingEntities.find((item) => item.id === entity) ?? accountingEntities[0]!;
+    activeEntities.find((item) => item.id === entity) ?? activeEntities[0]!;
   const accounts = useMemo(
-    () => accountingAccounts.filter((item) => item.entityId === entity),
-    [entity],
+    () => activeAccounts.filter((item) => item.entityId === currentEntity.id),
+    [activeAccounts, currentEntity.id],
   );
   const journal = useMemo(
-    () => records.filter((item) => item.entityId === entity),
-    [records, entity],
+    () =>
+      records.filter(
+        (item) =>
+          item.entityId === currentEntity.id &&
+          (!("organizationId" in item) ||
+            !(item as { organizationId?: string }).organizationId ||
+            (item as { organizationId?: string }).organizationId === settings.organizationId),
+      ),
+    [records, currentEntity.id, settings.organizationId],
   );
   const financialPosition = [
     {
       label: "Activos",
-      value: accountingAccounts.find((account) => account.code === "1")?.balance ?? 0,
+      value: accounts.find((account) => account.code === "1")?.balance ?? 0,
     },
     {
       label: "Pasivos",
-      value: Math.abs(accountingAccounts.find((account) => account.code === "2")?.balance ?? 0),
+      value: Math.abs(accounts.find((account) => account.code === "2")?.balance ?? 0),
     },
     {
-      label: "Patrimonio institucional",
-      value: Math.abs(accountingAccounts.find((account) => account.code === "3")?.balance ?? 0),
+      label: christian ? "Patrimonio congregacional" : "Patrimonio institucional",
+      value: Math.abs(accounts.find((account) => account.code === "3")?.balance ?? 0),
     },
   ];
   const activityStatement = [
     {
-      label: "Ingresos acumulados ? demo",
-      value: Math.abs(accountingAccounts.find((account) => account.code === "4")?.balance ?? 0),
+      label: "Ingresos acumulados · demo",
+      value: Math.abs(accounts.find((account) => account.code === "4")?.balance ?? 0),
     },
     {
-      label: "Gastos acumulados ? demo",
-      value: accountingAccounts.find((account) => account.code === "5")?.balance ?? 0,
+      label: "Gastos acumulados · demo",
+      value: accounts.find((account) => account.code === "5")?.balance ?? 0,
     },
     {
-      label: "Excedente acumulado ? demo",
+      label: "Excedente acumulado · demo",
       value:
-        Math.abs(accountingAccounts.find((account) => account.code === "4")?.balance ?? 0) -
-        (accountingAccounts.find((account) => account.code === "5")?.balance ?? 0),
+        Math.abs(accounts.find((account) => account.code === "4")?.balance ?? 0) -
+        (accounts.find((account) => account.code === "5")?.balance ?? 0),
     },
   ];
   const periodDebits = journal.reduce((total, entry) => total + entry.debit, 0);
   const periodCredits = journal.reduce((total, entry) => total + entry.credit, 0);
+  const periodDifference = periodDebits - periodCredits;
+  const isBalanced = periodDifference === 0;
+
   const accountColumns: DataTableColumn<(typeof accountingAccounts)[number]>[] = [
     {
       id: "code",
@@ -166,20 +197,24 @@ export function AccountingScreen() {
       breadcrumbs={[
         { label: "Dashboard", href: "/" },
         { label: "Finanzas y recursos" },
-        { label: "Contabilidad" },
+        { label: christian ? "Contabilidad congregacional" : "Contabilidad" },
       ]}
-      title="Contabilidad"
+      title={christian ? "Contabilidad congregacional" : "Contabilidad"}
       width="wide"
-      description="Catálogo configurable, comprobantes y estados demostrativos por entidad contable."
+      description={
+        christian
+          ? "Catálogo configurable para diezmos, ofrendas, donaciones y egresos congregacionales sin contabilidad paralela."
+          : "Catálogo configurable, comprobantes y estados demostrativos por entidad contable."
+      }
       actions={
         <div className="flex items-center gap-2 rounded-lg border bg-card p-1.5">
           <Landmark className="ml-1 size-4 text-primary" />
-          <Select value={entity} onValueChange={setEntity}>
+          <Select value={currentEntity.id} onValueChange={setEntity}>
             <SelectTrigger className="w-64 border-0 shadow-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {accountingEntities.map((item) => (
+              {activeEntities.map((item) => (
                 <SelectItem key={item.id} value={item.id}>
                   {item.name}
                 </SelectItem>
@@ -210,9 +245,13 @@ export function AccountingScreen() {
           />
           <StatCard
             label="Cuadre demostrativo"
-            value="Balanceado"
+            value={isBalanced ? "Balanceado" : "Descuadrado"}
             icon={Scale}
-            caption="Débitos = créditos · demo"
+            caption={
+              isBalanced
+                ? "Débitos = créditos · demo"
+                : `Diferencia: ${money(periodDifference)}`
+            }
           />
         </>
       }
@@ -240,7 +279,7 @@ export function AccountingScreen() {
           Base contable · local configurable
         </span>
         <span className="rounded-md bg-secondary px-3 py-2 text-xs text-muted-foreground">
-          Dimensión · pastoral / administrativa
+          Dimensión · {christian ? "ministerial / administrativa" : "pastoral / administrativa"}
         </span>
       </div>
       <Tabs value={tab} onValueChange={setTab}>
@@ -264,7 +303,9 @@ export function AccountingScreen() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Centro analítico
                 </p>
-                <p className="mt-1 font-semibold">Pastoral / Administrativa</p>
+                <p className="mt-1 font-semibold">
+                  {christian ? "Ministerial / Administrativa" : "Pastoral / Administrativa"}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">Dimensiones ilustrativas</p>
               </CardContent>
             </Card>
@@ -283,7 +324,7 @@ export function AccountingScreen() {
           <DataTable
             rows={accounts}
             columns={accountColumns}
-            getRowId={(item) => `${entity}-${item.code}-${item.name}`}
+            getRowId={(item) => `${currentEntity.id}-${item.code}-${item.name}`}
           />
         </TabsContent>
         <TabsContent value="journal" className="space-y-4">
@@ -305,14 +346,14 @@ export function AccountingScreen() {
               </div>
               <div className="text-right font-mono text-sm">
                 <p>Débitos período: {money(periodDebits)}</p>
-                <p>Créditos período: {money(periodDebits)}</p>
+                <p>Créditos período: {money(periodCredits)}</p>
               </div>
             </CardContent>
           </Card>
           <DataTable
             rows={journal}
             columns={journalColumns}
-            getRowId={(item) => `${item.id}-${item.account}`}
+            getRowId={(item) => `${item.id}-${item.account}-${item.debit}-${item.credit}`}
             onRowClick={setSelected}
           />
         </TabsContent>
@@ -326,7 +367,7 @@ export function AccountingScreen() {
               <DataTable
                 rows={accounts.filter((item) => item.type === "Cuenta" || item.type === "Grupo")}
                 columns={accountColumns}
-                getRowId={(item) => `${entity}-${item.code}-${item.name}`}
+                getRowId={(item) => `${currentEntity.id}-${item.code}-${item.name}`}
               />
             </div>
             <Card className="h-fit shadow-none">
@@ -336,8 +377,8 @@ export function AccountingScreen() {
               <CardContent className="space-y-3">
                 {[
                   { label: "Total débitos", value: periodDebits },
-                  { label: "Total créditos", value: periodDebits },
-                  { label: "Diferencia", value: 0 },
+                  { label: "Total créditos", value: periodCredits },
+                  { label: "Diferencia", value: periodDifference },
                 ].map((row) => (
                   <div key={row.label} className="flex justify-between border-b pb-2 text-sm">
                     <span className="text-muted-foreground">{row.label}</span>
@@ -400,30 +441,37 @@ export function AccountingScreen() {
           const description = String(data.get("description") ?? "").trim();
           const amount = Number(data.get("amount") ?? 0);
           if (description.length < 3 || !Number.isFinite(amount) || amount <= 0) return;
-          const id = `CMP-DEMO-${Date.now()}`;
+          const id = `${christian ? "CMP-CRI" : "CMP-DEMO"}-${Date.now()}`;
           const date = "Hoy · demo";
+          const cashAccount = christian ? "1105 · Caja congregacional" : "1105 · Caja parroquial";
+          const incomeAccount = christian
+            ? "4101 · Diezmos y ofrendas"
+            : "4101 · Ingresos de muestra";
+          const dim = christian ? "Ministerial" : "Administrativa";
           create({
             id,
             date,
             period: "2026-10",
             description,
-            account: "1105 · Caja parroquial",
+            account: cashAccount,
             debit: amount,
             credit: 0,
-            dimension: "Administrativa",
-            entityId: "ENT-DEMO-PAR-014",
-          });
+            dimension: dim,
+            entityId: currentEntity.id,
+            ...(christian ? { organizationId: settings.organizationId } : {}),
+          } as (typeof journalEntries)[number]);
           create({
             id,
             date,
             period: "2026-10",
             description,
-            account: "4101 · Ingresos de muestra",
+            account: incomeAccount,
             debit: 0,
             credit: amount,
-            dimension: "Administrativa",
-            entityId: "ENT-DEMO-PAR-014",
-          });
+            dimension: dim,
+            entityId: currentEntity.id,
+            ...(christian ? { organizationId: settings.organizationId } : {}),
+          } as (typeof journalEntries)[number]);
         }}
       >
         <label className="grid gap-1 text-sm">

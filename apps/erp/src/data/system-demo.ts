@@ -1,4 +1,20 @@
-export type InstitutionalDocument = { id: string; name: string; folder: string; category: string; type: string; owner: string; created: string; updated: string; version: string; status: "Vigente" | "En revisión" | "Archivado"; access: "Institucional" | "Interno" | "Restringido"; summary: string; versions: { version: string; date: string; author: string; note: string }[] };
+export type InstitutionalDocument = {
+  id: string;
+  name: string;
+  folder: string;
+  category: string;
+  type: string;
+  owner: string;
+  created: string;
+  updated: string;
+  version: string;
+  status: "Vigente" | "En revisión" | "Archivado";
+  access: "Institucional" | "Interno" | "Restringido";
+  summary: string;
+  organizationId?: string;
+  campusId?: string;
+  versions: { version: string; date: string; author: string; note: string }[];
+};
 export const institutionalDocuments: InstitutionalDocument[] = [
   { id: "DOC-2026-031", name: "Plan pastoral parroquial 2026", folder: "Pastoral / Planificación", category: "Pastoral", type: "Plan institucional", owner: "Coordinación pastoral", created: "12 ene. 2026", updated: "28 oct. 2026", version: "v3.0", status: "Vigente", access: "Institucional", summary: "Objetivos, líneas de acción y cronograma pastoral anual.", versions: [{ version: "v3.0", date: "28 oct. 2026", author: "Coordinación pastoral", note: "Ajuste del calendario de evaluación." }, { version: "v2.0", date: "15 jun. 2026", author: "Secretaría pastoral", note: "Actualización intermedia." }, { version: "v1.0", date: "12 ene. 2026", author: "Párroco administrador", note: "Versión inicial aprobada para uso local." }] },
   { id: "DOC-2026-028", name: "Acta de consejo económico", folder: "Administración / Actas", category: "Administrativo", type: "Acta", owner: "Secretaría parroquial", created: "21 oct. 2026", updated: "22 oct. 2026", version: "v1.0", status: "Vigente", access: "Interno", summary: "Acta demostrativa del consejo parroquial de octubre.", versions: [{ version: "v1.0", date: "22 oct. 2026", author: "Secretaría parroquial", note: "Versión registrada en el repositorio de muestra." }] },
@@ -6,6 +22,13 @@ export const institutionalDocuments: InstitutionalDocument[] = [
   { id: "DOC-2026-019", name: "Protocolo de conservación del templo", folder: "Patrimonio / Jurídicos", category: "Jurídico", type: "Protocolo", owner: "Responsable de patrimonio", created: "05 sep. 2026", updated: "05 sep. 2026", version: "v1.0", status: "Vigente", access: "Institucional", summary: "Orientaciones generales para conservación preventiva de espacios.", versions: [{ version: "v1.0", date: "05 sep. 2026", author: "Administración parroquial", note: "Documento de referencia." }] },
   { id: "DOC-2026-015", name: "Referencia documental sacramental", folder: "Archivo sacramental / Restringido", category: "Sacramental", type: "Referencia de archivo", owner: "Custodia documental", created: "17 ago. 2026", updated: "17 ago. 2026", version: "v1.0", status: "Vigente", access: "Restringido", summary: "Metadatos mínimos de clasificación. El contenido no se muestra en el explorador general.", versions: [{ version: "v1.0", date: "17 ago. 2026", author: "Custodia documental", note: "Referencia visible solo como objeto restringido." }] },
   { id: "DOC-2026-009", name: "Memoria de jornada comunitaria", folder: "Pastoral / Evidencias", category: "Pastoral", type: "Memoria de actividad", owner: "Equipo de servicio", created: "04 jul. 2026", updated: "09 jul. 2026", version: "v1.1", status: "Archivado", access: "Institucional", summary: "Memoria resumida y evidencias de una actividad pastoral ficticia.", versions: [{ version: "v1.1", date: "09 jul. 2026", author: "Equipo de servicio", note: "Se adjuntó síntesis de resultados." }, { version: "v1.0", date: "04 jul. 2026", author: "Coordinación pastoral", note: "Primera carga de la memoria." }] },
+];
+
+export const christianInstitutionalDocuments: InstitutionalDocument[] = [
+  { id: "DOC-CRI-031", name: "Plan anual de ministerios y células 2026", folder: "Ministerios / Planificación", category: "Ministerial", type: "Plan congregacional", owner: "Coordinación de ministerios", created: "12 ene. 2026", updated: "28 oct. 2026", version: "v3.0", status: "Vigente", access: "Institucional", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL", summary: "Objetivos, líneas de acción y calendario de ministerios y células.", versions: [{ version: "v3.0", date: "28 oct. 2026", author: "Coordinación de ministerios", note: "Ajuste de cronograma." }] },
+  { id: "DOC-CRI-028", name: "Acta junta de liderazgo · octubre 2026", folder: "Administración / Actas", category: "Administrativo", type: "Acta", owner: "Secretaría congregacional", created: "25 oct. 2026", updated: "25 oct. 2026", version: "v1.0", status: "Vigente", access: "Interno", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL", summary: "Acuerdos de cultos y presupuesto congregacional.", versions: [{ version: "v1.0", date: "25 oct. 2026", author: "Secretaría congregacional", note: "Versión aprobada local." }] },
+  { id: "DOC-CRI-024", name: "Informe mensual de diezmos y ofrendas", folder: "Finanzas / Informes", category: "Contable", type: "Informe financiero", owner: "Tesorería congregacional", created: "30 oct. 2026", updated: "31 oct. 2026", version: "v1.0", status: "En revisión", access: "Interno", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL", summary: "Resumen demostrativo de aportes y egresos congregacionales.", versions: [{ version: "v1.0", date: "31 oct. 2026", author: "Tesorería congregacional", note: "Cierre preliminar." }] },
+  { id: "DOC-CRI-019", name: "Estatutos y personería jurídica congregacional", folder: "Jurídico / Institucional", category: "Jurídico", type: "Estatuto", owner: "Representación legal", created: "05 sep. 2026", updated: "05 sep. 2026", version: "v1.0", status: "Vigente", access: "Restringido", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL", summary: "Metadatos de estatutos internos de la congregación.", versions: [{ version: "v1.0", date: "05 sep. 2026", author: "Administración", note: "Documento institucional." }] },
 ];
 
 export type AuditEntry = { id: string; date: string; time: string; actor: string; role: string; module: string; action: "Creación" | "Modificación" | "Consulta" | "Revisión" | "Aprobación"; entity: string; description: string; status: "Registrado" | "Revisión requerida" | "Completado"; detail: string };

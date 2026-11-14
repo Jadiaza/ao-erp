@@ -147,7 +147,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <aside className={`fixed inset-y-0 left-0 z-40 flex h-screen shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 md:sticky md:top-0 md:translate-x-0 ${open ? "w-80" : "w-20"} ${mobileNavOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className={`flex items-center gap-3 px-4 py-5 ${open ? "" : "justify-center"}`}>
         <img src="/favicon.png" alt="A&O ERP" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
-        {open && <div className="leading-tight"><div className="text-xl font-extrabold tracking-tight text-sidebar-primary-foreground">A&O ERP</div><div className="text-[10px] font-medium uppercase tracking-[0.15em] text-sidebar-foreground/70">Gestión eclesial</div></div>}
+        {open && <div className="leading-tight"><div className="text-xl font-extrabold tracking-tight text-sidebar-primary-foreground">A&O ERP</div><div className="text-[10px] font-medium uppercase tracking-[0.15em] text-sidebar-foreground/70">{christian ? "Gestión congregacional" : "Gestión eclesial"}</div></div>}
       </div>
       <nav aria-label="Navegación principal" className="flex-1 space-y-1 overflow-y-auto px-2.5 pb-3 pt-1">
         <ul className="mb-1 space-y-0.5">

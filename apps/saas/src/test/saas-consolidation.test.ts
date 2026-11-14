@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   evaluateOrganizationLicensing,
+  resolveModuleDependencies,
   saveContractWithRelations,
   saveLicenseWithEntitlements,
+  transitionContractStatus,
   validateOrganizationCapacity,
 } from "../data/commercial-service";
 import {
@@ -227,5 +229,130 @@ describe("consolidación funcional de A&O SaaS (demo local)", () => {
     if (workflow.ok) {
       expect(workflow.request.id).toBe(requestResult.request.id);
     }
+  });
+
+  it("habilita módulos cristianos y genéricos en PLN-CRI sin activar MOD-COM, MOD-SAC ni MOD-GOB", () => {
+    const christianPlan = repositories.plans.getById("PLN-CRI")!;
+    expect(christianPlan).toBeDefined();
+
+    const deps = resolveModuleDependencies(christianPlan.moduleIds);
+    expect(deps.resolvedModuleIds).toContain("MOD-CORE");
+    expect(deps.resolvedModuleIds).toContain("MOD-CRI-COM");
+    expect(deps.resolvedModuleIds).toContain("MOD-CRI-GRP");
+    expect(deps.resolvedModuleIds).toContain("MOD-CRI-CUL");
+    expect(deps.resolvedModuleIds).toContain("MOD-CRI-ADM");
+    expect(deps.resolvedModuleIds).toContain("MOD-CRI-PAS");
+    expect(deps.resolvedModuleIds).toContain("MOD-FIN");
+    expect(deps.resolvedModuleIds).toContain("MOD-DOC");
+    expect(deps.resolvedModuleIds).not.toContain("MOD-COM");
+    expect(deps.resolvedModuleIds).not.toContain("MOD-SAC");
+    expect(deps.resolvedModuleIds).not.toContain("MOD-GOB");
+
+    const now = new Date().toISOString();
+    const client = {
+      ...repositories.clients.list()[0]!,
+      id: "CLI-CRI-01",
+      name: "Iglesia Cristiana Nueva Esperanza",
+      status: "Activo" as const,
+      createdAt: now,
+      updatedAt: now,
+    };
+    repositories.clients.create(client);
+
+    const org = {
+      ...repositories.organizations.list()[0]!,
+      id: "ORG-CRI-01",
+      name: "Congregación Nueva Esperanza",
+      type: "Congregación",
+      clientId: client.id,
+      institutionIds: [],
+      userIds: [],
+      status: "Activo" as const,
+      createdAt: now,
+      updatedAt: now,
+    };
+    repositories.organizations.create(org);
+
+    const contractRes = saveContractWithRelations({
+      contract: {
+        id: "CON-CRI-01",
+        clientId: client.id,
+        organizationId: org.id,
+        applicationId: "APP-ERP",
+        planId: christianPlan.id,
+        status: "Activo",
+        startsAt: "2026-01-01",
+        endsAt: "2026-12-31",
+        contractedAmount: christianPlan.price,
+        currency: "COP",
+        billingPeriod: "Mensual",
+        createdAt: now,
+        updatedAt: now,
+      },
+      editingContract: null,
+    });
+    expect(contractRes.ok).toBe(true);
+
+    repositories.subscriptions.create({
+      id: "SUB-CRI-01",
+      contractId: "CON-CRI-01",
+      clientId: client.id,
+      organizationId: org.id,
+      applicationIds: ["APP-ERP"],
+      status: "Activo",
+      startsAt: "2026-01-01",
+      endsAt: "2026-12-31",
+      renewalAt: "2027-01-01",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const licRes = saveLicenseWithEntitlements({
+      license: {
+        id: "LIC-CRI-01",
+        subscriptionId: "SUB-CRI-01",
+        contractId: "CON-CRI-01",
+        organizationId: org.id,
+        applicationId: "APP-ERP",
+        status: "Activo",
+        startsAt: "2026-01-01",
+        expiresAt: "2026-12-31",
+        userLimit: christianPlan.userLimit,
+        institutionLimit: christianPlan.institutionLimit,
+        storageLimitGb: christianPlan.storageLimitGb,
+        moduleIds: christianPlan.moduleIds,
+        createdAt: now,
+        updatedAt: now,
+      },
+      editingLicense: null,
+    });
+    expect(licRes.ok).toBe(true);
+
+    const evaluation = evaluateOrganizationLicensing(org.id, { referenceDate: "2026-06-01" });
+    expect(evaluation.isAuthorized).toBe(true);
+    expect(evaluation.enabledModuleIds).toContain("MOD-CORE");
+    expect(evaluation.enabledModuleIds).toContain("MOD-CRI-COM");
+    expect(evaluation.enabledModuleIds).toContain("MOD-FIN");
+    expect(evaluation.enabledModuleIds).toContain("MOD-DOC");
+    expect(evaluation.enabledModuleIds).not.toContain("MOD-COM");
+    expect(evaluation.enabledModuleIds).not.toContain("MOD-SAC");
+    expect(evaluation.enabledModuleIds).not.toContain("MOD-GOB");
+
+    const catholicRejection = validateCommercialReadinessForProvisioning({
+      organizationId: org.id,
+      contractId: "CON-CRI-01",
+      subscriptionId: "SUB-CRI-01",
+      licenseId: "LIC-CRI-01",
+      requestedModuleIds: ["MOD-SAC"],
+      referenceDate: "2026-06-01",
+    });
+    expect(catholicRejection.ok).toBe(false);
+
+    // Suspender contrato bloquea autorización y entitlements sin eliminar datos de la organización
+    transitionContractStatus("CON-CRI-01", "Suspendido", "Prueba de suspensión");
+    const suspendedEval = evaluateOrganizationLicensing(org.id, { referenceDate: "2026-06-01" });
+    expect(suspendedEval.isAuthorized).toBe(false);
+    expect(suspendedEval.enabledModuleIds).toHaveLength(0);
+    expect(repositories.organizations.getById(org.id)).toBeDefined();
   });
 });
