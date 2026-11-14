@@ -19,7 +19,7 @@ describe("App routing", () => {
   it("registers the Dashboard and 27 parish modules at their configured paths", () => {
     const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
 
-    expect(appModules).toHaveLength(28);
+    expect(appModules).toHaveLength(29);
     for (const module of appModules) {
       const matches = router.matchRoutes(module.path);
       expect(matches.at(-1)?.routeId, module.path).not.toBe(rootRouteId);

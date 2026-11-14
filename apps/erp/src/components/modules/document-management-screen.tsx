@@ -40,12 +40,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { institutionalDocuments, type InstitutionalDocument } from "@/data/system-demo";
+import {
+  christianInstitutionalDocuments,
+  institutionalDocuments,
+  type InstitutionalDocument,
+} from "@/data/system-demo";
 import { useLocalCollection } from "@/data/local-repository";
+import { useAoCristianoSettings } from "@/lib/use-ao-cristiano";
+import { getProfileStorageKey, isChristianProfile } from "@/lib/ao-cristiano-profile";
 
 type DocumentFormValues = { name: string; type: string; owner: string };
 
-const folders = [
+const catholicFolders = [
   "Todos los documentos",
   "Pastoral / Planificación",
   "Pastoral / Evidencias",
@@ -53,6 +59,14 @@ const folders = [
   "Economía / Informes",
   "Patrimonio / Jurídicos",
   "Archivo sacramental / Restringido",
+];
+
+const christianFolders = [
+  "Todos los documentos",
+  "Ministerios / Planificación",
+  "Administración / Actas",
+  "Finanzas / Informes",
+  "Jurídico / Institucional",
 ];
 
 const archiveAreas = [
@@ -107,6 +121,11 @@ const archiveAreas = [
 ] as const;
 
 export function DocumentManagementScreen() {
+  const { settings } = useAoCristianoSettings();
+  const christian = isChristianProfile(settings.profile);
+  const onlyChristian = settings.profile === "cristiano";
+  const folders = onlyChristian ? christianFolders : catholicFolders;
+
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<InstitutionalDocument | null>(null);
   const form = useForm<DocumentFormValues>({
@@ -114,8 +133,17 @@ export function DocumentManagementScreen() {
     mode: "onBlur",
   });
   const { records, create, update } = useLocalCollection(
-    "ao-erp:document-management",
-    institutionalDocuments,
+    getProfileStorageKey("ao-erp:document-management", settings.profile),
+    christian ? christianInstitutionalDocuments : institutionalDocuments,
+  );
+  const scopedRecords = useMemo(
+    () =>
+      records.filter((doc) => {
+        if (doc.organizationId && doc.organizationId !== settings.organizationId) return false;
+        if (onlyChristian && doc.category === "Sacramental") return false;
+        return true;
+      }),
+    [records, settings.organizationId, onlyChristian],
   );
   const [folder, setFolder] = useState("Todos los documentos");
   const [query, setQuery] = useState("");
@@ -123,7 +151,7 @@ export function DocumentManagementScreen() {
   const [selected, setSelected] = useState<InstitutionalDocument | null>(null);
   const visible = useMemo(
     () =>
-      records.filter(
+      scopedRecords.filter(
         (doc) =>
           (folder === "Todos los documentos" || doc.folder === folder) &&
           (category === "Todas" || doc.category === category) &&
@@ -131,7 +159,7 @@ export function DocumentManagementScreen() {
             .toLowerCase()
             .includes(query.toLowerCase()),
       ),
-    [records, folder, category, query],
+    [scopedRecords, folder, category, query],
   );
   const columns: DataTableColumn<InstitutionalDocument>[] = [
     {
@@ -217,25 +245,25 @@ export function DocumentManagementScreen() {
         <>
           <StatCard
             label="Documentos en repositorio"
-            value="248"
+            value={String(scopedRecords.length)}
             icon={FileArchive}
-            caption="Catálogo de muestra"
+            caption="Repositorio de la organización"
           />
           <StatCard
             label="Carpetas organizadas"
-            value="18"
+            value={String(folders.length - 1)}
             icon={FolderOpen}
             caption="Por área y tipo documental"
           />
           <StatCard
             label="En revisión"
-            value="12"
+            value={String(scopedRecords.filter((d) => d.status === "En revisión").length)}
             icon={FileClock}
             caption="Pendientes de revisión interna"
           />
           <StatCard
             label="Acceso restringido"
-            value="7"
+            value={String(scopedRecords.filter((d) => d.access === "Restringido").length)}
             icon={ShieldCheck}
             caption="Metadatos limitados en la vista"
           />
@@ -243,9 +271,9 @@ export function DocumentManagementScreen() {
       }
     >
       <DemoNotice>
-        Repositorio de ejemplo. La gestión documental general no sustituye los libros sacramentales
-        ni el módulo de certificados. Los documentos sacramentales aparecen solo como referencias
-        clasificadas y su contenido se mantiene oculto en esta vista.
+        {onlyChristian
+          ? `Repositorio documental congregacional (${settings.organizationId}). Categorías sacramentales y canónicas ocultas en perfil exclusivamente cristiano.`
+          : "Repositorio de ejemplo. La gestión documental general no sustituye los libros sacramentales ni el módulo de certificados. Los documentos sacramentales aparecen solo como referencias clasificadas y su contenido se mantiene oculto en esta vista."}
       </DemoNotice>
       <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
         <Card className="h-fit shadow-none">
@@ -322,14 +350,17 @@ export function DocumentManagementScreen() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[
-                        "Todas",
-                        "Pastoral",
-                        "Administrativo",
-                        "Contable",
-                        "Jurídico",
-                        "Sacramental",
-                      ].map((item) => (
+                      {(onlyChristian
+                        ? ["Todas", "Ministerial", "Administrativo", "Contable", "Jurídico"]
+                        : [
+                            "Todas",
+                            "Pastoral",
+                            "Administrativo",
+                            "Contable",
+                            "Jurídico",
+                            "Sacramental",
+                          ]
+                      ).map((item) => (
                         <SelectItem key={item} value={item}>
                           {item === "Todas" ? "Todas las categorías" : item}
                         </SelectItem>
@@ -361,12 +392,14 @@ export function DocumentManagementScreen() {
               criterios de clasificación, consulta y seguridad.
             </p>
           </div>
-          <Link
-            to="/app/libros-sacramentales"
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-          >
-            Libros sacramentales <BookOpen className="size-4" />
-          </Link>
+          {!onlyChristian && (
+            <Link
+              to="/app/libros-sacramentales"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            >
+              Libros sacramentales <BookOpen className="size-4" />
+            </Link>
+          )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {archiveAreas.map((area) => {
@@ -395,25 +428,28 @@ export function DocumentManagementScreen() {
           })}
         </div>
         <div className="grid gap-3 lg:grid-cols-2">
-          <Link
-            to="/app/documentos-certificados"
-            className="flex items-center justify-between rounded-xl border bg-card p-4 hover:border-primary/40"
-          >
-            <span>
-              <span className="block text-sm font-semibold">Documentos y certificados</span>
-              <span className="mt-1 block text-xs text-muted-foreground">
-                Solicitudes y emisión de documentos oficiales
+          {!onlyChristian && (
+            <Link
+              to="/app/documentos-certificados"
+              className="flex items-center justify-between rounded-xl border bg-card p-4 hover:border-primary/40"
+            >
+              <span>
+                <span className="block text-sm font-semibold">Documentos y certificados</span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Solicitudes y emisión de documentos oficiales
+                </span>
               </span>
-            </span>
-            <span aria-hidden="true" className="text-lg text-primary">
-              →
-            </span>
-          </Link>
+              <span aria-hidden="true" className="text-lg text-primary">
+                →
+              </span>
+            </Link>
+          )}
           <div className="rounded-xl border bg-card p-4">
             <p className="text-sm font-semibold">Separación de responsabilidades</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              El repositorio conserva las imágenes y referencias archivísticas. Los asientos
-              sacramentales y los certificados mantienen su gestión en sus módulos de origen.
+              {onlyChristian
+                ? "El repositorio conserva los documentos administrativos, actas, correspondencia y soportes de la congregación por organización y sede."
+                : "El repositorio conserva las imágenes y referencias archivísticas. Los asientos sacramentales y los certificados mantienen su gestión en sus módulos de origen."}
             </p>
           </div>
         </div>
@@ -452,10 +488,10 @@ export function DocumentManagementScreen() {
             return;
           }
           create({
-            id: `DOC-DEMO-${Date.now()}`,
+            id: `${onlyChristian ? "DOC-CRI" : "DOC-DEMO"}-${Date.now()}`,
             name,
-            folder: "Pastoral / Evidencias",
-            category: "Pastoral",
+            folder: onlyChristian ? "Administración / Actas" : "Pastoral / Evidencias",
+            category: onlyChristian ? "Administrativo" : "Pastoral",
             type: values.type.trim() || "Documento local",
             owner,
             created: now,
@@ -463,6 +499,8 @@ export function DocumentManagementScreen() {
             version: "v1.0",
             status: "En revisión",
             access: "Institucional",
+            organizationId: settings.organizationId,
+            campusId: settings.campusId,
             summary: "Registro documental creado en almacenamiento local de demostración.",
             versions: [
               { version: "v1.0", date: now, author: owner, note: "Versión inicial local." },

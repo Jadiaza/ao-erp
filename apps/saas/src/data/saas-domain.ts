@@ -1041,6 +1041,20 @@ const applications: Application[] = [
 const modules: Module[] = [
   {
     ...dates(),
+    id: "MOD-CORE",
+    code: "ERP-CORE",
+    applicationId: "APP-ERP",
+    name: "Núcleo institucional y administración base",
+    description:
+      "Identidad institucional, sedes, configuración regional, usuarios/permisos y trazabilidad base compartida sin dependencia confesional.",
+    category: "Plataforma Base",
+    requiredModuleIds: [],
+    commercialAvailability: "Incluido en base",
+    featureIds: [],
+    status: "Activo",
+  },
+  {
+    ...dates(),
     id: "MOD-COM",
     code: "ERP-COM",
     applicationId: "APP-ERP",
@@ -1048,7 +1062,7 @@ const modules: Module[] = [
     description:
       "Directorio de feligreses, familias, grupos apostólicos, catequesis, agenda parroquial y comunicaciones.",
     category: "Pastoral y Comunidad",
-    requiredModuleIds: [],
+    requiredModuleIds: ["MOD-CORE"],
     commercialAvailability: "Incluido en base",
     featureIds: [],
     status: "Activo",
@@ -1074,9 +1088,9 @@ const modules: Module[] = [
     applicationId: "APP-ERP",
     name: "Gestión documental",
     description:
-      "Archivo eclesiástico digital, expedientes canónicos, correspondencia oficial y conservación documental.",
+      "Archivo institucional digital, expedientes, correspondencia oficial y conservación documental.",
     category: "Archivo y Cumplimiento",
-    requiredModuleIds: ["MOD-COM"],
+    requiredModuleIds: ["MOD-CORE"],
     commercialAvailability: "Incluido en base",
     featureIds: [],
     status: "Activo",
@@ -1088,9 +1102,9 @@ const modules: Module[] = [
     applicationId: "APP-ERP",
     name: "Finanzas y recursos",
     description:
-      "Tesorería, estipendios, ofrendas, contabilidad institucional, presupuestos, activos fijos y reportes al economato.",
+      "Tesorería, ingresos, ofrendas, contabilidad institucional, presupuestos, activos fijos y reportes.",
     category: "Administración y Economato",
-    requiredModuleIds: ["MOD-COM"],
+    requiredModuleIds: ["MOD-CORE"],
     commercialAvailability: "Incluido en base",
     featureIds: [],
     status: "Activo",
@@ -1104,14 +1118,94 @@ const modules: Module[] = [
     description:
       "Supervisión de parroquias, decretos episcopales, clero, aportes diocesanos y consolidación financiera de la curia.",
     category: "Gobierno Diocesano",
-    requiredModuleIds: ["MOD-DOC", "MOD-FIN"],
+    requiredModuleIds: ["MOD-COM", "MOD-DOC", "MOD-FIN"],
     commercialAvailability: "Bajo contrato institucional",
+    featureIds: [],
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-COM",
+    code: "ERP-CRI-COM",
+    applicationId: "APP-ERP",
+    name: "A&O Cristiano · Miembros y comunidad",
+    description:
+      "Registro de miembros, familias y relaciones, visitantes, contacto, membresía, ingreso, participación y bautismos según prácticas de la congregación.",
+    category: "Paquete A&O Cristiano",
+    requiredModuleIds: ["MOD-CORE"],
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    featureIds: [],
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-GRP",
+    code: "ERP-CRI-GRP",
+    applicationId: "APP-ERP",
+    name: "A&O Cristiano · Ministerios y grupos",
+    description:
+      "Ministerios, departamentos, células, grupos pequeños, líderes, integrantes, equipos de servicio, asignaciones, historial y organización.",
+    category: "Paquete A&O Cristiano",
+    requiredModuleIds: ["MOD-CRI-COM"],
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    featureIds: [],
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-CUL",
+    code: "ERP-CRI-CUL",
+    applicationId: "APP-ERP",
+    name: "A&O Cristiano · Cultos, eventos y asistencia",
+    description:
+      "Programación de cultos, reuniones y actividades, calendario, responsables, asistencia por persona/grupo/actividad, historial e informes básicos.",
+    category: "Paquete A&O Cristiano",
+    requiredModuleIds: ["MOD-CRI-COM"],
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    featureIds: [],
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-ADM",
+    code: "ERP-CRI-ADM",
+    applicationId: "APP-ERP",
+    name: "A&O Cristiano · Administración, finanzas y documentos",
+    description:
+      "Adaptación congregacional para diezmos/ofrendas/donaciones/egresos/caja-bancos/presupuestos/informes, sedes, responsables, actas, correspondencia, inventarios, activos y tareas.",
+    category: "Paquete A&O Cristiano",
+    requiredModuleIds: ["MOD-FIN", "MOD-DOC"],
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    featureIds: [],
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-PAS",
+    code: "ERP-CRI-PAS",
+    applicationId: "APP-ERP",
+    name: "A&O Cristiano · Acompañamiento pastoral",
+    description:
+      "Visitas, seguimiento a nuevos miembros, consejería, acompañamiento familiar, peticiones de oración, compromisos y actuaciones autorizadas con acceso restringido.",
+    category: "Paquete A&O Cristiano",
+    requiredModuleIds: ["MOD-CRI-COM"],
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
     featureIds: [],
     status: "Activo",
   },
 ];
 
 const features: Feature[] = [
+  {
+    ...dates(),
+    id: "MOD-CORE-CORE",
+    code: "FT-CORE-INSTITUCION",
+    moduleId: "MOD-CORE",
+    name: "Núcleo institucional · identidad, sedes, configuración y usuarios",
+    description: "Operación institucional base, sedes, responsables, configuración regional y control interno.",
+    commercialAvailability: "Disponible general (GA)",
+    status: "Activo",
+  },
   {
     ...dates(),
     id: "MOD-COM-CORE",
@@ -1172,6 +1266,61 @@ const features: Feature[] = [
     commercialAvailability: "Bajo contrato institucional",
     status: "Activo",
   },
+  {
+    ...dates(),
+    id: "MOD-CRI-COM-CORE",
+    code: "FT-CRI-MIEMBROS",
+    moduleId: "MOD-CRI-COM",
+    name: "A&O Cristiano · miembros, familias, visitantes y participación",
+    description:
+      "Registro de miembros y visitantes, contacto, familias/relaciones, membresía, ingreso, historial de participación y bautismos congregacionales.",
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-GRP-CORE",
+    code: "FT-CRI-MINISTERIOS",
+    moduleId: "MOD-CRI-GRP",
+    name: "A&O Cristiano · ministerios, grupos, células y equipos",
+    description:
+      "Ministerios, departamentos, células, grupos pequeños, líderes, integrantes, equipos de servicio, asignaciones, historial y organización.",
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-CUL-CORE",
+    code: "FT-CRI-CULTOS",
+    moduleId: "MOD-CRI-CUL",
+    name: "A&O Cristiano · cultos, eventos, calendario y asistencia",
+    description:
+      "Programación de cultos, reuniones y actividades, calendario, responsables, asistencia por persona/grupo/actividad, historial e informes básicos.",
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-ADM-CORE",
+    code: "FT-CRI-ADM-FIN-DOC",
+    moduleId: "MOD-CRI-ADM",
+    name: "A&O Cristiano · administración, finanzas congregacionales y documentos",
+    description:
+      "Diezmos, ofrendas, donaciones, egresos, caja/bancos, presupuestos, informes, sedes, responsables, actas, correspondencia, inventarios, activos y tareas.",
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    status: "Activo",
+  },
+  {
+    ...dates(),
+    id: "MOD-CRI-PAS-CORE",
+    code: "FT-CRI-ACOMPANAMIENTO",
+    moduleId: "MOD-CRI-PAS",
+    name: "A&O Cristiano · acompañamiento pastoral confidencial",
+    description:
+      "Visitas, seguimiento a nuevos miembros, consejería, acompañamiento familiar, peticiones de oración, compromisos y actuaciones autorizadas con acceso restringido.",
+    commercialAvailability: "Paquete A&O Cristiano (suscripción)",
+    status: "Activo",
+  },
 ];
 
 modules.forEach(
@@ -1207,7 +1356,7 @@ const planEnrichment: Record<
     currency: "COP",
     billingPeriod: "Mensual",
     storageLimitGb: 25,
-    moduleIds: ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"],
+    moduleIds: ["MOD-CORE", "MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"],
     conditions:
       "Licencia para una sede parroquial o santuario, hasta 10 usuarios concurrentes y 25 GB de archivo.",
   },
@@ -1218,7 +1367,7 @@ const planEnrichment: Record<
     currency: "COP",
     billingPeriod: "Mensual",
     storageLimitGb: 150,
-    moduleIds: ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"],
+    moduleIds: ["MOD-CORE", "MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"],
     conditions:
       "Cobertura para congregaciones, fundaciones o colegios con hasta 10 sedes y 30 usuarios.",
   },
@@ -1229,32 +1378,72 @@ const planEnrichment: Record<
     currency: "COP",
     billingPeriod: "Mensual",
     storageLimitGb: 1000,
-    moduleIds: ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN", "MOD-GOB"],
+    moduleIds: ["MOD-CORE", "MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN", "MOD-GOB"],
     conditions:
       "Cobertura multiinstitucional para diócesis, arquidiócesis o provincias religiosas con curia y parroquias.",
+  },
+  "Cristiano Esencial": {
+    code: "PLN-CRI-ESS-2026",
+    applicationId: "APP-ERP",
+    price: 320000,
+    currency: "COP",
+    billingPeriod: "Mensual",
+    storageLimitGb: 30,
+    moduleIds: ["MOD-CORE", "MOD-CRI-COM", "MOD-CRI-GRP", "MOD-CRI-CUL", "MOD-CRI-ADM", "MOD-CRI-PAS", "MOD-FIN", "MOD-DOC"],
+    conditions:
+      "Paquete A&O Cristiano para congregaciones independientes o sedes: miembros, ministerios, cultos/eventos, finanzas congregacionales, administración documental y acompañamiento pastoral. No incluye sacramentos católicos, libros sacramentales, gestión parroquial/diocesana, liturgia ni catequesis sacramental católica.",
   },
 };
 
 const planRows = legacyPlans;
-const plans: CommercialPlan[] = planRows.map((plan) => {
-  const enriched = planEnrichment[plan.name] ?? planEnrichment["Parroquial"]!;
-  return {
-    ...plan,
+const extraChristianPlans: CommercialPlan[] = [
+  {
     ...dates(),
-    code: enriched.code,
-    applicationId: enriched.applicationId,
-    description: plan.detail,
-    price: enriched.price,
-    currency: enriched.currency,
-    billingPeriod: enriched.billingPeriod,
-    storageLimitGb: enriched.storageLimitGb,
+    id: "PLN-CRI",
+    code: "PLN-CRI-ESS-2026",
+    name: "Cristiano Esencial",
+    detail: "Paquete congregacional para miembros, ministerios, cultos, finanzas, administración y acompañamiento pastoral.",
+    description:
+      "Suscripción A&O Cristiano para congregaciones: activa módulos cristianos y reutiliza finanzas/gestión documental genéricas sin habilitar sacramentos católicos, libros sacramentales, gestión parroquial/diocesana, liturgia católica ni catequesis sacramental. Paquete funcional A&O Cristiano.",
+    coverage: "1 congregación/sede · 15 usuarios · 30 GB · módulos cristianos y genéricos",
+    owner: "Comercial SaaS",
+    status: "Activo",
+    applicationId: "APP-ERP",
+    price: 320000,
+    currency: "COP",
+    billingPeriod: "Mensual",
+    storageLimitGb: 30,
     version: 1,
-    conditions: enriched.conditions,
-    moduleIds: enriched.moduleIds,
-    userLimit: plan.name === "Parroquial" ? 10 : plan.name === "Institucional" ? 30 : 999,
-    institutionLimit: plan.name === "Parroquial" ? 1 : plan.name === "Institucional" ? 10 : 999,
-  };
-});
+    conditions:
+      "Activable por suscripción/entitlements en A&O ERP. Compatible con módulos genéricos contratados y combinable con módulos católicos solo cuando el plan/contrato los incluya explícitamente. La desactivación bloquea acceso sin eliminar datos.",
+    moduleIds: ["MOD-CORE", "MOD-CRI-COM", "MOD-CRI-GRP", "MOD-CRI-CUL", "MOD-CRI-ADM", "MOD-CRI-PAS", "MOD-FIN", "MOD-DOC"],
+    userLimit: 15,
+    institutionLimit: 3,
+  },
+];
+
+const plans: CommercialPlan[] = [
+  ...planRows.map((plan) => {
+    const enriched = planEnrichment[plan.name] ?? planEnrichment["Parroquial"]!;
+    return {
+      ...plan,
+      ...dates(),
+      code: enriched.code,
+      applicationId: enriched.applicationId,
+      description: plan.detail,
+      price: enriched.price,
+      currency: enriched.currency,
+      billingPeriod: enriched.billingPeriod,
+      storageLimitGb: enriched.storageLimitGb,
+      version: 1,
+      conditions: enriched.conditions,
+      moduleIds: enriched.moduleIds,
+      userLimit: plan.name === "Parroquial" ? 10 : plan.name === "Institucional" ? 30 : 999,
+      institutionLimit: plan.name === "Parroquial" ? 1 : plan.name === "Institucional" ? 10 : 999,
+    };
+  }),
+  ...extraChristianPlans,
+];
 
 const contractRows = sectionRows("suscripciones");
 const contracts: Contract[] = contractRows.map((row, index) => {
@@ -1877,22 +2066,17 @@ export const initialSaasState: SaasDomainState = {
     scope: "global",
     organization: "",
     enabledModuleIds: [
-      "parishioners",
-      "sacraments",
-      "certificates",
-      "catechesis",
-      "pastoral-action",
-      "liturgy",
-      "treasury",
-      "accounting",
-      "budgets",
-      "assets",
-      "governance",
-      "documents",
-      "reports",
-      "agenda",
-      "portal",
-      "communications",
+      "MOD-CORE",
+      "MOD-COM",
+      "MOD-SAC",
+      "MOD-FIN",
+      "MOD-DOC",
+      "MOD-GOB",
+      "MOD-CRI-COM",
+      "MOD-CRI-GRP",
+      "MOD-CRI-CUL",
+      "MOD-CRI-ADM",
+      "MOD-CRI-PAS",
     ],
   },
   moduleRecords: Object.fromEntries(

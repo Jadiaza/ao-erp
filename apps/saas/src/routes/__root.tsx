@@ -4,6 +4,7 @@ import {
   Link,
   Outlet,
   Scripts,
+  useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -13,6 +14,7 @@ import { AppTopbar } from "../components/app-topbar";
 import { SaasBrandLogo } from "../components/saas-brand-logo";
 import { SaasIcon, type SaasIconName } from "../components/saas-icons";
 import { useSettings } from "../data/saas-repository";
+import { AuthProvider, useAuth } from "../auth/auth-context";
 
 const routeIconMap: Record<string, SaasIconName> = {
   "/": "dashboard",
@@ -54,9 +56,17 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootShell,
-  component: RootComponent,
+  component: RootWithAuth,
   notFoundComponent: NotFound,
 });
+
+function RootWithAuth() {
+  return (
+    <AuthProvider>
+      <RootComponent />
+    </AuthProvider>
+  );
+}
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -103,6 +113,8 @@ function isRouteActive(pathname: string, target: string): boolean {
 
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
   const settings = useSettings();
   const [systemDark, setSystemDark] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -112,6 +124,19 @@ function RootComponent() {
     commercial: true,
     control: true,
   });
+
+  const isLoginPage = pathname === "/login";
+
+  useEffect(() => {
+    // Protección de rutas privadas: Si no está autenticado y no está en /login, redirigir
+    if (!isLoading && !isAuthenticated && !isLoginPage) {
+      navigate({ to: "/login" as never });
+    }
+    // Si ya está autenticado e intenta ir a /login, redirigir al dashboard
+    if (!isLoading && isAuthenticated && isLoginPage) {
+      navigate({ to: "/" as never });
+    }
+  }, [isLoading, isAuthenticated, isLoginPage, navigate]);
 
   useEffect(() => {
     try {
@@ -170,6 +195,22 @@ function RootComponent() {
     if (typeof window !== "undefined" && window.innerWidth <= 620) setSidebarOpen(true);
     else setSidebarCollapsed((current) => !current);
   };
+
+  // Si estamos en la página de login, renderizamos directamente sin barra lateral ni topbar
+  if (isLoginPage) {
+    return <Outlet />;
+  }
+
+  // Si aún está cargando la verificación de sesión en rutas privadas, mostramos un loader sutil
+  if (isLoading && !isAuthenticated) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh", background: "var(--canvas)" }}>
+        <div style={{ textAlign: "center" }}>
+          <SaasBrandLogo subtitle="Verificando sesión..." />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

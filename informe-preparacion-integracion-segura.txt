@@ -1,0 +1,192 @@
+# INFORME DE PREPARACIÓN — INTEGRACIÓN SEGURA A&O ERP (SOLO LECTURA / PREPARACIÓN)
+
+Repositorio: D:\Proyectos\ao-erp
+Remoto: https://github.com/Jadiaza/ao-erp.git (Jadiaza/ao-erp)
+Fecha de auditoría: 2026-11-13
+Alcance ejecutado: inspección, comparación y preparación. No se realizaron merge, rebase, cherry-pick, aplicación de parche, commits, push, cambios de código, cambios de BD/Supabase/configuración de producción ni eliminación de ramas. No se usaron git reset, git clean, git checkout, git restore ni git stash.
+
+================================================================================
+1. RAMA ACTUAL Y NUEVA RAMA CREADA
+================================================================================
+
+| Elemento | Valor | Evidencia |
+|---|---|---|
+| Rama actual (HEAD de trabajo) | integracion-main-ao-erp @ a3f174e [origin/integracion-main-ao-erp] | git status, git branch -vv, git log --oneline --decorate -15 |
+| Nueva rama local creada | integracion-final-ao-erp (creada localmente, NO publicada) | git branch integracion-final-ao-erp origin/main -> "branch 'integracion-final-ao-erp' set up to track 'origin/main'." |
+| Ramas existentes conservadas | main (249104f), integracion-main-ao-erp (a3f174e), respaldo-traslado-ao-erp (507c83c) intactas | git branch -vv, git show-ref (sin eliminaciones ni cambios de rama) |
+
+Nota de seguridad: la creación se realizó con `git branch` (solo creación de ref, sin checkout/cambio de rama), por lo que no comprometió el árbol de trabajo ni el índice.
+
+================================================================================
+2. COMMIT EXACTO QUE SIRVE DE BASE
+================================================================================
+
+| Referencia | Commit | Fecha (committer) | Mensaje | Evidencia |
+|---|---|---|---|---|
+| origin/main (auditado/confirmado) | 66380795862900e8e269dd807ec0a9f9a55cfa57 (6638079) | 2026-11-09T17:53:51-05:00 | Merge pull request #4 from Jadiaza/design/saas-dashboard-refresh | git fetch origin, git rev-parse origin/main, git for-each-ref / historial |
+| Base de integracion-final-ao-erp | 6638079 | misma | misma | rama creada con origin/main como punto de partida |
+
+origin/main sigue correspondiendo al HEAD auditado (6638079); no se detectó una versión nueva en esta ejecución.
+
+================================================================================
+3. ESTADO DE LOS CAMBIOS LOCALES PROTEGIDOS
+================================================================================
+
+Comandos ejecutados: git status, git branch -vv, git log --oneline --decorate -15, git diff, git diff --cached, git show-ref
+
+- Índice (staged): vacío (git diff --cached sin salida).
+- Cambio local pendiente (tracked, no preparado), preservado sin modificar:
+  - apps/erp/src/components/modules/diocesan-management-screen.tsx
+  - Diff: 1 file changed, 1 insertion(+), 1 deletion(-)
+  - Alteración detectada/documentada:
+    -import { useMemo, useState } from "react";
+    +|import { useMemo, useState } from "react";
+    (carácter '|' inicial, probable error accidental de sintaxis). NO se corrigió, eliminó ni sobrescribió.
+- Archivos sin seguimiento (untracked), no eliminados ni añadidos:
+  - informe-auditoria-comparativa-github.txt
+  - informe-plan-integracion-507c83c.txt
+  - informe-sincronizacion-github.txt
+- Riesgo: el cambio en diocesan-management-screen.tsx y los untracked podrían perderse ante operaciones destructivas o cambios de rama forzados; no se intentó checkout/switch. Cualquier implementación futura debe preservar/copiar explícitamente este estado antes de operar.
+
+Evidencia git status:
+- On branch integracion-main-ao-erp (up to date with origin/integracion-main-ao-erp)
+- Changes not staged for commit: modified apps/erp/src/components/modules/diocesan-management-screen.tsx
+- Untracked files: informe-auditoria-comparativa-github.txt, informe-plan-integracion-507c83c.txt, informe-sincronizacion-github.txt
+
+================================================================================
+4. RESULTADO DE LA INSPECCIÓN DE respaldo-cambios-locales.patch
+================================================================================
+
+Localización/inspección (solo lectura):
+- No existe en árbol de trabajo ni como untracked (Get-ChildItem -Recurse -Filter respaldo-cambios-locales.patch y git ls-files --others --exclude-standard sin resultados).
+- Existe en origin/main: git show origin/main:respaldo-cambios-locales.patch (63 líneas, 1421 caracteres).
+- Archivos modificados por el parche: 1 único archivo.
+  - apps/saas/src/test/setup.ts (--- a/apps/saas/src/test/setup.ts, +++ b/apps/saas/src/test/setup.ts, @@ -1 +1,57 @@)
+
+Contenido/funcionalidad del parche:
+- Reemplaza el setup de pruebas SaaS por una implementación que crea MemoryStorage, define/asegura globalThis.localStorage y window.localStorage cuando no están disponibles o fallan en jsdom, y limpia storage en afterEach (Vitest).
+
+Comparación con el estado actual:
+- En origin/main (base 6638079): el contenido resultante del parche YA ESTÁ PRESENTE en apps/saas/src/test/setup.ts (coincide con el resultado del parche).
+- En 507c83c: apps/saas/src/test/setup.ts conservaba el estado anterior ("// Test setup reserved for app-specific browser APIs.").
+- Cambios ya presentes en origin/main: todos los del parche (100%).
+- Cambios faltantes: ninguno.
+- Conflictos esperados: ninguno por este parche (ya aplicado en base).
+- Cambios no vistos en la comparación anterior de 507c83c: SÍ; el parche respalda un ajuste de apps/saas/src/test/setup.ts que no formaba parte de 507c83c pero que ya fue incorporado en origin/main. No aporta funcionalidad adicional pendiente de recuperar.
+
+Acción: no aplicar el parche (no necesario ni autorizado en esta fase).
+
+================================================================================
+5. FUNCIONALIDADES DOCUMENTALES QUE FALTAN (ERP)
+================================================================================
+
+Archivo principal auditado: apps/erp/src/components/modules/document-management-screen.tsx (base 6638079 / integracion-final-ao-erp), comparado con 507c83c.
+
+| Aspecto | 507c83c (exclusivo/previo) | origin/main (base actual) | Funcionalidad faltante respecto a recuperar |
+|---|---|---|---|
+| Creación de documentos | Sí: FormModal, react-hook-form, useLocalCollection("ao-erp:document-management", institutionalDocuments), create(...). | Sí: FormModal + form, useLocalCollection(..., institutionalDocuments) con create, botón "Registrar documento". | No se identifica falta de creación frente a 507c83c. |
+| Validaciones | Validación implícita del formulario/flujo de alta (patrón forms compartidos). | Conserva patrón de formulario (FormModal/FormSection/TextInputField). | Sin evidencia de pérdida por comparación estática; validar en pruebas. |
+| Edición y actualización | No visible (alta centrada en create). | Sí: estado editing, update(...), flujo de edición. | Ninguna (origin/main supera a 507c83c). |
+| Persistencia | Local demo vía useLocalCollection (key ao-erp:document-management). | Misma estrategia de repositorio local (create, update). | Ninguna. |
+| Clasificación y archivo documental | Carpetas/categorías, metadatos, acceso/estado en vista principal. | Conserva clasificación y amplía con archiveAreas y enlaces a subáreas (Recepción, Digitalización y OCR, Repositorio, Clasificación archivística, Expedientes/libros/folios, Instrumentos archivísticos, Transferencias, Conservación y preservación) hacia /app/gestion-documental/*. | Ninguna falta; origin/main más completo. |
+| Rutas y áreas de archivo | No incluía bloque de subrutas archivísticas. | Presentes: apps/erp/src/components/modules/archive-area-screen.tsx, apps/erp/src/data/archive-demo.ts, rutas apps/erp/src/routes/app/gestion-documental/{clasificacion,conservacion,digitalizacion,expedientes,instrumentos,recepcion,repositorio,transferencias}.tsx. | Ninguna (no en 507c83c; sí en origin/main). |
+
+Conclusión documental: no se identifican funcionalidades documentales faltantes en origin/main respecto a lo aportado por 507c83c; la base conserva creación/persistencia local y supera en edición/actualización y alcance archivístico/rutas. Acción recomendada: verificación funcional/regresión, no rescate de código antiguo.
+
+================================================================================
+6. FUNCIONALIDADES SAAS QUE FALTAN
+================================================================================
+
+Componentes/rutas auditados: apps/saas/src/components/admin-screen.tsx, apps/saas/src/routes/configuracion.tsx, apps/saas/src/routes/{instituciones,organizaciones,planes-licencias,roles-permisos,usuarios,__root,index}.tsx.
+
+Contexto: 507c83c aporta SaaS simple (AdminScreen + data/demo.ts, localStorage, rutas básicas). origin/main implementa SaaS rediseñado y más amplio (repositorio/dominio/servicios, consolas especializadas, más rutas y pruebas). Regla: no reemplazar diseño actual por el antiguo.
+
+| Área | Integridad en origin/main (evidencia) | Faltantes frente a 507c83c / a recuperar |
+|---|---|---|
+| Organizaciones e instituciones | Rutas delegan a OrganizationsMasterScreen e InstitutionsMasterScreen; existen componentes, saas-repository, commercial-service, saas-domain, ecosystem-demo. | Sin faltantes claros del modelo simple de 507c83c; origin/main más completo. Validar paridad de campos/acciones. |
+| Productos y módulos | configuracion.tsx incluye catálogo por grupos, toggles, conteos, ámbito global/por organización y persistencia en saasStore.updateSettings (enabledModuleIds, scope, organization, theme, density), avisos de plan/licencia/permisos y no eliminación histórica. Rutas/componentes adicionales: productos-servicios, products-catalog-screen, plans-licensing-screen. | Sin falta estructural respecto a 507c83c. Verificar cobertura de grupos/módulos y reglas de alcance. |
+| Planes y licencias | planes-licencias.tsx -> PlansLicensingScreen; datos/servicios de licenciamiento y suscripciones presentes. | Ninguno identificado desde 507c83c. |
+| Usuarios, roles y permisos | usuarios.tsx y roles-permisos.tsx usan AdminScreen con repositories.users/repositories.roles; admin-screen integra EntityRepository (list/replace/subscribe) y UI SaaS. | No recuperar versión antigua con localStorage; origin/main superior. Verificar permisos efectivos cuando exista backend. |
+| Configuración global y por organización | configuracion.tsx soporta scope global/organización, selección de organización demo, apariencia y módulos; sincroniza con saasStore. | Posible delta a validar (no necesariamente faltante): confirmar vinculación canónica plan/licencia/entitlements por entidad en UI/dominio. Rescatar solo si falta regla explícita. |
+| Entitlements y aprovisionamiento | Presentes en origin/main: aprovisionamiento.tsx, provisioning-console-screen.tsx, provisioning-service.ts, dominio/repositorio. | No aportados por 507c83c. |
+| Persistencia y repositorios | saas-repository.ts, saas-domain.ts, saasStore/hooks, servicios comerciales/provisioning/soporte. | No recuperar persistencia localStorage ad-hoc de 507c83c. |
+| Validaciones y relaciones entre entidades | admin-screen y pantallas especializadas con validaciones y contexto/estado; saas-repository.test.ts y app-routing.test.ts presentes. | Revisar paridad fina de relaciones organización↔institución↔usuario↔rol↔plan/licencia en implementación; sin evidencia de regla superior en 507c83c. |
+| Navegación y layout SaaS | __root.tsx e index.tsx rediseñados con topbar/branding y navegación ampliada (analítica, aprovisionamiento, auditoría, clientes, facturación/cartera, identidad/seguridad, infraestructura, productos/servicios, soporte, suscripciones, runtime, etc.). | Ningún faltante a recuperar del shell simple de 507c83c. |
+
+Conclusión SaaS: no se identifican funcionalidades SaaS de 507c83c que deban reimplantarse reemplazando el diseño actual. Evaluar/rescatar como semántica: paridad fina de configuración por organización/módulos frente a plan/licencia/permisos y validaciones relacionales.
+
+================================================================================
+7. CAMBIOS EXCLUSIVOS QUE VALE LA PENA RECUPERAR
+================================================================================
+
+| Origen | Cambio exclusivo | Valor | Recomendación |
+|---|---|---|---|
+| 507c83c / integracion-main-ao-erp / respaldo-traslado-ao-erp | Aporte histórico de formularios compartidos, demo-crud-panel, paneles institucional/pastoral, local-repository.ts, institutional-structure-demo.ts, mejoras en pantallas ERP, navegación y auditorías (auditoria-local-completitud-2026-11.md, inventario-formularios-global-2026-11.md) | Alto, pero ya incorporado en origin/main (mayoría idéntica) | No reimportar código; usar origin/main como fuente. |
+| 507c83c | Semántica de document-management-screen.tsx (alta local simple) | Medio (referencia) | Comparar deltas funcionales contra versión ampliada; rescatar solo si hay vacío funcional concreto (no detectado). |
+| 507c83c | Semántica de configuracion.tsx (catálogo/módulos, ámbito global vs organización, avisos plan/licencia/permisos, no pérdida histórica) | Medio-alto (negocio) | Rescatar como criterios/paridad funcional sobre implementación de origin/main, no como reemplazo de UI/código. |
+| 507c83c | Base SaaS simple (admin-screen localStorage, rutas wrapper) | Bajo en código, histórico | No recuperar; reemplazada por arquitectura de repositorio y pantallas especializadas. |
+| a3f174e | Merge de integración (trazabilidad) | Trazabilidad | Conservar ramas existentes como referencia; no eliminar. |
+| Cambio local pendiente | diocesan-management-screen.tsx ('|import') | Desconocido/potencialmente accidental | Preservar y decidir en implementación autorizada (corregir sintaxis o descartar intencionalmente). |
+| respaldo-cambios-locales.patch (en origin/main) | Mock localStorage en apps/saas/src/test/setup.ts | Ya aplicado | Nada que recuperar. |
+
+================================================================================
+8. RIESGOS Y POSIBLES CONFLICTOS
+================================================================================
+
+| Riesgo | Evidencia / causa | Impacto | Mitigación |
+|---|---|---|---|
+| Pérdida de cambios locales no commiteados | diocesan-management-screen.tsx modificado (unstaged) con '|import'; 3 informes untracked | Alto si se fuerza checkout/limpieza | No usar checkout/reset/clean/restore/stash; preservar/copiar antes de operar; resolver en fase autorizada. |
+| Divergencia SaaS (dos evoluciones) | 507c83c vs origin/main: admin-screen, rutas, __root, index, styles, routeTree difieren ampliamente; origin/main añade dominio/servicios/rutas extra | Medio-alto si se reintroduce código antiguo | origin/main como única base estructural; portar solo semántica validada. |
+| Conflictos semánticos en configuracion.tsx / entidades SaaS | Ambos implementan catálogo/ámbito; origin/main usa saasStore y diseño nuevo | Medio | Matriz de paridad funcional antes de tocar código; pruebas de rutas y estado. |
+| Regresión documental ERP | document-management-screen.tsx difiere y depende de subrutas/archive-* | Medio | No revertir a 507c83c; adaptar solo deltas comprobados sobre origin/main. |
+| Artefactos generados | routeTree.gen.ts generado | Medio si se fusiona manualmente | Regenerar con tooling, nunca merge manual. |
+| bun.lock / dependencias | Alineado hoy, posible cambio futuro | Bajo ahora, medio después | Regenerar lock solo con flujo autorizado; validar install/build/test. |
+| Falsa sensación de completitud por fecha | origin/main más completo globalmente pero 507c83c con valor histórico/semántico | Medio (decisional) | Usar auditoría como checklist de paridad. |
+| Ramas/referencias | main behind 21, integración/respaldo divergentes respecto origin/main | Bajo si se respeta política | No eliminar ni sobrescribir ramas existentes; publicar integracion-final-ao-erp solo cuando se autorice. |
+
+================================================================================
+9. PROPUESTA ORDENADA DE IMPLEMENTACIÓN (POSTERIOR A AUTORIZACIÓN)
+================================================================================
+
+No ejecutar hasta recibir autorización explícita. Base: origin/main (6638079) en integracion-final-ao-erp.
+
+1. Fase 0 — Salvaguarda del estado local (obligatoria)
+   - Preservar explícitamente diff/contenido de apps/erp/src/components/modules/diocesan-management-screen.tsx y los 3 informes untracked. Confirmar que integracion-main-ao-erp, respaldo-traslado-ao-erp y main siguen intactos.
+2. Fase 1 — Consolidación de base
+   - Trabajar sobre integracion-final-ao-erp. Verificar paridad de aportes ya presentes de 507c83c sin reintroducir código.
+3. Fase 2 — ERP Gestión documental (adaptación puntual)
+   - Sobre document-management-screen.tsx en base origin/main, ajustar solo si faltan capacidades de creación/validación/persistencia local frente a 507c83c, preservando submódulos archivísticos y rutas /app/gestion-documental/*, archive-area-screen.tsx, archive-demo.ts.
+4. Fase 3 — SaaS: paridad funcional (sin revertir diseño)
+   - Revisar configuracion.tsx (catálogo, ámbitos, vínculos plan/licencia/permisos/entidad), admin-screen.tsx, __root.tsx, index.tsx y rutas instituciones/organizaciones/planes-licencias/roles-permisos/usuarios; portar solo deltas semánticos faltantes a la arquitectura actual.
+5. Fase 4 — Artefactos y coherencia
+   - Regenerar routeTree.gen.ts (saas/erp si aplica) mediante tooling; actualizar lock solo si cambian manifiestos y con flujo autorizado.
+6. Fase 5 — Resolución del cambio local pendiente
+   - Decidir y aplicar corrección/aceptación del '|import' en diocesan-management-screen.tsx con intención documentada.
+7. Fase 6 — Validación integral y publicación controlada (cuando se autorice)
+   - Ejecutar pruebas/typecheck/lint/build; revisión manual de flujos críticos; abrir PR desde integracion-final-ao-erp a main; no eliminar ramas de respaldo hasta confirmar integración completa.
+
+================================================================================
+10. PRUEBAS NECESARIAS ANTES DE CONSIDERAR TERMINADA LA INTEGRACIÓN
+================================================================================
+
+| Ámbito | Pruebas requeridas | Criterio de aceptación |
+|---|---|---|
+| Calidad estática | typecheck, lint por app afectada (@ao/erp, @ao/saas; @ao/diocesano si impactado) | Sin errores nuevos. |
+| Pruebas automatizadas | test por app afectada; SaaS: app-routing.test.ts, saas-repository.test.ts, setup.ts; ERP: tests relevantes en apps/erp/src/test/* | Suites en verde o desviaciones justificadas/documentadas. |
+| ERP Gestión documental | Render document-management-screen, alta/edición, persistencia local (ao-erp:document-management), búsqueda/filtros/categorías/acceso, navegación a /app/gestion-documental/*, coherencia con archive-area-screen.tsx/archive-demo.ts | Flujos operativos sin regresión respecto a base origin/main. |
+| SaaS Configuración | Apariencia, ámbito global/por organización, catálogo de módulos, restauración, persistencia en saasStore, avisos de plan/licencia/permisos y no pérdida histórica | Paridad funcional validada sin romper rediseño actual. |
+| SaaS Entidades | CRUD/listado y navegación en organizaciones, instituciones, usuarios, roles-permisos, planes-licencias; relaciones/contexto; validaciones | Estados, filtros y acciones coherentes con repositorio/dominio. |
+| SaaS Plataforma ampliada | Rutas/pantallas: analítica-reportes, aprovisionamiento, auditoría-cumplimiento, clientes, facturación-cartera, identidad-seguridad, infraestructura, productos-servicios, soporte (y subrutas), suscripciones, vercel-runtime | Sin rutas rotas ni regresiones de render. |
+| Navegación/layout | routes/__root.tsx, routes/index.tsx, activación de enlaces, responsive básico | Navegación consistente y completa. |
+| Regresión cambio local resuelto | diocesan-management-screen.tsx compila y renderiza tras decisión aplicada | Sin error de sintaxis ('|import' corregido o cambio intencional documentado). |
+| Build | build de apps afectadas y verificación de generación de routeTree.gen.ts | Build exitoso y artefactos coherentes. |
+
+================================================================================
+ESTADO DE PREPARACIÓN
+================================================================================
+
+- Base de integración creada localmente: integracion-final-ao-erp -> 6638079 (origin/main), no publicada, sin checkout.
+- Trabajo local protegido: cambio pendiente en diocesan-management-screen.tsx y archivos untracked preservados; sin operaciones destructivas.
+- Conclusión: repositorio preparado para autorizar la implementación por fases sobre origin/main, priorizando conservación de semántica útil de 507c83c/ramas de respaldo sin revertir la arquitectura ni el diseño actuales de A&O. No se avanzó a implementación funcional.
+
+FIN DEL INFORME

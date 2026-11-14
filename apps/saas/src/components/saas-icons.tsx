@@ -17,6 +17,7 @@ import {
   CreditCard,
   Database,
   Eye,
+  EyeOff,
   FileCheck2,
   FileText,
   Filter,
@@ -26,6 +27,9 @@ import {
   Layers,
   LayoutDashboard,
   Lock,
+  LogIn,
+  LogOut,
+  Mail,
   Menu,
   Monitor,
   Moon,
@@ -86,6 +90,11 @@ export type SaasIconName =
   | "palette"
   | "filter"
   | "eye"
+  | "eye-off"
+  | "mail"
+  | "lock"
+  | "log-in"
+  | "log-out"
   | "edit"
   | "trash"
   | "arrow-left"
@@ -141,6 +150,11 @@ const iconMap = {
   palette: Palette,
   filter: Filter,
   eye: Eye,
+  "eye-off": EyeOff,
+  mail: Mail,
+  lock: Lock,
+  "log-in": LogIn,
+  "log-out": LogOut,
   edit: Pencil,
   trash: Trash2,
   "arrow-left": ArrowLeft,

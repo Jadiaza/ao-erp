@@ -1,5 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "../auth/auth-context";
 import {
   getSupportRepository,
   repositories,
@@ -46,6 +47,8 @@ export function AppTopbar({
   onMenuToggle: () => void;
   pathname?: string;
 }) {
+  const navigate = useNavigate();
+  const { session, logout } = useAuth();
   const [query, setQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -247,21 +250,49 @@ export function AppTopbar({
             }}
             aria-expanded={showProfile}
           >
-            <span className="profile-avatar">AO</span>
+            <span className="profile-avatar">{session?.user?.name ? session.user.name.substring(0, 2).toUpperCase() : "AO"}</span>
             <span>
-              <strong>Administrador</strong>
-              <small>A&amp;O TECHNOLOGIES</small>
+              <strong>{session?.user?.name ?? "Administrador"}</strong>
+              <small>{session?.organization?.name ?? "A&O TECHNOLOGIES"}</small>
             </span>
             <SaasIcon name="chevron-down" size={14} />
           </button>
           {showProfile && (
             <div className="profile-menu">
-              <strong>A&amp;O TECHNOLOGIES</strong>
-              <small>Administrador del ecosistema</small>
+              <strong>{session?.organization?.name ?? "A&O TECHNOLOGIES"}</strong>
+              <small>{session?.user?.email ?? "Administrador del ecosistema"}</small>
               <Link to="/configuracion" onClick={() => setShowProfile(false)}>
                 <SaasIcon name="settings" size={14} />
                 Configuración
               </Link>
+              <button
+                type="button"
+                className="profile-menu-logout"
+                onClick={() => {
+                  setShowProfile(false);
+                  logout();
+                  navigate({ to: "/login" as never });
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  padding: "8px 12px",
+                  marginTop: "4px",
+                  border: "none",
+                  borderTop: "1px solid var(--line-subtle)",
+                  background: "transparent",
+                  color: "var(--danger)",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  textAlign: "left",
+                }}
+              >
+                <SaasIcon name="log-out" size={14} />
+                <span>Cerrar sesión</span>
+              </button>
             </div>
           )}
         </div>

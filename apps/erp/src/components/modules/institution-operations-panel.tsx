@@ -12,6 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLocalCollection } from "@/data/local-repository";
 import {
+  christianDepartments,
+  christianResponsibles,
+  christianSites,
   institutionalDepartments,
   institutionalResponsibles,
   institutionalSites,
@@ -19,6 +22,8 @@ import {
   type InstitutionalResponsible,
   type InstitutionalSite,
 } from "@/data/institutional-structure-demo";
+import { useAoCristianoSettings } from "@/lib/use-ao-cristiano";
+import { getProfileStorageKey, isChristianProfile } from "@/lib/ao-cristiano-profile";
 
 type Editor = { kind: "site" | "department" | "responsible"; id?: string };
 type InstitutionFormValues = {
@@ -31,14 +36,29 @@ type InstitutionFormValues = {
 };
 
 export function InstitutionOperationsPanel() {
-  const sites = useLocalCollection("ao-erp:institution:sites", institutionalSites);
+  const { settings } = useAoCristianoSettings();
+  const christian = isChristianProfile(settings.profile);
+
+  const sites = useLocalCollection(
+    getProfileStorageKey("ao-erp:institution:sites", settings.profile),
+    christian ? christianSites : institutionalSites,
+  );
   const responsibles = useLocalCollection(
-    "ao-erp:institution:responsibles",
-    institutionalResponsibles,
+    getProfileStorageKey("ao-erp:institution:responsibles", settings.profile),
+    christian ? christianResponsibles : institutionalResponsibles,
   );
   const departments = useLocalCollection(
-    "ao-erp:institution:departments",
-    institutionalDepartments,
+    getProfileStorageKey("ao-erp:institution:departments", settings.profile),
+    christian ? christianDepartments : institutionalDepartments,
+  );
+  const scopedSites = sites.records.filter(
+    (s) => !s.organizationId || s.organizationId === settings.organizationId,
+  );
+  const scopedResponsibles = responsibles.records.filter(
+    (r) => !r.organizationId || r.organizationId === settings.organizationId,
+  );
+  const scopedDepartments = departments.records.filter(
+    (d) => !d.organizationId || d.organizationId === settings.organizationId,
   );
   const [editor, setEditor] = useState<Editor | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ kind: Editor["kind"]; id: string } | null>(
@@ -112,6 +132,7 @@ export function InstitutionOperationsPanel() {
         name,
         address: values.address.trim(),
         status: "active",
+        organizationId: settings.organizationId,
       };
       if (selectedSite) sites.update(record.id, record);
       else sites.create(record);
@@ -123,6 +144,7 @@ export function InstitutionOperationsPanel() {
         role: values.role.trim(),
         email: values.email.trim(),
         status: "active",
+        organizationId: settings.organizationId,
       };
       if (selectedResponsible) responsibles.update(record.id, record);
       else responsibles.create(record);
@@ -137,6 +159,7 @@ export function InstitutionOperationsPanel() {
         siteId,
         responsibleId,
         status: "active",
+        organizationId: settings.organizationId,
       };
       if (selectedDepartment) departments.update(record.id, record);
       else departments.create(record);
@@ -147,17 +170,19 @@ export function InstitutionOperationsPanel() {
   return (
     <section className="space-y-4 rounded-xl border bg-card p-4">
       <div>
-        <h2 className="font-semibold">Estructura operativa local</h2>
+        <h2 className="font-semibold">
+          {christian ? "Sedes, responsables y dependencias congregacionales" : "Estructura operativa local"}
+        </h2>
         <p className="text-xs text-muted-foreground">
-          Sedes, dependencias y responsables relacionados por identificadores estables.
+          Sedes, dependencias y responsables asociados a {settings.organizationId}.
         </p>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         {[
           {
             kind: "site" as const,
-            label: "Sedes",
-            records: sites.records,
+            label: christian ? "Sedes / congregaciones" : "Sedes",
+            records: scopedSites,
             render: (item: InstitutionalSite) => (
               <>
                 <p className="font-medium">{item.name}</p>
@@ -168,7 +193,7 @@ export function InstitutionOperationsPanel() {
           {
             kind: "responsible" as const,
             label: "Responsables",
-            records: responsibles.records,
+            records: scopedResponsibles,
             render: (item: InstitutionalResponsible) => (
               <>
                 <p className="font-medium">{item.name}</p>
@@ -179,13 +204,13 @@ export function InstitutionOperationsPanel() {
           {
             kind: "department" as const,
             label: "Dependencias",
-            records: departments.records,
+            records: scopedDepartments,
             render: (item: InstitutionalDepartment) => (
               <>
                 <p className="font-medium">{item.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {sites.records.find((site) => site.id === item.siteId)?.name} ·{" "}
-                  {responsibles.records.find((person) => person.id === item.responsibleId)?.name}
+                  {scopedSites.find((site) => site.id === item.siteId)?.name} ·{" "}
+                  {scopedResponsibles.find((person) => person.id === item.responsibleId)?.name}
                 </p>
               </>
             ),
@@ -279,7 +304,7 @@ export function InstitutionOperationsPanel() {
                 name="siteId"
                 label="Sede"
                 required
-                options={sites.records.map((site) => ({ value: site.id, label: site.name }))}
+                options={scopedSites.map((site) => ({ value: site.id, label: site.name }))}
               />
             </FieldGroup>
             <FieldGroup label="Responsable">
@@ -288,7 +313,7 @@ export function InstitutionOperationsPanel() {
                 name="responsibleId"
                 label="Responsable"
                 required
-                options={responsibles.records.map((person) => ({
+                options={scopedResponsibles.map((person) => ({
                   value: person.id,
                   label: person.name,
                 }))}

@@ -1,0 +1,100 @@
+# INFORME — CONTINUACIÓN: INCORPORACIÓN DEL PERFIL CRISTIANO A&O ERP (ANÁLISIS, SIN CAMBIOS DE CÓDIGO)
+
+Repositorio: D:\Proyectos\ao-erp
+Rama de trabajo: integracion-final-ao-erp
+Commit base/HEAD: 66380795862900e8e269dd807ec0a9f9a55cfa57 (origin/main)
+Fecha: 2026-11-13
+Alcance: recuperación de decisiones documentadas, comparación con implementación actual e identificación de adaptaciones. No se implementaron cambios de código/datos/rutas para el perfil cristiano. No se alteró BD/producción ni se publicaron cambios.
+
+================================================================================
+1. DECISIONES ORIGINALES RECUPERADAS
+================================================================================
+Fuente obligatoria revisada:
+- docs/erp/definicion-funcional-y-arquitectonica.md
+  Definición aprobada para orientar fases posteriores (ERP demostrativo, sin persistencia/autenticación/servicios productivos). Establece: ERP parroquial independiente de adopción diocesana; mapa funcional (Dashboard + 27 módulos parroquiales en navegación, con transiciones SaaS/Diocesano fuera de menú); límites ERP/SaaS/Diocesano; modelo conceptual institucional; fuente común de agenda; modelo financiero/referencias; privacidad/permisos; contexto canónico de demostración único (§8): Parroquia Santa María del Camino (PAR-014 demo), Diócesis de San Gabriel ficticia, Colombia/COP, periodo 2026; restricciones (no cambiar rutas/navegación/código salvo fases aprobadas, no backend/productivo).
+
+Documentación funcional/arquitectónica relacionada revisada:
+- docs/erp/plan-implementacion-funcional.md
+- docs/erp/transicion-modulos-saas-diocesano.md
+- docs/erp/estandar-formularios.md
+- docs/erp/procesos/intenciones-de-misa.md
+- docs/erp/auditorias/* (inventarios, cierres y evidencias disponibles)
+
+Referencia a "A&O Cristiano" localizada en el repositorio:
+- informe-plan-integracion-507c83c.txt, §3 "OPORTUNIDADES PARA FUTURO A&O CRISTIANO (SIN DUPLICAR NI ALTERAR ERP/DIOCESANO)".
+  Decisión/criterio documentado: reutilización futura por extracción selectiva a paquetes/workspace neutros o como referencia de patrones, solo con consumidor real y respetando separación de productos. Activos candidatos citados: formularios compartidos, CRUD/paneles y tablas, repositorio local/datos demo, gestión institucional, planeación/grupos/comunidades, patrones admin SaaS, navegación/configuración por módulos. Condiciones: no modificar ERP/Diocesano, parametrizar terminología/dominio, adaptar semántica en app/módulo propio de A&O Cristiano, ownership/datos separados por producto, no reutilizar datos/identidades parroquiales/sacramentales/diocesanas ni reglas jurisdiccionales, respetar límites y privacidad.
+
+Búsqueda realizada:
+- No se encontró en docs/ ni en apps/erp/src (código/datos/rutas) una especificación aprobada y detallada de "perfil cristiano" dentro del mismo A&O ERP (p. ej. tipos de institución/confesión, reglas de adaptación por módulo, terminología y flujos por perfil, selector de perfil, matriz de cambios o convivencia explícita perfil católico/perfil cristiano sobre mismas pantallas). Las coincidencias "cristiana/evangelizadora/Evangelista" halladas corresponden a contenido textual/demostrativo, no a una definición de perfil producto.
+
+Restricciones aplicadas:
+- No rediseñar arquitectura ni proponer estructura/matriz nueva.
+- No crear segundo ERP ni Dashboard alternativo.
+- No alterar funcionamiento del perfil católico.
+- Conservar funcionalidades/módulos, navegación, diseño, componentes y servicios compartidos pertinentes.
+- No modificar bases de datos de producción ni publicar cambios.
+
+================================================================================
+2. FUNCIONALIDADES YA IMPLEMENTADAS (COMPARACIÓN CON BASE ACTUAL)
+================================================================================
+Estructura ERP (misma aplicación, navegación y componentes compartidos):
+- Dashboard + 27 módulos parroquiales visibles según apps/erp/src/data/navigation.ts (General; Gobierno e institución; Comunidad y pastoral; Finanzas y recursos; Gestión y control; Servicios; Sistema). Rutas/transiciones SaaS-Diocesano conservadas fuera de menú según definición/transición.
+- Componentes compartidos: components/modules/*, components/forms/*, components/ui/*, layouts; datos/utilidades demo (local-repository.ts, demo-types.ts) y paneles reutilizables (p.ej. institution-operations-panel, demo-crud-panel).
+
+Perfil/contexto católico-parroquial implementado (demostrativo):
+- Contexto e identidad: apps/erp/src/data/parish-demo.ts, institution-profile-demo.ts, institutional-structure-demo.ts (Parroquia Santa María del Camino, jurisdicción/diócesis ficticia, roles párroco/secretaría, sedes templo/capilla/casa cural/oficina parroquial, etc.).
+- Pantallas clave: apps/erp/src/components/modules/institution-screen.tsx (identidad canónica/civil/jurisdicción/parroquial), settings-center-screen.tsx (tipo entidad incluye parroquia/jurisdicción eclesiástica, parámetros sacramentales y marco regional/contable configurable), community-screen.tsx, sacramental-screen.tsx, books-screen.tsx, documents-screen.tsx, formation-screen.tsx, groups-screen.tsx, pastoral-planning-screen.tsx, liturgy-screen.tsx, etc.
+- Datasets con semántica católica/parroquial: community-demo.ts, pastoral-demo.ts, governance-demo.ts, institutional-demo.ts, services-demo.ts, economy-demo.ts, system-demo.ts y relacionados.
+
+Alineación con reutilización futura (ya presente como base común):
+- Formularios estandarizados y componentes de módulo/tabla/diálogo/panel, navegación/configuración y patrones de datos demo existen en ERP y pueden servir como base de extracción/patrones según §3 del informe 507c83c, sin alteración del ERP/Diocesano actual.
+
+SaaS (estado previo en la rama, no parte de perfil cristiano ERP):
+- apps/saas consolidado con dominio/repositorio/servicios, rutas y configuración contextual demo local; pruebas/builds/typecheck documentados en informe-implementacion-integracion-final-ao-erp.txt.
+
+================================================================================
+3. ADAPTACIONES CRISTIANAS PENDIENTES
+================================================================================
+No identificables como ajustes de implementación aprobados y ejecutables en esta base, por ausencia de especificación aprobada y detallada del perfil "A&O Cristiano" dentro del mismo A&O ERP.
+
+Pendientes previos de definición (requeridos antes de implementar, sin reinventar arquitectura):
+- Documento/sección aprobada que defina el perfil cristiano: tipologías de institución cristiana soportadas, terminología oficial, y mapeo con módulos existentes.
+- Criterios de adaptación por módulo/funcionalidad que cambia según identidad y prácticas (p.ej. Institución/identidad y relaciones no diocesanas, Estructura eclesiástica, Gestión sacramental/Libros sacramentales/Documentos y certificados, Liturgia y celebraciones, Catequesis/formación, u otros que la especificación determine) manteniendo Dashboard, navegación, diseño y componentes compartidos.
+- Definición de configuración de perfil (global/por institución) y comportamiento con datos demo, preservando el perfil católico intacto.
+- Aclaración de alcance frente a §3 del informe 507c83c: "adaptar semántica en app/módulo propio de A&O Cristiano" vs. "perfil dentro del mismo A&O ERP", para evitar ambigüedad sin cambiar decisiones aprobadas.
+
+Conclusión de pendientes: no se proponen ni implementan funcionalidades nuevas; los ajustes concretos dependen de la especificación aprobada faltante.
+
+================================================================================
+4. ARCHIVOS QUE MODIFIQUÉ (ESTA CONTINUACIÓN)
+================================================================================
+- Ninguno (código, datos, rutas, configuración o documentación funcional). Solo se elaboró este informe.
+
+Archivos modificados/creados previamente en la rama (contexto, no alterados en esta continuación):
+- apps/saas/src/routes/configuracion.tsx
+- apps/saas/src/routeTree.gen.ts (generado por tooling oficial)
+- apps/erp/src/routeTree.gen.ts (generado por tooling oficial)
+- apps/diocesano/src/routeTree.gen.ts (generado por tooling oficial)
+- apps/saas/src/test/saas-consolidation.test.ts
+- informes *.txt existentes/untracked según git status
+
+================================================================================
+5. PRUEBAS REALIZADAS (ESTA CONTINUACIÓN)
+================================================================================
+- Ninguna ejecución de pruebas, typecheck, lint o build en esta continuación.
+- Verificaciones realizadas: lectura de documentación fuente, búsqueda en docs/código/historial (git log/branches, contenido 507c83c, búsqueda de "Cristiano/cristian/perfil/confesional/denominación") y revisión de git status para confirmar ausencia de cambios nuevos de código.
+
+Pruebas previas documentadas en la rama (referencia: informe-implementacion-integracion-final-ao-erp.txt):
+- SaaS: typecheck OK, tests 3 archivos/35 aprobados (timeout intermitente preexistente observado en ejecución intermedia), build OK; lint con fallos masivos preexistentes CRLF/Prettier.
+- ERP: typecheck OK, tests 3 archivos/10 aprobados, build OK; lint con fallos masivos preexistentes CRLF/Prettier.
+- Diocesano: typecheck OK, build OK.
+
+================================================================================
+6. ESTADO FINAL
+================================================================================
+- Rama: integracion-final-ao-erp @ 66380795862900e8e269dd807ec0a9f9a55cfa57 (local, sin publicar).
+- Sin commits, push, merge, rebase, PR ni cambios de BD/producción/Supabase/secretos.
+- Perfil católico/parroquial existente no modificado. No se creó segundo ERP ni Dashboard alternativo.
+- git status al cierre de esta continuación: modificaciones/generados e informes untracked previos se mantienen; este informe se añade como archivo nuevo no rastreado.
+
+FIN DEL INFORME

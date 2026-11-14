@@ -19,6 +19,7 @@ import { Route as FacturacionCarteraRouteImport } from './routes/facturacion-car
 import { Route as IdentidadSeguridadRouteImport } from './routes/identidad-seguridad'
 import { Route as InfraestructuraRouteImport } from './routes/infraestructura'
 import { Route as InstitucionesRouteImport } from './routes/instituciones'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as OrganizacionesRouteImport } from './routes/organizaciones'
 import { Route as PlanesLicenciasRouteImport } from './routes/planes-licencias'
 import { Route as ProductosServiciosRouteImport } from './routes/productos-servicios'
@@ -85,6 +86,11 @@ const InfraestructuraRoute = InfraestructuraRouteImport.update({
 const InstitucionesRoute = InstitucionesRouteImport.update({
   id: '/instituciones',
   path: '/instituciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrganizacionesRoute = OrganizacionesRouteImport.update({
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/identidad-seguridad': typeof IdentidadSeguridadRoute
   '/infraestructura': typeof InfraestructuraRoute
   '/instituciones': typeof InstitucionesRoute
+  '/login': typeof LoginRoute
   '/organizaciones': typeof OrganizacionesRoute
   '/planes-licencias': typeof PlanesLicenciasRoute
   '/productos-servicios': typeof ProductosServiciosRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/identidad-seguridad': typeof IdentidadSeguridadRoute
   '/infraestructura': typeof InfraestructuraRoute
   '/instituciones': typeof InstitucionesRoute
+  '/login': typeof LoginRoute
   '/organizaciones': typeof OrganizacionesRoute
   '/planes-licencias': typeof PlanesLicenciasRoute
   '/productos-servicios': typeof ProductosServiciosRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/identidad-seguridad': typeof IdentidadSeguridadRoute
   '/infraestructura': typeof InfraestructuraRoute
   '/instituciones': typeof InstitucionesRoute
+  '/login': typeof LoginRoute
   '/organizaciones': typeof OrganizacionesRoute
   '/planes-licencias': typeof PlanesLicenciasRoute
   '/productos-servicios': typeof ProductosServiciosRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/identidad-seguridad'
     | '/infraestructura'
     | '/instituciones'
+    | '/login'
     | '/organizaciones'
     | '/planes-licencias'
     | '/productos-servicios'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/identidad-seguridad'
     | '/infraestructura'
     | '/instituciones'
+    | '/login'
     | '/organizaciones'
     | '/planes-licencias'
     | '/productos-servicios'
@@ -339,6 +350,7 @@ export interface FileRouteTypes {
     | '/identidad-seguridad'
     | '/infraestructura'
     | '/instituciones'
+    | '/login'
     | '/organizaciones'
     | '/planes-licencias'
     | '/productos-servicios'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   IdentidadSeguridadRoute: typeof IdentidadSeguridadRoute
   InfraestructuraRoute: typeof InfraestructuraRoute
   InstitucionesRoute: typeof InstitucionesRoute
+  LoginRoute: typeof LoginRoute
   OrganizacionesRoute: typeof OrganizacionesRoute
   PlanesLicenciasRoute: typeof PlanesLicenciasRoute
   ProductosServiciosRoute: typeof ProductosServiciosRoute
@@ -449,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/instituciones'
       fullPath: '/instituciones'
       preLoaderRoute: typeof InstitucionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/organizaciones': {
@@ -611,6 +631,7 @@ const rootRouteChildren: RootRouteChildren = {
   IdentidadSeguridadRoute: IdentidadSeguridadRoute,
   InfraestructuraRoute: InfraestructuraRoute,
   InstitucionesRoute: InstitucionesRoute,
+  LoginRoute: LoginRoute,
   OrganizacionesRoute: OrganizacionesRoute,
   PlanesLicenciasRoute: PlanesLicenciasRoute,
   ProductosServiciosRoute: ProductosServiciosRoute,

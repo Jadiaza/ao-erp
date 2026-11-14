@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAccionPastoralSocialRouteImport } from './routes/app/accion-pastoral-social'
+import { Route as AppAcompanamientoPastoralRouteImport } from './routes/app/acompanamiento-pastoral'
 import { Route as AppAdministracionInstitucionalRouteImport } from './routes/app/administracion-institucional'
 import { Route as AppAdministracionPlataformaRouteImport } from './routes/app/administracion-plataforma'
 import { Route as AppAgendaInfraestructuraRouteImport } from './routes/app/agenda-infraestructura'
@@ -58,6 +59,12 @@ const AppAccionPastoralSocialRoute = AppAccionPastoralSocialRouteImport.update({
   path: '/app/accion-pastoral-social',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAcompanamientoPastoralRoute =
+  AppAcompanamientoPastoralRouteImport.update({
+    id: '/app/acompanamiento-pastoral',
+    path: '/app/acompanamiento-pastoral',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppAdministracionInstitucionalRoute =
   AppAdministracionInstitucionalRouteImport.update({
     id: '/app/administracion-institucional',
@@ -261,6 +268,7 @@ const AppGestionDocumentalTransferenciasRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app/accion-pastoral-social': typeof AppAccionPastoralSocialRoute
+  '/app/acompanamiento-pastoral': typeof AppAcompanamientoPastoralRoute
   '/app/administracion-institucional': typeof AppAdministracionInstitucionalRoute
   '/app/administracion-plataforma': typeof AppAdministracionPlataformaRoute
   '/app/agenda-infraestructura': typeof AppAgendaInfraestructuraRoute
@@ -301,6 +309,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/accion-pastoral-social': typeof AppAccionPastoralSocialRoute
+  '/app/acompanamiento-pastoral': typeof AppAcompanamientoPastoralRoute
   '/app/administracion-institucional': typeof AppAdministracionInstitucionalRoute
   '/app/administracion-plataforma': typeof AppAdministracionPlataformaRoute
   '/app/agenda-infraestructura': typeof AppAgendaInfraestructuraRoute
@@ -342,6 +351,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app/accion-pastoral-social': typeof AppAccionPastoralSocialRoute
+  '/app/acompanamiento-pastoral': typeof AppAcompanamientoPastoralRoute
   '/app/administracion-institucional': typeof AppAdministracionInstitucionalRoute
   '/app/administracion-plataforma': typeof AppAdministracionPlataformaRoute
   '/app/agenda-infraestructura': typeof AppAgendaInfraestructuraRoute
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app/accion-pastoral-social'
+    | '/app/acompanamiento-pastoral'
     | '/app/administracion-institucional'
     | '/app/administracion-plataforma'
     | '/app/agenda-infraestructura'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/app/accion-pastoral-social'
+    | '/app/acompanamiento-pastoral'
     | '/app/administracion-institucional'
     | '/app/administracion-plataforma'
     | '/app/agenda-infraestructura'
@@ -464,6 +476,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app/accion-pastoral-social'
+    | '/app/acompanamiento-pastoral'
     | '/app/administracion-institucional'
     | '/app/administracion-plataforma'
     | '/app/agenda-infraestructura'
@@ -505,6 +518,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppAccionPastoralSocialRoute: typeof AppAccionPastoralSocialRoute
+  AppAcompanamientoPastoralRoute: typeof AppAcompanamientoPastoralRoute
   AppAdministracionInstitucionalRoute: typeof AppAdministracionInstitucionalRoute
   AppAdministracionPlataformaRoute: typeof AppAdministracionPlataformaRoute
   AppAgendaInfraestructuraRoute: typeof AppAgendaInfraestructuraRoute
@@ -549,6 +563,13 @@ declare module '@tanstack/react-router' {
       path: '/app/accion-pastoral-social'
       fullPath: '/app/accion-pastoral-social'
       preLoaderRoute: typeof AppAccionPastoralSocialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/acompanamiento-pastoral': {
+      id: '/app/acompanamiento-pastoral'
+      path: '/app/acompanamiento-pastoral'
+      fullPath: '/app/acompanamiento-pastoral'
+      preLoaderRoute: typeof AppAcompanamientoPastoralRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/administracion-institucional': {
@@ -837,6 +858,7 @@ const AppGestionDocumentalRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppAccionPastoralSocialRoute: AppAccionPastoralSocialRoute,
+  AppAcompanamientoPastoralRoute: AppAcompanamientoPastoralRoute,
   AppAdministracionInstitucionalRoute: AppAdministracionInstitucionalRoute,
   AppAdministracionPlataformaRoute: AppAdministracionPlataformaRoute,
   AppAgendaInfraestructuraRoute: AppAgendaInfraestructuraRoute,

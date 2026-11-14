@@ -1,20 +1,52 @@
 import type { RecordStatus } from "@/data/demo-types";
 import { parishDemo, parishDemoAccountingEntity, parishDemoPeople, parishDemoSites } from "@/data/parish-demo";
 
-export type TreasuryMovement = { id: string; date: string; dateISO: string; concept: string; source: string; category: string; account: string; direction: "Ingreso" | "Egreso"; amount: number; status: RecordStatus; reference: string };
+export type TreasuryMovement = {
+  id: string;
+  date: string;
+  dateISO: string;
+  concept: string;
+  source: string;
+  category: string;
+  account: string;
+  direction: "Ingreso" | "Egreso";
+  amount: number;
+  status: RecordStatus;
+  reference: string;
+  responsible?: string | undefined;
+  journalVoucherId?: string | undefined;
+  budgetLineId?: string | undefined;
+  organizationId?: string | undefined;
+  campusId?: string | undefined;
+};
 export const treasuryAccounts = [
   { id: "CTA-DEMO-01", name: "Caja parroquial · demo", kind: "Caja", balance: 2850000, entity: parishDemo.officialName },
   { id: "CTA-DEMO-02", name: "Cuenta corriente · demo", kind: "Banco", balance: 18450000, entity: parishDemo.officialName },
   { id: "CTA-DEMO-03", name: "Fondo pastoral · demo", kind: "Caja", balance: 1620000, entity: parishDemo.officialName },
 ];
 export const treasuryMovements: TreasuryMovement[] = [
-  { id: "MOV-DEMO-101", date: "30 oct. 2026", dateISO: "2026-10-30", concept: "Ofrenda dominical", source: "Colecta comunitaria", category: "Ofrendas", account: "Caja parroquial", direction: "Ingreso", amount: 845000, status: "approved", reference: "ING-DEMO-041" },
-  { id: "MOV-DEMO-102", date: "29 oct. 2026", dateISO: "2026-10-29", concept: "Aporte solidario", source: "Donación de muestra", category: "Donaciones", account: "Cuenta corriente · muestra", direction: "Ingreso", amount: 1200000, status: "approved", reference: "ING-DEMO-040" },
-  { id: "MOV-DEMO-103", date: "28 oct. 2026", dateISO: "2026-10-28", concept: "Actividad comunitaria", source: "Encuentro cultural", category: "Actividades", account: "Caja parroquial", direction: "Ingreso", amount: 460000, status: "pending", reference: "ING-DEMO-039" },
-  { id: "MOV-DEMO-104", date: "27 oct. 2026", dateISO: "2026-10-27", concept: "Servicios públicos", source: "Proveedor de muestra", category: "Servicios", account: "Cuenta corriente · muestra", direction: "Egreso", amount: 326500, status: "paid", reference: "EGR-DEMO-028" },
-  { id: "MOV-DEMO-105", date: "26 oct. 2026", dateISO: "2026-10-26", concept: "Material de formación", source: "Compra menor", category: "Pastoral", account: "Fondo pastoral", direction: "Egreso", amount: 148000, status: "approved", reference: "EGR-DEMO-027" },
-  { id: "MOV-DEMO-106", date: "24 oct. 2026", dateISO: "2026-10-24", concept: "Mantenimiento de sede", source: "Servicio contratado", category: "Mantenimiento", account: "Cuenta corriente · muestra", direction: "Egreso", amount: 780000, status: "pending", reference: "EGR-DEMO-026" },
-  { id: "MOV-DEMO-107", date: "22 oct. 2026", dateISO: "2026-10-22", concept: "Recaudo de actividad", source: "Inscripciones de muestra", category: "Actividades", account: "Caja parroquial", direction: "Ingreso", amount: 315000, status: "approved", reference: "ING-DEMO-038" },
+  { id: "MOV-DEMO-101", date: "30 oct. 2026", dateISO: "2026-10-30", concept: "Ofrenda dominical", source: "Colecta comunitaria", category: "Ofrendas", account: "Caja parroquial · demo", direction: "Ingreso", amount: 845000, status: "approved", reference: "ING-DEMO-041", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-DEMO-102", date: "29 oct. 2026", dateISO: "2026-10-29", concept: "Aporte solidario", source: "Donación de muestra", category: "Donaciones", account: "Cuenta corriente · demo", direction: "Ingreso", amount: 1200000, status: "approved", reference: "ING-DEMO-040", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-DEMO-103", date: "28 oct. 2026", dateISO: "2026-10-28", concept: "Actividad comunitaria", source: "Encuentro cultural", category: "Actividades", account: "Caja parroquial · demo", direction: "Ingreso", amount: 460000, status: "pending", reference: "ING-DEMO-039", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-DEMO-104", date: "27 oct. 2026", dateISO: "2026-10-27", concept: "Servicios públicos", source: "Proveedor de muestra", category: "Servicios", account: "Cuenta corriente · demo", direction: "Egreso", amount: 326500, status: "paid", reference: "EGR-DEMO-028", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-DEMO-105", date: "26 oct. 2026", dateISO: "2026-10-26", concept: "Material de formación", source: "Compra menor", category: "Pastoral", account: "Fondo pastoral · demo", direction: "Egreso", amount: 148000, status: "approved", reference: "EGR-DEMO-027", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-DEMO-106", date: "24 oct. 2026", dateISO: "2026-10-24", concept: "Mantenimiento de sede", source: "Servicio contratado", category: "Mantenimiento", account: "Cuenta corriente · demo", direction: "Egreso", amount: 780000, status: "pending", reference: "EGR-DEMO-026", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-DEMO-107", date: "22 oct. 2026", dateISO: "2026-10-22", concept: "Recaudo de actividad", source: "Inscripciones de muestra", category: "Actividades", account: "Caja parroquial · demo", direction: "Ingreso", amount: 315000, status: "approved", reference: "ING-DEMO-038", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+];
+
+export const christianTreasuryAccounts = [
+  { id: "CTA-CRI-01", name: "Caja congregacional · demo", kind: "Caja", balance: 2850000, entity: "Congregación demo · ORG-DEMO-001" },
+  { id: "CTA-CRI-02", name: "Cuenta bancaria congregacional · demo", kind: "Banco", balance: 18450000, entity: "Congregación demo · ORG-DEMO-001" },
+  { id: "CTA-CRI-03", name: "Fondo ministerial y social · demo", kind: "Caja", balance: 1620000, entity: "Congregación demo · ORG-DEMO-001" },
+];
+export const christianTreasuryMovements: TreasuryMovement[] = [
+  { id: "MOV-CRI-100", date: "31 oct. 2026", dateISO: "2026-10-31", concept: "Diezmos congregacionales", source: "Aportes de miembros", category: "Diezmos", account: "Cuenta bancaria congregacional · demo", direction: "Ingreso", amount: 1850000, status: "approved", reference: "ING-CRI-042", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-CRI-101", date: "30 oct. 2026", dateISO: "2026-10-30", concept: "Ofrenda culto dominical", source: "Colecta de cultos", category: "Ofrendas", account: "Caja congregacional · demo", direction: "Ingreso", amount: 845000, status: "approved", reference: "ING-CRI-041", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-CRI-102", date: "29 oct. 2026", dateISO: "2026-10-29", concept: "Donación para obra social", source: "Donante identificado · demo", category: "Donaciones", account: "Cuenta bancaria congregacional · demo", direction: "Ingreso", amount: 1200000, status: "approved", reference: "ING-CRI-040", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-CRI-103", date: "28 oct. 2026", dateISO: "2026-10-28", concept: "Encuentro de jóvenes", source: "Inscripciones y actividades", category: "Otros ingresos", account: "Caja congregacional · demo", direction: "Ingreso", amount: 460000, status: "pending", reference: "ING-CRI-039", organizationId: "ORG-DEMO-001", campusId: "SEDE-SECUNDARIA" },
+  { id: "MOV-CRI-104", date: "27 oct. 2026", dateISO: "2026-10-27", concept: "Servicios públicos de sede", source: "Proveedor de muestra", category: "Egresos operativos", account: "Cuenta bancaria congregacional · demo", direction: "Egreso", amount: 326500, status: "paid", reference: "EGR-CRI-028", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-CRI-105", date: "26 oct. 2026", dateISO: "2026-10-26", concept: "Material de discipulado y ministerios", source: "Compra menor", category: "Egresos ministeriales", account: "Fondo ministerial y social · demo", direction: "Egreso", amount: 148000, status: "approved", reference: "EGR-CRI-027", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "MOV-CRI-106", date: "24 oct. 2026", dateISO: "2026-10-24", concept: "Mantenimiento de auditorio", source: "Servicio contratado", category: "Egresos operativos", account: "Cuenta bancaria congregacional · demo", direction: "Egreso", amount: 780000, status: "pending", reference: "EGR-CRI-026", organizationId: "ORG-DEMO-001", campusId: "SEDE-SECUNDARIA" },
 ];
 export const treasuryPeriodSummaryDemo = {
   income: treasuryMovements.filter((movement) => movement.direction === "Ingreso").reduce((sum, movement) => sum + movement.amount, 0),
@@ -51,30 +83,176 @@ export const accountingAccounts: AccountingAccount[] = [
   { code: "5", name: "Gastos", type: "Clase", debit: 12420000, credit: 0, balance: 12420000, entityId: parishDemo.accountingEntityId, dimension: "Administrativa" },
   { code: "51", name: "Servicios y mantenimiento", type: "Grupo", parent: "5", debit: 3265000, credit: 0, balance: 3265000, entityId: parishDemo.accountingEntityId, dimension: "Administrativa" },
 ];
-export const journalEntries = [
+export type JournalEntryDemo = {
+  id: string;
+  date: string;
+  period: string;
+  description: string;
+  account: string;
+  debit: number;
+  credit: number;
+  dimension: string;
+  entityId: string;
+  organizationId?: string | undefined;
+  campusId?: string | undefined;
+  treasuryMovementId?: string | undefined;
+  budgetLineId?: string | undefined;
+};
+
+export function buildJournalEntriesFromMovement(params: {
+  movement: TreasuryMovement;
+  entityId: string;
+  christian: boolean;
+}): [JournalEntryDemo, JournalEntryDemo] {
+  const { movement, entityId, christian } = params;
+  const voucherId = movement.journalVoucherId || `${christian ? "CMP-CRI" : "CMP-DEMO"}-${Date.now()}`;
+  const isIncome = movement.direction === "Ingreso";
+  const cashAcc = movement.account.toLowerCase().includes("banc")
+    ? "1110 · Cuenta bancaria"
+    : movement.account.toLowerCase().includes("fondo")
+      ? "1120 · Fondo ministerial"
+      : christian
+        ? "1105 · Caja congregacional"
+        : "1105 · Caja parroquial";
+  const counterpartAcc = isIncome
+    ? christian
+      ? `4101 · ${movement.category}`
+      : `4101 · ${movement.category}`
+    : christian
+      ? `5105 · ${movement.category}`
+      : `5105 · ${movement.category}`;
+  const dimension = movement.category.toLowerCase().includes("minister") || movement.category.toLowerCase().includes("diez") || movement.category.toLowerCase().includes("ofren")
+    ? christian
+      ? "Ministerial"
+      : "Pastoral"
+    : "Administrativa";
+  const period = movement.dateISO.slice(0, 7) || "2026-10";
+
+  const line1: JournalEntryDemo = {
+    id: voucherId,
+    date: movement.date,
+    period,
+    description: `${movement.concept} (${movement.reference})`,
+    account: isIncome ? cashAcc : counterpartAcc,
+    debit: movement.amount,
+    credit: 0,
+    dimension,
+    entityId,
+    organizationId: movement.organizationId,
+    campusId: movement.campusId,
+    treasuryMovementId: movement.id,
+    budgetLineId: movement.budgetLineId,
+  };
+  const line2: JournalEntryDemo = {
+    id: voucherId,
+    date: movement.date,
+    period,
+    description: `${movement.concept} (${movement.reference})`,
+    account: isIncome ? counterpartAcc : cashAcc,
+    debit: 0,
+    credit: movement.amount,
+    dimension,
+    entityId,
+    organizationId: movement.organizationId,
+    campusId: movement.campusId,
+    treasuryMovementId: movement.id,
+    budgetLineId: movement.budgetLineId,
+  };
+  return [line1, line2];
+}
+export const journalEntries: JournalEntryDemo[] = [
   { id: "CMP-DEMO-071", date: "30 oct. 2026", period: "2026-10", description: "Registro demostrativo de ofrenda comunitaria", account: "1105 · Caja parroquial", debit: 845000, credit: 0, dimension: "Pastoral", entityId: parishDemo.accountingEntityId },
   { id: "CMP-DEMO-071", date: "30 oct. 2026", period: "2026-10", description: "Registro demostrativo de ofrenda comunitaria", account: "4101 · Ofrendas", debit: 0, credit: 845000, dimension: "Pastoral", entityId: parishDemo.accountingEntityId },
   { id: "CMP-DEMO-070", date: "29 oct. 2026", period: "2026-10", description: "Pago demostrativo de servicios públicos", account: "5105 · Servicios", debit: 326500, credit: 0, dimension: "Administrativa", entityId: parishDemo.accountingEntityId },
   { id: "CMP-DEMO-070", date: "29 oct. 2026", period: "2026-10", description: "Pago demostrativo de servicios públicos", account: "1110 · Banco demo", debit: 0, credit: 326500, dimension: "Administrativa", entityId: parishDemo.accountingEntityId },
 ];
 
-export type BudgetLine = { id: string; area: string; category: string; type: "Ingreso" | "Gasto"; budget: number; executed: number; period: string };
-export const budgetLines: BudgetLine[] = [
-  { id: "PRE-DEMO-01", area: "Pastoral", category: "Ofrendas ordinarias", type: "Ingreso", budget: 24000000, executed: 18600000, period: "Octubre" },
-  { id: "PRE-DEMO-02", area: "Pastoral", category: "Formación y catequesis", type: "Gasto", budget: 6800000, executed: 5120000, period: "Octubre" },
-  { id: "PRE-DEMO-03", area: "Administrativa", category: "Servicios y mantenimiento", type: "Gasto", budget: 9200000, executed: 10100000, period: "Octubre" },
-  { id: "PRE-DEMO-04", area: "Acción social", category: "Aportes solidarios", type: "Ingreso", budget: 14500000, executed: 12300000, period: "Octubre" },
-  { id: "PRE-DEMO-05", area: "Acción social", category: "Ayuda comunitaria", type: "Gasto", budget: 11800000, executed: 8900000, period: "Octubre" },
-  { id: "PRE-DEMO-06", area: "Administrativa", category: "Ingresos por actividades", type: "Ingreso", budget: 7500000, executed: 5940000, period: "Octubre" },
+export const christianAccountingEntities = [
+  { id: "ENT-CRI-001", organizationId: "ORG-DEMO-001", name: "Entidad contable congregacional · demo", country: "Colombia", framework: "Marco institucional configurable" },
+];
+export const christianAccountingAccounts: AccountingAccount[] = [
+  { code: "1", name: "Activos", type: "Clase", debit: 28450000, credit: 0, balance: 28450000, entityId: "ENT-CRI-001", dimension: "Administrativa" },
+  { code: "11", name: "Efectivo y equivalentes", type: "Grupo", parent: "1", debit: 22920000, credit: 0, balance: 22920000, entityId: "ENT-CRI-001", dimension: "Tesorería" },
+  { code: "1105", name: "Caja congregacional", type: "Cuenta", parent: "11", debit: 4210000, credit: 1360000, balance: 2850000, entityId: "ENT-CRI-001", dimension: "Tesorería" },
+  { code: "1110", name: "Cuenta bancaria congregacional · demo", type: "Cuenta", parent: "11", debit: 18710000, credit: 260000, balance: 18450000, entityId: "ENT-CRI-001", dimension: "Tesorería" },
+  { code: "1120", name: "Fondo ministerial y social · demo", type: "Cuenta", parent: "11", debit: 1620000, credit: 0, balance: 1620000, entityId: "ENT-CRI-001", dimension: "Ministerial" },
+  { code: "2", name: "Pasivos", type: "Clase", debit: 0, credit: 3480000, balance: -3480000, entityId: "ENT-CRI-001", dimension: "Administrativa" },
+  { code: "3", name: "Patrimonio congregacional", type: "Clase", debit: 0, credit: 24970000, balance: -24970000, entityId: "ENT-CRI-001", dimension: "Administrativa" },
+  { code: "4", name: "Ingresos", type: "Clase", debit: 0, credit: 18450000, balance: -18450000, entityId: "ENT-CRI-001", dimension: "Ministerial" },
+  { code: "41", name: "Diezmos, ofrendas y donaciones", type: "Grupo", parent: "4", debit: 0, credit: 14450000, balance: -14450000, entityId: "ENT-CRI-001", dimension: "Ministerial" },
+  { code: "5", name: "Gastos", type: "Clase", debit: 12420000, credit: 0, balance: 12420000, entityId: "ENT-CRI-001", dimension: "Administrativa" },
+  { code: "51", name: "Operación de sedes y ministerios", type: "Grupo", parent: "5", debit: 3265000, credit: 0, balance: 3265000, entityId: "ENT-CRI-001", dimension: "Administrativa" },
+];
+export const christianJournalEntries: JournalEntryDemo[] = [
+  { id: "CMP-CRI-071", date: "31 oct. 2026", period: "2026-10", description: "Registro de diezmos y ofrendas dominicales", account: "1105 · Caja congregacional", debit: 845000, credit: 0, dimension: "Ministerial", entityId: "ENT-CRI-001", organizationId: "ORG-DEMO-001" },
+  { id: "CMP-CRI-071", date: "31 oct. 2026", period: "2026-10", description: "Registro de diezmos y ofrendas dominicales", account: "4101 · Diezmos y ofrendas", debit: 0, credit: 845000, dimension: "Ministerial", entityId: "ENT-CRI-001", organizationId: "ORG-DEMO-001" },
+  { id: "CMP-CRI-070", date: "29 oct. 2026", period: "2026-10", description: "Pago de servicios públicos de sede", account: "5105 · Servicios de sede", debit: 326500, credit: 0, dimension: "Administrativa", entityId: "ENT-CRI-001", organizationId: "ORG-DEMO-001" },
+  { id: "CMP-CRI-070", date: "29 oct. 2026", period: "2026-10", description: "Pago de servicios públicos de sede", account: "1110 · Cuenta bancaria congregacional", debit: 0, credit: 326500, dimension: "Administrativa", entityId: "ENT-CRI-001", organizationId: "ORG-DEMO-001" },
 ];
 
-export type AssetDemo = { id: string; name: string; kind: string; location: string; responsible: string; condition: string; acquisitionValue: number; acquisitionDate: string; maintenance: string; accountingCategory: string; carryingAmount: number; support: string; status: RecordStatus };
+export type BudgetLine = {
+  id: string;
+  area: string;
+  category: string;
+  type: "Ingreso" | "Gasto";
+  budget: number;
+  executed: number;
+  period: string;
+  organizationId?: string;
+  campusId?: string;
+};
+export const budgetLines: BudgetLine[] = [
+  { id: "PRE-DEMO-01", area: "Pastoral", category: "Ofrendas ordinarias", type: "Ingreso", budget: 24000000, executed: 18600000, period: "Octubre", organizationId: "ORG-DEMO-001" },
+  { id: "PRE-DEMO-02", area: "Pastoral", category: "Formación y catequesis", type: "Gasto", budget: 6800000, executed: 5120000, period: "Octubre", organizationId: "ORG-DEMO-001" },
+  { id: "PRE-DEMO-03", area: "Administrativa", category: "Servicios y mantenimiento", type: "Gasto", budget: 9200000, executed: 10100000, period: "Octubre", organizationId: "ORG-DEMO-001" },
+  { id: "PRE-DEMO-04", area: "Acción social", category: "Aportes solidarios", type: "Ingreso", budget: 14500000, executed: 12300000, period: "Octubre", organizationId: "ORG-DEMO-001" },
+  { id: "PRE-DEMO-05", area: "Acción social", category: "Ayuda comunitaria", type: "Gasto", budget: 11800000, executed: 8900000, period: "Octubre", organizationId: "ORG-DEMO-001" },
+  { id: "PRE-DEMO-06", area: "Administrativa", category: "Ingresos por actividades", type: "Ingreso", budget: 7500000, executed: 5940000, period: "Octubre", organizationId: "ORG-DEMO-001" },
+];
+
+export const christianBudgetLines: BudgetLine[] = [
+  { id: "PRE-CRI-00", area: "Congregacional", category: "Diezmos", type: "Ingreso", budget: 22000000, executed: 18500000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PRE-CRI-01", area: "Congregacional", category: "Ofrendas", type: "Ingreso", budget: 12000000, executed: 9800000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PRE-CRI-01B", area: "Congregacional", category: "Donaciones", type: "Ingreso", budget: 8000000, executed: 6200000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PRE-CRI-01C", area: "Congregacional", category: "Otros ingresos", type: "Ingreso", budget: 4500000, executed: 3200000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-SECUNDARIA" },
+  { id: "PRE-CRI-02", area: "Ministerios", category: "Formación y ministerios", type: "Gasto", budget: 6800000, executed: 5120000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PRE-CRI-03", area: "Administrativa", category: "Servicios, caja y bancos", type: "Gasto", budget: 9200000, executed: 10100000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PRE-CRI-04", area: "Acción social", category: "Aportes solidarios", type: "Ingreso", budget: 14500000, executed: 12300000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PRE-CRI-05", area: "Acción social", category: "Ayuda comunitaria", type: "Gasto", budget: 11800000, executed: 8900000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PRE-CRI-06", area: "Operación", category: "Mantenimiento y egresos", type: "Gasto", budget: 7500000, executed: 5940000, period: "Octubre", organizationId: "ORG-DEMO-001", campusId: "SEDE-SECUNDARIA" },
+];
+
+export type AssetDemo = {
+  id: string;
+  name: string;
+  kind: string;
+  location: string;
+  responsible: string;
+  condition: string;
+  acquisitionValue: number;
+  acquisitionDate: string;
+  maintenance: string;
+  accountingCategory: string;
+  carryingAmount: number;
+  support: string;
+  status: RecordStatus;
+  organizationId?: string | undefined;
+  campusId?: string | undefined;
+  decommissionedAt?: string | undefined;
+  decommissionReason?: string | undefined;
+};
 export const assets: AssetDemo[] = [
-  { id: "PAT-DEMO-001", name: "Órgano de capilla · muestra", kind: "Elemento litúrgico", location: parishDemoSites.chapel.name, responsible: parishDemoPeople.inventoryCustodian.name, condition: "Bueno", acquisitionValue: 8400000, acquisitionDate: "12 mar. 2021 · ficha ficticia", maintenance: "Afinación preventiva · nov. 2026 · muestra", accountingCategory: "Equipo especializado · referencia", carryingAmount: 6200000, support: "Soporte ficticio PAT-DEMO-001", status: "active" },
-  { id: "PAT-DEMO-002", name: "Sistema de sonido · muestra", kind: "Equipo tecnológico", location: parishDemoSites.temple.name, responsible: parishDemoPeople.inventoryCustodian.name, condition: "Requiere revisión", acquisitionValue: 5300000, acquisitionDate: "04 ago. 2022 · ficha ficticia", maintenance: "Diagnóstico técnico pendiente · demo", accountingCategory: "Equipo audiovisual · referencia", carryingAmount: 3710000, support: "Soporte ficticio PAT-DEMO-002", status: "pending" },
-  { id: "PAT-DEMO-003", name: "Conjunto de bancas · muestra", kind: "Mueble", location: parishDemoSites.hall.name, responsible: parishDemoPeople.inventoryCustodian.name, condition: "Bueno", acquisitionValue: 6800000, acquisitionDate: "16 ene. 2020 · ficha ficticia", maintenance: "Inspección semestral · ene. 2027 · muestra", accountingCategory: "Mobiliario · referencia", carryingAmount: 3400000, support: "Soporte ficticio PAT-DEMO-003", status: "active" },
-  { id: "PAT-DEMO-004", name: "Vehículo de servicio · muestra", kind: "Vehículo", location: parishDemoSites.parking.name, responsible: parishDemoPeople.inventoryCustodian.name, condition: "Bueno", acquisitionValue: 48900000, acquisitionDate: "09 jun. 2023 · ficha ficticia", maintenance: "Mantenimiento preventivo · dic. 2026 · muestra", accountingCategory: "Equipo de transporte · referencia", carryingAmount: 39120000, support: "Soporte ficticio PAT-DEMO-004", status: "active" },
-  { id: "PAT-DEMO-005", name: "Pintura patrimonial · muestra", kind: "Bien cultural y artístico", location: parishDemoSites.archive.name, responsible: parishDemoPeople.heritageCustodian.name, condition: "Conservación especializada", acquisitionValue: 0, acquisitionDate: "Fecha de referencia · dato ficticio", maintenance: "Evaluación de conservación anual · demo", accountingCategory: "Registro patrimonial separado", carryingAmount: 0, support: "Ficha ficticia de conservación", status: "approved" },
+  { id: "PAT-DEMO-001", name: "Órgano de capilla · muestra", kind: "Elemento litúrgico", location: parishDemoSites.chapel.name, responsible: parishDemoPeople.inventoryCustodian.name, condition: "Bueno", acquisitionValue: 8400000, acquisitionDate: "12 mar. 2021 · ficha ficticia", maintenance: "Afinación preventiva · nov. 2026 · muestra", accountingCategory: "Equipo especializado · referencia", carryingAmount: 6200000, support: "Soporte ficticio PAT-DEMO-001", status: "active", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PAT-DEMO-002", name: "Sistema de sonido · muestra", kind: "Equipo tecnológico", location: parishDemoSites.temple.name, responsible: parishDemoPeople.inventoryCustodian.name, condition: "Requiere revisión", acquisitionValue: 5300000, acquisitionDate: "04 ago. 2022 · ficha ficticia", maintenance: "Diagnóstico técnico pendiente · demo", accountingCategory: "Equipo audiovisual · referencia", carryingAmount: 3710000, support: "Soporte ficticio PAT-DEMO-002", status: "pending", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PAT-DEMO-003", name: "Conjunto de bancas · muestra", kind: "Mueble", location: parishDemoSites.hall.name, responsible: parishDemoPeople.inventoryCustodian.name, condition: "Bueno", acquisitionValue: 6800000, acquisitionDate: "16 ene. 2020 · ficha ficticia", maintenance: "Inspección semestral · ene. 2027 · muestra", accountingCategory: "Mobiliario · referencia", carryingAmount: 3400000, support: "Soporte ficticio PAT-DEMO-003", status: "active", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PAT-DEMO-004", name: "Vehículo de servicio · muestra", kind: "Vehículo", location: parishDemoSites.parking.name, responsible: parishDemoPeople.inventoryCustodian.name, condition: "Bueno", acquisitionValue: 48900000, acquisitionDate: "09 jun. 2023 · ficha ficticia", maintenance: "Mantenimiento preventivo · dic. 2026 · muestra", accountingCategory: "Equipo de transporte · referencia", carryingAmount: 39120000, support: "Soporte ficticio PAT-DEMO-004", status: "active", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "PAT-DEMO-005", name: "Pintura patrimonial · muestra", kind: "Bien cultural y artístico", location: parishDemoSites.archive.name, responsible: parishDemoPeople.heritageCustodian.name, condition: "Conservación especializada", acquisitionValue: 0, acquisitionDate: "Fecha de referencia · dato ficticio", maintenance: "Evaluación de conservación anual · demo", accountingCategory: "Registro patrimonial separado", carryingAmount: 0, support: "Ficha ficticia de conservación", status: "approved", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+];
+export const christianAssets: AssetDemo[] = [
+  { id: "ACT-CRI-001", name: "Consola digital y sistema de audio · demo", kind: "Equipo audiovisual", location: "Auditorio congregacional", responsible: "Coordinación técnica · demo", condition: "Bueno", acquisitionValue: 12500000, acquisitionDate: "14 mar. 2023", maintenance: "Revisión semestral · ene. 2027", accountingCategory: "Equipo audiovisual", carryingAmount: 9400000, support: "Factura ACT-CRI-001", status: "active", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "ACT-CRI-002", name: "Instrumentos de alabanza (batería y teclados)", kind: "Equipo ministerial", location: "Auditorio congregacional", responsible: "Coordinación musical A", condition: "Bueno", acquisitionValue: 9800000, acquisitionDate: "02 sep. 2022", maintenance: "Afinación y repuestos · dic. 2026", accountingCategory: "Equipos de ministerio", carryingAmount: 6100000, support: "Factura ACT-CRI-002", status: "active", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "ACT-CRI-003", name: "Proyector y pantalla salón juvenil", kind: "Equipo tecnológico", location: "Salón de ministerios y jóvenes", responsible: "Enlace pastoral C", condition: "Requiere revisión", acquisitionValue: 4100000, acquisitionDate: "18 may. 2021", maintenance: "Cambio de lámpara pendiente", accountingCategory: "Equipo tecnológico", carryingAmount: 1850000, support: "Soporte ACT-CRI-003", status: "pending", organizationId: "ORG-DEMO-001", campusId: "SEDE-PRINCIPAL" },
+  { id: "ACT-CRI-004", name: "Sillas modulares Sede Secundaria", kind: "Mobiliario", location: "Auditorio Sede Secundaria", responsible: "Líder de sede · demo", condition: "Bueno", acquisitionValue: 7200000, acquisitionDate: "10 feb. 2024", maintenance: "Inspección anual", accountingCategory: "Mobiliario", carryingAmount: 5800000, support: "Soporte ACT-CRI-004", status: "active", organizationId: "ORG-DEMO-001", campusId: "SEDE-SECUNDARIA" },
 ];
 export const inventoryMovements = [
   { id: "INV-MOV-01", date: "29 oct. 2026", asset: "Sistema de sonido · muestra", from: parishDemoSites.temple.name, to: parishDemoSites.workshop.name, kind: "Salida de muestra para revisión", status: "pending" as const },

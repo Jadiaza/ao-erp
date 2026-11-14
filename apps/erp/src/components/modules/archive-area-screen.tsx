@@ -168,7 +168,7 @@ export function ArchiveAreaScreen({ area }: { area: ArchiveArea }) {
               type: values.type.trim() || "Registro documental",
               responsible: values.responsible.trim() || "Pendiente de asignar",
               notes: values.notes.trim() || "Registro guardado en modo demostraciÃ³n.",
-              updatedAt: "Hoy Â· demo",
+              updatedAt: "Hoy · demo",
             });
             return;
           }

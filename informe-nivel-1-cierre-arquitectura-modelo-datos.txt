@@ -1,0 +1,366 @@
+# INFORME NIVEL 1 — CIERRE DE ARQUITECTURA Y MODELO DE DATOS DE A&O
+
+Repositorio: D:\Proyectos\ao-erp
+Rama de trabajo autorizada: integracion-final-ao-erp
+Commit base (HEAD): 6f8b1dc ("docs: add implementation and audit reports")
+Base documental revisada: AGENTS.md, docs/arquitectura/backend/01..15, docs/erp/definicion-funcional-y-arquitectonica.md, informe-fase-1-correccion-integridad-ao-cristiano.txt, informe-auditoria-integral-preparacion-desarrollo.txt
+Fecha: 2026-11-13
+Alcance: cierre exclusivamente lógico y documental del Nivel 1. No se modificó código fuente, no se crearon ni ejecutaron archivos SQL o migraciones, no se conectó ni modificó Supabase y se conservaron intactos todos los cambios locales de Fase 1 y Fase 2. Este archivo fue creado únicamente por solicitud expresa del usuario.
+
+================================================================================
+A. INFORME DE ARQUITECTURA
+================================================================================
+1. Evaluación de la arquitectura de base de datos preferida
+Decisión evaluada: Un único proyecto PostgreSQL central administrado en Supabase, con separación lógica por dominios (esquemas PostgreSQL), autenticación mediante Supabase Auth, Row Level Security (RLS) en todas las tablas expuestas y capa server-side en TanStack Start (createServerFn + middleware de contexto y protección CSRF en apps/erp/src/start.ts).
+
+Comparativa:
+- PostgreSQL central único con esquemas por dominio + RLS [RECOMENDADA]:
+  * Ventajas: fuente única de verdad para Identidad (auth.users), SaaS (entitlements) y ERP sin sincronizaciones asíncronas frágiles; FKs compuestas verificables entre tenant y operación; menor costo operativo y de respaldos; cumple docs/arquitectura/backend/01 y 11.
+  * Riesgos: requiere disciplina estricta de RLS, FKs compuestas (organization_id, id) y pruebas negativas automáticas en cada migración.
+- Bases de datos separadas por cliente (database-per-tenant) [DESCARTADA]:
+  * Inviable en costos, operación y migraciones para decenas/cientos de parroquias y congregaciones; complica plataforma SaaS e informes diocesanos.
+- Proyectos separados SaaS vs. ERP [NO RECOMENDADA]:
+  * Duplica identidad y membresías y exige tokens/webhooks distribuidos para validar licencias y vencimientos en tiempo real.
+
+2. Organización de esquemas lógicos en PostgreSQL
+- core: identidad (profiles), tenants (organizations), catálogo eclesial (ecclesial_entities, organization_entities, entity_relationships), sedes operativas (campuses), RBAC (memberships, membership_scopes, roles, permissions, role_permissions, membership_roles) e institutional_access_grants.
+- saas: parties, party_persons, party_organizations, clients, catálogo (applications, modules, module_dependencies, features, plans, plan_modules), contratación (contracts, contract_entities, contract_terms, subscriptions, licenses, license_assignments, entitlements, usage_limits), facturación/recaudo (invoices*, payments*, credit_notes*, receivable_adjustments), CRM IA y proyección derivada service_entitlements.
+- erp: dominio operativo común y A&O Cristiano (families, persons, family_memberships, congregational_baptisms, participation_events, ministries_groups, group_members, service_teams, service_assignments, facilities, worship_events, event_attendance, motor único financiero accounting_entities, chart_of_accounts, accounting_periods, financial_categories, treasury_accounts, treasury_movements, journal_vouchers, journal_lines, budget_lines, assets, asset_movements, vendors, procurement_requests, payables, meeting_minutes, correspondence_items, admin_tasks, document_file_metadata, erp_documents, erp_document_files).
+- pastoral: dominio aislado de Acompañamiento Pastoral Confidencial (pastoral_care_cases, pastoral_care_confidential_notes, pastoral_care_commitments, pastoral_care_case_events), con RLS por authorized_roles / authorized_user_ids y prohibición de lectura desde Dashboard, reportes generales o IA sin autorización expresa.
+- sacramental: dominio exclusivo de A&O Católico (sacramental_books, sacramental_entries, marginal_notes, sacramental_requests, certificate_issuances, catechesis_programs, catechesis_enrollments, liturgy_schedules, parish_annual_reports), habilitado únicamente cuando la licencia incluye MOD-COM / MOD-SAC (nunca en PLN-CRI).
+- diocesan: dominio de A&O Diocesano (report_templates*, report_requests*, report_submissions*, report_reviews*, communication_threads, communications, communication_recipients, communication_attachments, communication_events, communication_read_receipts), sujeto a core.institutional_access_grants explícitos.
+- audit: tablas append-only sin UPDATE ni DELETE (security_events, commercial_audit_events, institutional_audit_events, sensitive_access_events).
+
+3. Separación de entidades institucionales y motores únicos compartidos
+- organizations (core): tenant comercial contratante; clave primaria de aislamiento multi-tenant (organization_id).
+- ecclesial_entities (core): entidad eclesial real (diócesis, parroquia, congregación, fundación, seminario, centro pastoral), equivalente al concepto Institution actual de apps/saas/src/data/saas-domain.ts, vinculada a organizations mediante organization_entities (N:M) sin heredar acceso operativo.
+- campuses (erp/core): sedes físicas u operativas dentro de una organización/entidad (ej. SEDE-PRINCIPAL, SEDE-SECUNDARIA). No son sinónimos de organization ni de ecclesial_entity.
+- Motores únicos sin duplicación:
+  * Personas: un único maestro erp.persons parametrizado por person_type y membership_status.
+  * Finanzas/Contabilidad: un único motor treasury_movements -> journal_vouchers/journal_lines -> budget_lines parametrizado por financial_categories (profile_scope: shared | christian | catholic) y accounting_entities.
+  * Documentos/Storage: un único registro document_file_metadata (Storage privado) con tablas puente tipadas y carpetas parametrizables.
+
+================================================================================
+B. DECISIONES D-01 A D-13 CON RECOMENDACIÓN Y ESTADO DE APROBACIÓN
+================================================================================
+(Base: docs/arquitectura/backend/15-especificacion-fisica-postgresql-saas.md §3)
+
+D-01 — Contratación y cardinalidad comercial:
+- Alternativas: A) 1:1 estricto contrato-org-licencia; B) Separar pagador (clients/contracts) de beneficiarios (contract_entities) con 1..N suscripciones y licencias.
+- Consecuencias: B soporta congregaciones multisede, diócesis y contratos mixtos; requiere validar solapamientos en servicio.
+- Recomendación: Adoptar B (mantener contract_entities y license_assignments).
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO.
+
+D-02 — Flujo de alta y aprobación de organization_entities:
+- Alternativas: A) Vínculo automático; B) Alta independiente de organizations y ecclesial_entities, y vínculo organization_entities N:M explícito, aprobado y revocable sin herencia de permisos.
+- Recomendación: Adoptar B.
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO (solo flujo de vínculo).
+
+D-03 — Catálogo de scopes, roles globales vs. tenant y membresías:
+- Alternativas: A) Roles libres en texto/JSON; B) 1 membership por (user_id, organization_id), scopes en membership_scopes (tenant | entity | campus), roles en roles y asignación en membership_roles.
+- Recomendación: Adoptar B con catálogo sistema inicial cerrado (platform_admin, tenant_admin, pastor_principal, lider_pastoral, consejero_autorizado, tesorero, contador, secretaria, custodio_archivo, consulta).
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO (BLOQUEANTE DE FASE BD 1).
+
+D-04 — Identidad comercial canónica (parties) vs. duplicación en CRM/Clientes:
+- Alternativas: A) Entidades separadas; B) parties como identidad comercial canónica (party_persons/party_organizations) y roles leads/clients/contacts por organización.
+- Recomendación: Adoptar B para SaaS/CRM; mantener erp.persons separado de saas.parties.
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO.
+
+D-05 — Plantillas de informes diocesanos globales vs. por organización:
+- Alternativas: A) Solo por org; B) owner_organization_id NULL para plantillas oficiales de plataforma + NOT NULL por diócesis con versiones inmutables publicadas.
+- Recomendación: Adoptar B.
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO.
+
+D-06 — institutional_access_grants y comunicaciones cruzadas:
+- Alternativas: A) Comunicación libre entre entidades; B) Grants explícitos por finalidad (reports | communications), acciones y vigencia.
+- Recomendación: Adoptar B en fase Diocesano.
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO.
+
+D-07 — Metadatos documentales y Storage privado:
+- Alternativas: A) Metadatos por módulo; B) Tabla única document_file_metadata + Storage privado (storage_key nunca expuesto) + URLs firmadas server-side + evento en sensitive_access_events.
+- Recomendación: Adoptar B.
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO (política de retención).
+
+D-08 — Acuses de lectura en comunicaciones:
+- Alternativas: A) Solo read_at en destinatario; B) read_at + tabla histórica communication_read_receipts.
+- Recomendación: Adoptar B gradual (read_at desde inicio, receipts opcional).
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO.
+
+D-09 — Facturación SaaS vs. facturación electrónica fiscal (DIAN):
+- Alternativas: A) Integrar DIAN desde inicio; B) Facturación comercial interna con snapshot, emisor, serie, impuestos y pagos transaccionales; conector fiscal desacoplado.
+- Recomendación: Adoptar B.
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO (emisor, impuestos y país).
+
+D-10 — Medición de consumo:
+- Alternativas: A) Motor de usage_events por petición; B) usage_limits por licencia/entitlement (usuarios, instituciones/sedes, GB, módulos) + conteos reales agregados.
+- Recomendación: Adoptar B y diferir usage_events hasta cobro por consumo variable.
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO.
+
+D-11 — Tablas puente documentales vs. FK polimórfica:
+- Alternativas: A) (owner_type, owner_id) sin FK; B) document_file_metadata + tablas puente tipadas con FKs reales.
+- Recomendación: Adoptar B (cero polimorfismos sin FK).
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO.
+
+D-12 — Catálogo de estados:
+- Alternativas: A) Tablas catálogo para todo; B) text con CHECK para estados cerrados de negocio + tablas catálogo solo para clasificaciones configurables (ej. financial_categories).
+- Recomendación: Adoptar B.
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO (BLOQUEANTE DE FASE BD 1).
+
+D-13 — Alcance del modelo operativo A&O ERP:
+- Alternativas: A) Mantener ERP fuera del diseño PostgreSQL; B) Diseñar en Nivel 1 el esquema operativo completo del ERP (erp, pastoral, sacramental) unido por organization_id, ecclesial_entity_id y campus_id sin mezclar responsabilidades comerciales de saas.
+- Recomendación: Adoptar B (cerrado en este informe Nivel 1).
+- Estado: REQUIERE APROBACIÓN DEL PROPIETARIO (BLOQUEANTE DE NIVEL 2).
+
+================================================================================
+C. DIAGRAMAS ERD SEPARADOS POR DOMINIO (MERMAID)
+================================================================================
+[C.1 Dominio 1: Identidad, Organizaciones, Entidades Eclesiales, Sedes y Autorización (core)]
+erDiagram
+  AUTH_USERS ||--o| PROFILES : tiene
+  AUTH_USERS ||--o{ MEMBERSHIPS : participa
+  ORGANIZATIONS ||--o{ MEMBERSHIPS : agrupa
+  ORGANIZATIONS ||--o{ ORGANIZATION_ENTITIES : vincula
+  ECCLESIAL_ENTITIES ||--o{ ORGANIZATION_ENTITIES : participa
+  ECCLESIAL_ENTITIES ||--o{ ENTITY_RELATIONSHIPS : origen_destino
+  ORGANIZATIONS ||--o{ CAMPUSES : opera_sedes
+  ECCLESIAL_ENTITIES ||--o{ CAMPUSES : ubica_en
+  MEMBERSHIPS ||--o{ MEMBERSHIP_SCOPES : delimita
+  ORGANIZATION_ENTITIES ||--o{ MEMBERSHIP_SCOPES : entidad_scope
+  CAMPUSES ||--o{ MEMBERSHIP_SCOPES : sede_scope
+  MEMBERSHIPS ||--o{ MEMBERSHIP_ROLES : asigna
+  ROLES ||--o{ MEMBERSHIP_ROLES : rol
+  ROLES ||--o{ ROLE_PERMISSIONS : agrupa
+  PERMISSIONS ||--o{ ROLE_PERMISSIONS : permiso
+  ORGANIZATION_ENTITIES ||--o{ INSTITUTIONAL_ACCESS_GRANTS : autoriza
+
+[C.2 Dominio 2: Comercial SaaS, Suscripciones, Licencias, Entitlements y Facturación (saas)]
+erDiagram
+  PARTIES ||--o| PARTY_PERSONS : persona
+  PARTIES ||--o| PARTY_ORGANIZATIONS : juridica
+  PARTIES ||--o{ CLIENTS : cliente
+  APPLICATIONS ||--o{ MODULES : contiene
+  MODULES ||--o{ MODULE_DEPENDENCIES : requiere
+  MODULES ||--o{ FEATURES : expone
+  APPLICATIONS ||--o{ PLANS : comercializa
+  PLANS ||--o{ PLAN_MODULES : incluye
+  CLIENTS ||--o{ CONTRACTS : suscribe
+  ORGANIZATIONS ||--o{ CONTRACTS : tenant_contratante
+  CONTRACTS ||--o{ CONTRACT_ENTITIES : beneficia
+  CONTRACTS ||--o{ CONTRACT_TERMS : versiona
+  CONTRACTS ||--o{ SUBSCRIPTIONS : genera
+  PLANS ||--o{ SUBSCRIPTIONS : plan_base
+  SUBSCRIPTIONS ||--o{ LICENSES : habilita
+  LICENSES ||--o{ LICENSE_ASSIGNMENTS : asigna
+  LICENSES ||--o{ ENTITLEMENTS : concede
+  MODULES ||--o{ ENTITLEMENTS : modulo
+  ENTITLEMENTS ||--o{ USAGE_LIMITS : topes
+  CONTRACTS ||--o{ INVOICES : factura
+  INVOICES ||--|{ INVOICE_ITEMS : detalle
+  INVOICES ||--o{ INVOICE_TAXES : impuestos
+  INVOICES ||--o{ INVOICE_DISCOUNTS : descuentos
+  PAYMENTS ||--o{ PAYMENT_ALLOCATIONS : aplica
+  INVOICES ||--o{ PAYMENT_ALLOCATIONS : cobra
+  INVOICES ||--o{ CREDIT_NOTES : anula_parcial
+
+[C.3 Dominio 3: ERP Común + A&O Cristiano — Personas, Grupos, Cultos y Administración (erp)]
+erDiagram
+  ORGANIZATIONS ||--o{ FAMILIES : contiene
+  CAMPUSES ||--o{ FAMILIES : sede
+  ORGANIZATIONS ||--o{ PERSONS : contiene
+  CAMPUSES ||--o{ PERSONS : sede
+  FAMILIES ||--o{ FAMILY_MEMBERSHIPS : agrupa
+  PERSONS ||--o{ FAMILY_MEMBERSHIPS : pertenece
+  PERSONS ||--o{ CONGREGATIONAL_BAPTISMS : registra
+  PERSONS ||--o{ PARTICIPATION_EVENTS : historial
+  ORGANIZATIONS ||--o{ MINISTRIES_GROUPS : organiza
+  CAMPUSES ||--o{ MINISTRIES_GROUPS : sede
+  MINISTRIES_GROUPS ||--o{ GROUP_MEMBERS : integra
+  PERSONS ||--o{ GROUP_MEMBERS : miembro
+  MINISTRIES_GROUPS ||--o{ SERVICE_TEAMS : conforma
+  MINISTRIES_GROUPS ||--o{ SERVICE_ASSIGNMENTS : asigna
+  PERSONS ||--o{ SERVICE_ASSIGNMENTS : responsable
+  CAMPUSES ||--o{ FACILITIES : dispone
+  FACILITIES ||--o{ WORSHIP_EVENTS : aloja
+  PERSONS ||--o{ WORSHIP_EVENTS : dirige
+  WORSHIP_EVENTS ||--o{ EVENT_ATTENDANCE : controla
+  PERSONS ||--o{ EVENT_ATTENDANCE : asiste
+  MINISTRIES_GROUPS ||--o{ EVENT_ATTENDANCE : asiste_grupo
+  CAMPUSES ||--o{ MEETING_MINUTES : actas
+  CAMPUSES ||--o{ CORRESPONDENCE_ITEMS : radicados
+  CAMPUSES ||--o{ ADMIN_TASKS : tareas
+
+[C.4 Dominio 4: ERP Finanzas, Contabilidad, Presupuestos, Inventarios y Compras (erp)]
+erDiagram
+  ORGANIZATIONS ||--o{ ACCOUNTING_ENTITIES : posee
+  ACCOUNTING_ENTITIES ||--o{ CHART_OF_ACCOUNTS : plan_cuentas
+  ACCOUNTING_ENTITIES ||--o{ ACCOUNTING_PERIODS : periodos
+  ORGANIZATIONS ||--o{ FINANCIAL_CATEGORIES : clasifica
+  ACCOUNTING_ENTITIES ||--o{ TREASURY_ACCOUNTS : cajas_bancos
+  TREASURY_ACCOUNTS ||--o{ TREASURY_MOVEMENTS : registra
+  FINANCIAL_CATEGORIES ||--o{ TREASURY_MOVEMENTS : categoriza
+  CAMPUSES ||--o{ TREASURY_MOVEMENTS : sede
+  ACCOUNTING_ENTITIES ||--o{ JOURNAL_VOUCHERS : contabiliza
+  TREASURY_MOVEMENTS ||--o| JOURNAL_VOUCHERS : origina
+  JOURNAL_VOUCHERS ||--|{ JOURNAL_LINES : partidas
+  CHART_OF_ACCOUNTS ||--o{ JOURNAL_LINES : imputa
+  ACCOUNTING_ENTITIES ||--o{ BUDGET_LINES : presupuesta
+  FINANCIAL_CATEGORIES ||--o{ BUDGET_LINES : rubro
+  BUDGET_LINES ||--o{ TREASURY_MOVEMENTS : ejecuta
+  CAMPUSES ||--o{ ASSETS : inventario
+  ASSETS ||--o{ ASSET_MOVEMENTS : traslados_bajas
+  ORGANIZATIONS ||--o{ VENDORS : proveedores
+  VENDORS ||--o{ PROCUREMENT_REQUESTS : cotiza
+  PROCUREMENT_REQUESTS ||--o| JOURNAL_VOUCHERS : devenga
+
+[C.5 Dominio 5: A&O Cristiano — Acompañamiento Pastoral Confidencial (pastoral)]
+erDiagram
+  ORGANIZATIONS ||--o{ PASTORAL_CARE_CASES : aisla
+  CAMPUSES ||--o{ PASTORAL_CARE_CASES : sede
+  PERSONS ||--o{ PASTORAL_CARE_CASES : atendido
+  FAMILIES ||--o{ PASTORAL_CARE_CASES : familia
+  PASTORAL_CARE_CASES ||--o| PASTORAL_CARE_CONFIDENTIAL_NOTES : separa_rls
+  PASTORAL_CARE_CASES ||--o{ PASTORAL_CARE_COMMITMENTS : compromisos
+  PASTORAL_CARE_CASES ||--o{ PASTORAL_CARE_CASE_EVENTS : actuaciones
+
+[C.6 Dominio 6: A&O Católico — Sacramentos, Libros, Certificados, Liturgia y Catequesis (sacramental)]
+erDiagram
+  ORGANIZATIONS ||--o{ SACRAMENTAL_BOOKS : custodia
+  ECCLESIAL_ENTITIES ||--o{ SACRAMENTAL_BOOKS : parroquia_titular
+  SACRAMENTAL_BOOKS ||--o{ SACRAMENTAL_ENTRIES : asienta
+  PERSONS ||--o{ SACRAMENTAL_ENTRIES : sujeto
+  SACRAMENTAL_ENTRIES ||--o{ MARGINAL_NOTES : anota
+  PERSONS ||--o{ SACRAMENTAL_REQUESTS : solicita
+  SACRAMENTAL_ENTRIES ||--o{ CERTIFICATE_ISSUANCES : certifica
+  ORGANIZATIONS ||--o{ CATECHESIS_PROGRAMS : forma
+  CATECHESIS_PROGRAMS ||--o{ CATECHESIS_ENROLLMENTS : inscribe
+  PERSONS ||--o{ CATECHESIS_ENROLLMENTS : catequizando
+  ORGANIZATIONS ||--o{ LITURGY_SCHEDULES : celebra
+  ORGANIZATIONS ||--o{ PARISH_ANNUAL_REPORTS : consolida_anual
+
+[C.7 Dominio 7: A&O Diocesano, Documentos/Storage y Auditoría (diocesan, erp docs, audit)]
+erDiagram
+  ORGANIZATIONS ||--o{ REPORT_TEMPLATES : publica
+  REPORT_TEMPLATES ||--o{ REPORT_TEMPLATE_VERSIONS : versiona
+  REPORT_TEMPLATE_VERSIONS ||--o{ REPORT_REQUESTS : convoca
+  REPORT_REQUESTS ||--o{ REPORT_REQUEST_RECIPIENTS : destina
+  REPORT_REQUEST_RECIPIENTS ||--o{ REPORT_SUBMISSIONS : presenta
+  REPORT_SUBMISSIONS ||--o{ REPORT_REVIEWS : evalua
+  ORGANIZATIONS ||--o{ COMMUNICATION_THREADS : abre
+  COMMUNICATION_THREADS ||--o{ COMMUNICATIONS : mensajes
+  COMMUNICATIONS ||--o{ COMMUNICATION_RECIPIENTS : entrega
+  DOCUMENT_FILE_METADATA ||--o{ ERP_DOCUMENTS : adjunta
+  DOCUMENT_FILE_METADATA ||--o{ MEETING_MINUTE_FILES : acta_adjunto
+  DOCUMENT_FILE_METADATA ||--o{ CORRESPONDENCE_FILES : radicado_adjunto
+  DOCUMENT_FILE_METADATA ||--o{ REPORT_SUBMISSION_FILES : informe_adjunto
+
+================================================================================
+D. DICCIONARIO COMPLETO DE DATOS (CONVENCIONES Y TABLAS POR ESQUEMA)
+================================================================================
+Convenciones comunes: id uuid PK DEFAULT gen_random_uuid(); created_at/updated_at timestamptz NOT NULL DEFAULT now(); dinero numeric(19,4); moneda char(3) DEFAULT 'COP'; ON UPDATE RESTRICT; baja lógica deleted_at timestamptz NULL cuando aplique.
+
+D.1 Esquema core:
+- core.profiles (id PK/FK auth.users, display_name text NOT NULL, avatar_path text, locale text DEFAULT 'es-CO')
+- core.organizations (id PK, name text NOT NULL, slug text UNIQUE NOT NULL, org_kind text NOT NULL, status text CHECK(active|suspended|closed), created_by uuid)
+- core.ecclesial_entities (id PK, entity_type text CHECK(...), legal_name text NOT NULL, display_name text NOT NULL, country_code char(2) NOT NULL, tax_identifier text, canonical_code text, status text NOT NULL)
+- core.organization_entities (id PK, organization_id FK, ecclesial_entity_id FK, relation_type text, status text, starts_at timestamptz, ends_at timestamptz, UNIQUE(organization_id, ecclesial_entity_id, relation_type), UNIQUE(organization_id, id))
+- core.entity_relationships (id PK, source_entity_id FK, target_entity_id FK, relationship_type text, valid_from date, valid_to date, status text, CHECK(source_entity_id <> target_entity_id))
+- core.campuses (id PK, organization_id FK, ecclesial_entity_id FK, code text, name text, address text, is_main boolean, status text CHECK(active|inactive), UNIQUE(organization_id, code), UNIQUE(organization_id, id))
+- core.memberships (id PK, user_id FK auth.users, organization_id FK, status text CHECK(invited|active|suspended|expired|revoked), invited_at, joined_at, expires_at, UNIQUE(user_id, organization_id), UNIQUE(organization_id, id))
+- core.membership_scopes (id PK, membership_id, organization_id, scope_type CHECK(tenant|entity|campus), organization_entity_id, campus_id; FKs compuestas a memberships, organization_entities y campuses)
+- core.roles (id PK, organization_id NULL para roles globales, code text, name text, is_system boolean; índices únicos parciales global/tenant)
+- core.permissions (id PK, code text UNIQUE, name text, domain text)
+- core.role_permissions (PK compuesta role_id, permission_id)
+- core.membership_roles (id PK, membership_id, organization_id, role_id, scope_id, starts_at, ends_at, status)
+- core.institutional_access_grants (id PK, source_organization_id, source_org_entity_id, target_organization_id, target_org_entity_id, purpose CHECK(reports|communications), allowed_actions text[], starts_at, ends_at, status, granted_by, revoked_at)
+
+D.2 Esquema saas:
+- saas.parties, saas.party_persons, saas.party_organizations, saas.clients
+- saas.applications (APP-ERP, APP-DIO), saas.modules (ERP-CORE, ERP-COM, ERP-SAC, ERP-DOC, ERP-FIN, DIO-GOB, ERP-CRI-COM/GRP/CUL/ADM/PAS), saas.module_dependencies (ERP-FIN y ERP-DOC -> ERP-CORE, nunca ERP-COM), saas.features
+- saas.plans, saas.plan_modules (versionado por code + version; incluye PLN-CRI)
+- saas.contracts, saas.contract_entities, saas.contract_terms (append-only con plan_snapshot jsonb)
+- saas.subscriptions, saas.licenses, saas.license_assignments, saas.entitlements, saas.usage_limits
+- Vista derivada saas.service_entitlements (organization_id, ecclesial_entity_id, application_id, module_code, feature_codes, license_status, valid_to)
+- saas.invoices, saas.invoice_items, saas.invoice_taxes, saas.invoice_discounts, saas.payments, saas.payment_allocations, saas.credit_notes, saas.credit_note_items, saas.receivable_adjustments
+
+D.3 Esquema erp (Común + A&O Cristiano):
+- Área 1: erp.families, erp.persons (UNIQUE(organization_id, person_code), UNIQUE(organization_id, id)), erp.family_memberships (UNIQUE(family_id, person_id)), erp.congregational_baptisms (practice CHECK immersion|sprinkling|faith_affirmation|other), erp.participation_events
+- Área 2: erp.ministries_groups (UNIQUE parcial nombre por sede), erp.group_members (UNIQUE parcial (group_id, person_id) WHERE status <> 'retired'), erp.service_teams, erp.service_assignments
+- Área 3: erp.facilities, erp.worship_events (CHECK end_time > start_time, índice (organization_id, facility_id, event_date, start_time)), erp.event_attendance (UNIQUE parcial (event_id, person_id))
+- Área 4: erp.accounting_entities, erp.chart_of_accounts, erp.accounting_periods (open|closed), erp.financial_categories (profile_scope shared|christian|catholic), erp.treasury_accounts (cash|bank|fund), erp.treasury_movements (CHECK amount > 0), erp.journal_vouchers (draft|posted|reversed), erp.journal_lines (CHECK debit > 0 XOR credit > 0 + trigger SUM(debit)=SUM(credit)), erp.budget_lines, erp.assets (CHECK status <> 'decommissioned' OR decommission_reason IS NOT NULL), erp.asset_movements, erp.vendors, erp.procurement_requests, erp.payables
+- Área 5: erp.meeting_minutes (draft|approved|archived, UNIQUE(organization_id, code)), erp.correspondence_items (inbound|outbound, UNIQUE(organization_id, radicado)), erp.admin_tasks (high|medium|low, pending|in_progress|completed), erp.document_file_metadata, erp.erp_documents, erp.erp_document_files
+
+D.4 Esquema pastoral (A&O Cristiano confidencial):
+- pastoral.pastoral_care_cases (organization_id, campus_id, person_id, family_id, care_type, authorized_roles text[] NOT NULL, authorized_user_ids uuid[], allow_ai_analysis boolean NOT NULL DEFAULT false, status)
+- pastoral.pastoral_care_confidential_notes (id, organization_id, case_id FK compuesta, encrypted_body text, created_by)
+- pastoral.pastoral_care_commitments, pastoral.pastoral_care_case_events (append-only)
+
+D.5 Esquema sacramental (Exclusivo A&O Católico, bloqueado en PLN-CRI):
+- sacramental.sacramental_books, sacramental.sacramental_entries, sacramental.marginal_notes, sacramental.sacramental_requests, sacramental.certificate_issuances, sacramental.catechesis_programs, sacramental.catechesis_enrollments, sacramental.liturgy_schedules, sacramental.parish_annual_reports
+
+D.6 Esquemas diocesan y audit:
+- diocesan: report_templates, report_template_versions, report_template_sections, report_template_fields, report_template_attachments, report_requests, report_request_recipients, report_submissions, report_field_values, report_submission_files, report_reviews, report_review_events, communication_threads, communications, communication_recipients, communication_attachments, communication_events, communication_read_receipts.
+- audit: security_events, commercial_audit_events, institutional_audit_events, sensitive_access_events (append-only, REVOKE UPDATE/DELETE).
+
+================================================================================
+E. RELACIONES Y RESTRICCIONES DE INTEGRIDAD TRANSVERSALES
+================================================================================
+1. FKs compuestas (organization_id, id) en toda relación padre-hijo para impedir cruces de tenant.
+2. Equilibrio contable estricto: trigger diferido verifica SUM(debit) = SUM(credit) al publicar comprobantes y prohíbe asientos en periodos closed.
+3. No borrado físico en contratos, facturas, pagos, comprobantes contables, actas aprobadas, partidas sacramentales, presentaciones diocesanas y auditoría.
+4. Unicidad anti-duplicados: group_members activos y event_attendance nominativa por evento/persona.
+5. Suspensión/vencimiento sin pérdida de datos: RLS y server functions bloquean operaciones del módulo deshabilitado conservando los registros intactos.
+
+================================================================================
+F. MATRIZ DE DEPENDENCIAS ENTRE DOMINIOS Y MÓDULOS
+================================================================================
+- core -> habilita todos los esquemas (organization_entities no concede acceso).
+- saas -> habilita ERP y Diocesano vía service_entitlements (MOD-FIN y MOD-DOC dependen de MOD-CORE, nunca de MOD-COM).
+- Área 5 base (campuses, document_file_metadata) -> contexto de sede y adjuntos para Áreas 1-6.
+- Área 1 (persons/families) -> Área 2 (group_members) -> Área 3 (event_attendance) -> participa en historial de Área 1.
+- Área 4 -> treasury_movements origina journal_vouchers y actualiza ejecución presupuestal por accounting_entity.
+- Área 6 (pastoral.*) -> referencia Área 1/core con aislamiento unidireccional absoluto (sin exposición en Dashboard/reportes/IA).
+- sacramental.* -> requiere MOD-COM + MOD-SAC (excluido de PLN-CRI).
+- diocesan.* -> requiere MOD-GOB + institutional_access_grants vigentes.
+
+================================================================================
+G. ORDEN DE MIGRACIONES PARA NIVELES POSTERIORES
+================================================================================
+- M0: Extensiones (pgcrypto) y esquemas (core, saas, erp, pastoral, sacramental, diocesan, audit).
+- M1: core (11 tablas base + campuses + funciones RLS + políticas Fase 1 + pruebas negativas org_a/org_b).
+- M2: audit (4 tablas append-only).
+- M3: saas catálogo, contratos, suscripciones, licencias, entitlements, usage_limits y vista service_entitlements.
+- M4: saas parties, clients, facturación/recaudo y CRM IA.
+- M5: erp.document_file_metadata, erp_documents, erp_document_files y buckets privados Storage.
+- M6: erp Comunidad (Área 1), Ministerios/Grupos (Área 2) y Cultos/Asistencia (Área 3).
+- M7: erp Finanzas, Contabilidad, Presupuestos, Inventarios y Compras (Área 4 + trigger contable).
+- M8: erp Administración operativa (Actas, Correspondencia, Tareas - Área 5).
+- M9: pastoral (Acompañamiento pastoral confidencial + notas aisladas + RLS por authorized_roles).
+- M10: sacramental (Dominio católico exclusivo bloqueado para PLN-CRI).
+- M11: diocesan + core.institutional_access_grants.
+- M12: Seeds técnicos de sistema (roles, permisos, módulos, planes base incluido PLN-CRI; sin datos demo en producción).
+
+================================================================================
+H. RIESGOS, DECISIONES PENDIENTES Y CRITERIOS DE ACEPTACIÓN DEL NIVEL 1
+================================================================================
+Riesgos:
+1. Confusión entre organizations, ecclesial_entities y campuses si no se respetan FKs compuestas.
+2. Recursión o fallos en políticas RLS si no se encapsulan funciones auxiliares STABLE en esquema privado.
+3. Exposición accidental de pastoral_care_confidential_notes mediante JOINs abiertos en Dashboard o IA.
+4. Condiciones de carrera en saldos de cartera y cierres contables sin transacciones serializadas/FOR UPDATE.
+
+Decisiones pendientes que requieren aprobación expresa del propietario:
+- Bloqueantes inmediatos antes de Nivel 2: D-03 (roles/scopes), D-12 (estados cerrados), D-13 (modelo operativo ERP) y selección de proveedor/región Supabase.
+- Bloqueantes de dominios posteriores: D-01, D-02, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11.
+
+Criterios de aceptación del Nivel 1:
+1. Todas las entidades de SaaS, ERP Común, Cristiano, Pastoral, Católico y Diocesano tienen esquema, PK, FK compuesta con organization_id, tipos PostgreSQL y restricciones definidas.
+2. MOD-FIN y MOD-DOC dependen de MOD-CORE (nunca de MOD-COM), protegiendo la separación de PLN-CRI.
+3. Cero duplicación de motores de personas, finanzas/contabilidad, documentos ni administración.
+4. Dominio pastoral aislado en tabla separada y sujeto a auditoría append-only.
+
+================================================================================
+I. DICTAMEN DEL NIVEL 1
+================================================================================
+DICTAMEN: NIVEL 1 COMPLETADO — LISTO PARA REVISIÓN Y APROBACIÓN DEL PROPIETARIO (CONDICIONADO AL CIERRE FORMAL DE D-03, D-12 Y D-13).
+
+El modelo lógico y relacional integral queda listo para ser revisado y aprobado antes de pasar al Nivel 2 (especificación física definitiva, DDL e implementación de migraciones Supabase). No se realizaron cambios en código, SQL, Supabase ni historial Git.

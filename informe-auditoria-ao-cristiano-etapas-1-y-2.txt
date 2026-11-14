@@ -1,0 +1,280 @@
+# INFORME FINAL DE AUDITORÍA FUNCIONAL Y TÉCNICA — A&O CRISTIANO (ETAPAS 1 Y 2)
+
+Repositorio: D:\Proyectos\ao-erp
+Rama de trabajo autorizada: integracion-final-ao-erp
+Commit HEAD: 6f8b1dc ("docs: add implementation and audit reports")
+Commits base relevantes: 277b34d ("feat(erp,saas): add A&O Cristiano package demo with 6 core areas") sobre 6638079 (origin/main)
+Fecha: 2026-11-13
+Alcance: auditoría funcional y técnica exclusivamente de lectura (Etapas 1 y 2). No se modificó código fuente, rutas, configuración, dependencias, Supabase ni bases de datos. Este archivo fue creado únicamente tras solicitud expresa del usuario.
+
+================================================================================
+1. VERIFICACIÓN DEL ESTADO TÉCNICO DEL REPOSITORIO
+================================================================================
+- Rama activa: integracion-final-ao-erp (sincronizada con origin/integracion-final-ao-erp).
+- Ramas locales y remotas preservadas sin alteración: main, integracion-main-ao-erp, respaldo-traslado-ao-erp, origin/design/saas-dashboard-refresh, origin/feature/ao-archivo-eclesiastico, origin/integration/ao-ecosystem-foundation.
+- Cambios locales modificados sin commit (conservados intactos):
+  * apps/saas/src/routes/configuracion.tsx (+37 líneas: agrega grupo "cristiano" en initialGroups)
+  * apps/saas/src/styles.css (+6/-1 líneas: oculta scrollbar en .sidebar nav)
+  * informe-plan-integracion-507c83c.txt (+1/-1 línea: espacio inicial en línea 1)
+- Respaldos e informes existentes en raíz (conservados intactos):
+  * respaldo-cambios-locales.patch
+  * informe-auditoria-comparativa-github.txt
+  * informe-continuacion-perfil-cristiano-ao-erp.txt
+  * informe-implementacion-integracion-final-ao-erp.txt
+  * informe-plan-integracion-507c83c.txt
+  * informe-preparacion-integracion-segura.txt
+  * informe-sincronizacion-github.txt
+- Arquitectura monorepo:
+  * apps/erp (React 19, TypeScript, TanStack Start/Router, Tailwind CSS 4, Vite, Bun)
+  * apps/saas (consola comercial/técnica del ecosistema A&O)
+  * apps/diocesano (consola diocesana)
+  * packages/utilities (solo exporta cn() en packages/utilities/src/index.ts)
+- Persistencia y backend real:
+  * Inexistente en código ejecutable. No hay archivos *.sql, migraciones ni imports de @supabase/*.
+  * Toda persistencia actual en apps/erp y apps/saas reside en window.localStorage y datos demo en memoria.
+  * apps/saas/src/server-functions/vercel-runtime.ts es únicamente un spike temporal de diagnóstico HTTP/cookies.
+  * apps/erp/src/server.ts únicamente gestiona SSR y normalización de errores H3.
+
+================================================================================
+2. AUDITORÍA DE A&O SAAS (apps/saas)
+================================================================================
+2.1 Catálogo e identificadores reales verificados (apps/saas/src/data/saas-domain.ts y demo.ts)
+- Aplicaciones (saas-domain.ts:1000-1039):
+  * APP-ERP (code: "PROD-AO-ERP"): A&O ERP
+  * APP-DIO (code: "PROD-AO-DIO"): A&O Diocesano
+  * Nota: No existe APP-CRI separado; A&O Cristiano está modelado como paquete de módulos dentro de APP-ERP.
+
+- Módulos base / católicos / diocesanos (saas-domain.ts:1041-1111):
+  * MOD-COM (code: "ERP-COM", app: APP-ERP, requiredModuleIds: []): Comunidad y pastoral
+  * MOD-SAC (code: "ERP-SAC", app: APP-ERP, requiredModuleIds: ["MOD-COM"]): Sacramentos y partidas
+  * MOD-DOC (code: "ERP-DOC", app: APP-ERP, requiredModuleIds: ["MOD-COM"]): Gestión documental
+  * MOD-FIN (code: "ERP-FIN", app: APP-ERP, requiredModuleIds: ["MOD-COM"]): Finanzas y recursos
+  * MOD-GOB (code: "DIO-GOB", app: APP-DIO, requiredModuleIds: ["MOD-DOC", "MOD-FIN"]): Gobierno y consolidación diocesana
+
+- Módulos A&O Cristiano (saas-domain.ts:1112-1182, en APP-ERP):
+  * MOD-CRI-COM (code: "ERP-CRI-COM", requiredModuleIds: []): Miembros y comunidad
+  * MOD-CRI-GRP (code: "ERP-CRI-GRP", requiredModuleIds: ["MOD-CRI-COM"]): Ministerios y grupos
+  * MOD-CRI-CUL (code: "ERP-CRI-CUL", requiredModuleIds: ["MOD-CRI-COM"]): Cultos, eventos y asistencia
+  * MOD-CRI-ADM (code: "ERP-CRI-ADM", requiredModuleIds: ["MOD-FIN", "MOD-DOC"]): Administración, finanzas y documentos
+  * MOD-CRI-PAS (code: "ERP-CRI-PAS", requiredModuleIds: ["MOD-CRI-COM"]): Acompañamiento pastoral
+
+- Features (saas-domain.ts:1184-1300):
+  * Base/católicas: MOD-COM-CORE (FT-FELIGRESES), MOD-COM-AGENDA (FT-AGENDA), MOD-SAC-CORE (FT-LIBROS), MOD-DOC-CORE (FT-ARCHIVO), MOD-FIN-CORE (FT-TESORERIA), MOD-GOB-CORE (FT-CURIA).
+  * Cristianas: MOD-CRI-COM-CORE (FT-CRI-MIEMBROS), MOD-CRI-GRP-CORE (FT-CRI-MINISTERIOS), MOD-CRI-CUL-CORE (FT-CRI-CULTOS), MOD-CRI-ADM-CORE (FT-CRI-ADM-FIN-DOC), MOD-CRI-PAS-CORE (FT-CRI-ACOMPANAMIENTO).
+
+- Planes comerciales (demo.ts:112-134 y saas-domain.ts:1315-1422):
+  * PLAN-01 (code: "PLN-PAR-2026", "Parroquial", APP-ERP): ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"]
+  * PLAN-02 (code: "PLN-INS-2026", "Institucional", APP-ERP): ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN"]
+  * PLAN-03 (code: "PLN-DIO-2026", "Diocesano", APP-DIO): ["MOD-COM", "MOD-SAC", "MOD-DOC", "MOD-FIN", "MOD-GOB"]
+  * PLN-CRI (code: "PLN-CRI-ESS-2026", "Cristiano Esencial", APP-ERP): ["MOD-CRI-COM", "MOD-CRI-GRP", "MOD-CRI-CUL", "MOD-CRI-ADM", "MOD-CRI-PAS", "MOD-FIN", "MOD-DOC"]
+
+- Organizaciones e instituciones demo (demo.ts:25-83, saas-domain.ts:785-929):
+  * ORG-001 (Diócesis de San Gabriel), ORG-002 (Parroquia Santa María del Camino), ORG-003 (Fundación Camino y Vida).
+  * INS-014, INS-021, INS-032 / INS-033.
+  * Nota: No existe ninguna organización, contrato, suscripción ni licencia demo precargada con el plan PLN-CRI.
+
+2.2 Servicios, repositorio y pantallas de A&O SaaS
+- Repositorio: apps/saas/src/data/saas-repository.ts (LocalSaasStore en localStorage "ao-saas:domain:v1", EntityRepository<K>, SupportRepository, ModuleRecordRepository).
+- Servicio comercial: apps/saas/src/data/commercial-service.ts (resolveModuleDependencies, createPlanSnapshot, saveCommercialPlan, saveContractWithRelations, transitionContractStatus, saveLicenseWithEntitlements, evaluateOrganizationLicensing, validateOrganizationCapacity).
+- Servicio de aprovisionamiento: apps/saas/src/data/provisioning-service.ts (validateCommercialReadinessForProvisioning, createProvisioningRequest, executeProvisioningWorkflow en 5 etapas con idempotencia y TenantInfrastructureAdapter lógico).
+- Pantallas relevantes: products-catalog-screen.tsx, plans-licensing-screen.tsx, contracts-subscriptions-screen.tsx, provisioning-console-screen.tsx, organizations-master-screen.tsx, institutions-master-screen.tsx, routes/configuracion.tsx.
+
+2.3 Hallazgos y brechas críticas en A&O SaaS
+1. Dependencia defectuosa MOD-FIN / MOD-DOC -> MOD-COM:
+   En saas-domain.ts:1079 y 1093, MOD-DOC y MOD-FIN tienen requiredModuleIds: ["MOD-COM"]. Por efecto de resolveModuleDependencies() (commercial-service.ts:83-163), al emitir licencia del plan PLN-CRI (que incluye MOD-FIN y MOD-DOC), el motor agrega automáticamente MOD-COM (Comunidad y pastoral católica), violando la regla de no habilitar módulos católicos en una suscripción exclusivamente cristiana.
+2. Desalineación de IDs en apps/saas/src/routes/configuracion.tsx:
+   initialGroups usa slugs ("parishioners", "treasury", "documents", etc.) para los 5 grupos base, mientras que el bloque sin commit de "cristiano" (líneas 150-185) usa IDs de dominio ("MOD-CRI-COM", etc.). Como evaluateOrganizationLicensing() devuelve IDs "MOD-*", los módulos genéricos/católicos no concilian por ID en esa vista.
+3. Persistencia demo y ausencia de Auth/RBAC:
+   Todo se almacena en localStorage; no existen endpoints backend, sesiones ni control de acceso real en apps/saas/src/routes/__root.tsx.
+4. Catálogo pendiente de desagregación:
+   Falta un módulo base neutro (MOD-CORE), falta separar capacidades genéricas dentro de MOD-COM de las católicas exclusivas, y falta definir variantes escalonadas o plan combinado explícito.
+
+================================================================================
+3. AUDITORÍA DE LA CONEXIÓN SAAS–ERP
+================================================================================
+- Conexión real SaaS -> ERP: INEXISTENTE.
+  apps/saas ("ao-saas:domain:v1") y apps/erp ("ao-erp:ao-cristiano:settings:v1") no comparten API, almacenamiento, cookies, tokens ni paquetes de dominio.
+- Control actual en ERP:
+  * apps/erp/src/lib/ao-cristiano-profile.ts y use-ao-cristiano.ts leen el perfil local ("catolico" | "cristiano" | "combinado"), organizationId, campusId, terminology, pastoralAccessRole y allowPastoralAiAnalysis desde localStorage.
+  * Cualquier usuario puede editar todos esos valores libremente en /app/configuracion (apps/erp/src/components/modules/settings-center-screen.tsx:77-123).
+- Navegación (apps/erp/src/components/layout/app-shell.tsx:41-52):
+  * Filtra appModules usando canAccessPath(module.path) y renombra 5 etiquetas cuando isChristianProfile(settings.profile) es true.
+- Protección de rutas (apps/erp/src/routes/__root.tsx:130-132 y apps/erp/src/components/access/module-access-guard.tsx):
+  * Control exclusivamente visual en el cliente basado en settings.profile.
+  * CATHOLIC_ONLY_ROUTE_PATHS bloquea únicamente 5 rutas: /app/gestion-sacramental, /app/libros-sacramentales, /app/gestion-diocesana, /app/liturgia-celebraciones, /app/catequesis-formacion.
+  * CHRISTIAN_PACKAGE_ROUTE_PATHS bloquea únicamente /app/acompanamiento-pastoral.
+  * Brecha: en perfil "cristiano" siguen accesibles rutas de fuerte carga parroquial/católica como /app/estructura-eclesiastica, /app/informe-anual-parroquial, /app/documentos-certificados y /app/portal-feligres.
+- Validación de servicios / servidor / vencimiento:
+  * Inexistente. El ERP no consulta vigencia de contrato, estado Suspendido/Vencido ni usageLimits.
+- Conservación de datos ante desactivación:
+  * En localStorage las colecciones no se borran al cambiar de perfil, pero no existe bloqueo server-side ni flujo formal de solo lectura/exportación ante suspensión o vencimiento.
+
+================================================================================
+4. AUDITORÍA DE LAS SEIS ÁREAS FUNCIONALES (apps/erp)
+================================================================================
+4.1 Área 1. Miembros y comunidad
+- Archivos: apps/erp/src/components/modules/community-screen.tsx, apps/erp/src/data/community-demo.ts.
+- Implementado (demo local "ao-erp:community:parishioners"):
+  * Directorio con búsqueda y filtros (estado, membershipStatus, personType Miembro/Visitante, campusId).
+  * Estados de membresía ("Miembro activo", "En proceso", "Visitante", "Inactivo", "Trasladado"), memberSince, firstVisitDate, datos de contacto.
+  * Pestaña de familias (agrupación derivada por familyId), pestaña de historial (participationHistory) y pestaña de bautismos congregacionales (congregationalBaptisms con "Por inmersión", "Por aspersión", "Afirmación de fe", "Otra práctica").
+- Brechas y defectos:
+  * NO filtra por settings.organizationId (mezcla organizaciones).
+  * Botón "Exportar vista" (líneas 186-189) no tiene manejador onClick.
+  * Sin edición completa de ficha ni entidad independiente de familias/relaciones.
+  * Sin alta desde UI en participationHistory.
+  * Corrupción de codificación (mojibake) en varias cadenas de community-demo.ts.
+
+4.2 Área 2. Ministerios y grupos
+- Archivos: apps/erp/src/components/modules/groups-screen.tsx, apps/erp/src/data/pastoral-demo.ts.
+- Implementado (demo local "ao-erp:pastoral:groups"):
+  * Filtrado por organizationId; tipos Ministerio, Departamento, Célula, Grupo pequeño, Equipo de servicio, Comunidad, Movimiento.
+  * Líderes/responsables, sedes, integrantes (memberList), equipos de servicio (serviceTeams), asignaciones (assignments) e historial (history).
+- Brechas:
+  * addMember() (líneas 88-94) crea un registro ficticio automático sin enlazar personas reales de Área 1.
+  * No hay formularios para crear/editar serviceTeams, assignments ni editar el grupo.
+
+4.3 Área 3. Cultos, eventos y asistencia
+- Archivos: apps/erp/src/components/modules/institutional-agenda-screen.tsx, apps/erp/src/data/institutional-demo.ts.
+- Implementado (demo local "ao-erp:agenda:events" y "ao-erp:agenda:attendance"):
+  * Programación de cultos/reuniones/actividades filtrada por organizationId, calendario mensual, responsables, registro de asistencia por Persona/Grupo/Actividad, resumen básico de asistencia y vista estática de espacios (facilities).
+- Brechas:
+  * attendanceStore NO filtra por organizationId ni campusId (línea 57), mezclando asistencias entre organizaciones.
+  * Calendario fijado en noviembre 2026 (línea 135) sin recurrencia de cultos ni reserva/conflictos de espacios.
+  * Asistencia por texto libre (personOrGroup) sin enlace a Área 1/Área 2; informe sin filtros ni exportación.
+
+4.4 Área 4. Finanzas y tesorería
+- Archivos: apps/erp/src/components/modules/treasury-screen.tsx, accounting-screen.tsx, budget-screen.tsx, apps/erp/src/data/economy-demo.ts.
+- Implementado (demo local):
+  * economy-demo.ts incorpora categorías cristianas (Diezmos, Ofrendas, Donaciones, Otros ingresos, Egresos operativos, Egresos ministeriales) y áreas presupuestales (Congregacional, Ministerios).
+  * treasury-screen.tsx adapta encabezado en perfil cristiano y registra movimientos locales ("ao-erp:treasury:movements").
+  * accounting-screen.tsx ("ao-erp:accounting:journal") y budget-screen.tsx ("ao-erp:budget:lines") muestran catálogo, diario, mayor, estados y rubros demo.
+- Brechas y defectos críticos:
+  * treasury-screen.tsx usa constantes estáticas para KPIs, cuentas, gráfico de flujo, fuentes de ingreso y conciliación (no se actualizan al crear movimientos); mantiene nombres parroquiales ("Caja parroquial", parishDemo.officialName); y su FormDialog (líneas 359-394) fuerza direction="Ingreso" y account="Caja parroquial" (impide registrar egresos y seleccionar cuenta).
+  * accounting-screen.tsx define christian (línea 40) sin usarlo, imprime periodDebits en lugar de periodCredits (líneas 308 y 339), y al crear comprobantes hardcodea "1105 · Caja parroquial" y entityId "ENT-DEMO-PAR-014".
+  * budget-screen.tsx define christian (línea 50) sin usarlo, muestra KPIs fijos y tiene la prop actions duplicada (líneas 140-156).
+  * Sin filtro por organizationId/campusId, sin informes financieros exportables reales ni enlace entre tesorería, contabilidad y presupuestos.
+- Adaptación sin duplicar: reutilizar un único motor contable/tesorero/presupuestal parametrizado por organizationId y plantilla de categorías/plan de cuentas según perfil.
+
+4.5 Área 5. Administración y gestión documental
+- Archivos: institution-screen.tsx, institution-operations-panel.tsx, institutional-administration-screen.tsx, document-management-screen.tsx (+ 8 subrutas), documents-screen.tsx, assets-screen.tsx.
+- Implementado (demo local):
+  * InstitutionOperationsPanel: CRUD local de sedes, responsables y dependencias ("ao-erp:institution:sites/responsibles/departments").
+  * document-management-screen.tsx: CRUD local de metadatos documentales ("ao-erp:document-management") y 8 subpantallas archivísticas UI.
+  * assets-screen.tsx: listado/alta local de activos ("ao-erp:assets") con StatCards estáticos.
+- Brechas:
+  * NO existen módulos operativos para actas, correspondencia ni tareas administrativas con responsables (institutional-administration-screen.tsx tiene un modal "Vista previa" que no guarda, y routes/index.tsx tiene 3 checkboxes estáticos sin persistencia).
+  * Ninguna pantalla de Área 5 filtra por organizationId ni adapta su semántica al perfil cristiano (persisten "SMC", "Identidad canónica", "Archivo sacramental / Restringido", "Órgano de capilla · Elemento litúrgico").
+  * Sin almacenamiento real de archivos ni control de acceso documental en servidor.
+
+4.6 Área 6. Acompañamiento pastoral
+- Archivos: apps/erp/src/components/modules/pastoral-care-screen.tsx, apps/erp/src/data/pastoral-care-demo.ts, users-permissions-screen.tsx, audit-trail-screen.tsx.
+- Implementado (demo local "ao-erp:pastoral-care:records"):
+  * Cubre Visita pastoral, Seguimiento a nuevo miembro, Consejería, Acompañamiento familiar, Petición de oración y Compromiso pastoral.
+  * Filtra por organizationId (y campusId de forma laxa cuando es "SEDE-PRINCIPAL"), aplica rol demostrativo pastoralAccessRole, enmascaramiento visual maskPastoralSensitive, switch allowPastoralAiAnalysis (false por defecto) y registra accessLog dentro del objeto local.
+- Brechas críticas de seguridad y auditoría:
+  * No existe protección real en servidor ni RLS: los registros confidenciales vienen en el bundle JS y residen en texto plano en localStorage.
+  * El usuario puede cambiar su propio pastoralAccessRole y habilitar IA en /app/configuracion.
+  * pastoral-care-screen.tsx ignora el arreglo record.authorizedRoles (ej. "lider_pastoral" puede ver casos restringidos a "pastor_principal" y "consejero_autorizado").
+  * accessLog es mutable en cliente y audit-trail-screen.tsx muestra eventos estáticos sintéticos.
+
+4.7 Dashboard e impacto en A&O Católico
+- apps/erp/src/routes/index.tsx (Dashboard) no consulta useAoCristianoSettings() y muestra identidad parroquial/diocesana y conteos sacramentales aun en perfil "cristiano".
+- A&O Católico y A&O Diocesano conservan intactas sus rutas y pantallas, aunque al haberse añadido datos semilla cristianos en community-demo.ts, pastoral-demo.ts y economy-demo.ts, dichos registros aparecen también en el perfil "catolico".
+
+================================================================================
+5. AUDITORÍA DE SEGURIDAD Y MULTIINSTITUCIÓN
+================================================================================
+- Separación de organizaciones: solo simulada en UI en groups-screen, institutional-agenda-screen (eventos) y pastoral-care-screen usando settings.organizationId editable en cliente. Ausente en community, attendance, treasury, accounting, budget, assets, document-management, documents, institution y Dashboard.
+- Separación de sedes (campusId): filtro opcional en UI y laxo en pastoral-care-screen (si campusId === "SEDE-PRINCIPAL", muestra todas las sedes, línea 61).
+- Autenticación, RBAC y rutas: inexistentes en servidor. ModuleAccessGuard protege solo visualmente en React.
+- Riesgo de acceso cruzado y fuga pastoral: CRÍTICO mientras no exista autenticación real, aislamiento por tenant en PostgreSQL/RLS y separación estricta de notas confidenciales fuera del bundle y de vistas generales.
+
+================================================================================
+6. MATRIZ DE RESULTADOS
+================================================================================
+Clasificaciones utilizadas: Implementado y funcional | Implementado parcialmente | Solo interfaz visual | Demostración o datos ficticios | No implementado | No se pudo verificar.
+
+| Área | Funcionalidad | Archivo o módulo existente | Estado | Reutilización posible | Trabajo faltante | Riesgo |
+|---|---|---|---|---|---|---|
+| 1. Miembros y comunidad | Directorio de miembros, visitantes, contacto, estados de membresía y bautismos congregacionales | apps/erp/src/components/modules/community-screen.tsx, data/community-demo.ts | Implementado parcialmente | Alta (ModuleLayout, FormModal, DataTable, DetailDrawer) | Filtro organizationId, edición completa, exportación real, CRUD historial de participación, corregir mojibake, BD/RLS | Alto |
+| 1. Miembros y comunidad | Familias y relaciones | community-screen.tsx (tab families) | Implementado parcialmente | Media | Entidad formal de familias y relaciones bidireccionales; persistencia BD | Medio |
+| 2. Ministerios y grupos | Ministerios, departamentos, células, líderes, integrantes, equipos de servicio y asignaciones | apps/erp/src/components/modules/groups-screen.tsx, data/pastoral-demo.ts | Implementado parcialmente | Alta | Vincular integrantes reales desde Área 1; CRUD de equipos, asignaciones y edición del grupo | Medio |
+| 3. Cultos, eventos y asistencia | Agenda, calendario, programación de cultos/reuniones, responsables, asistencia e informes | apps/erp/src/components/modules/institutional-agenda-screen.tsx, data/institutional-demo.ts | Implementado parcialmente | Alta | Filtrar asistencia por org/sede, recurrencia de cultos, reserva de espacios, enlace a Área 1/2, informes filtrables/exportables | Alto |
+| 4. Finanzas y tesorería | Tesorería (diezmos, ofrendas, donaciones, egresos, caja/bancos, conciliación) | apps/erp/src/components/modules/treasury-screen.tsx, data/economy-demo.ts | Implementado parcialmente | Alta (motor único reutilizable) | KPIs/gráficos dinámicos, soporte de egresos y selector de cuentas, plantillas cristianas, filtro organizationId | Alto |
+| 4. Finanzas y tesorería | Contabilidad, presupuestos e informes financieros | accounting-screen.tsx, budget-screen.tsx, economy-demo.ts | Demostración o datos ficticios | Alta (motor único multi-entidad) | Adaptar UI a perfil cristiano, corregir bug débitos=créditos, conectar tesorería->contabilidad->presupuesto, reportes exportables | Alto |
+| 5. Administración y gestión documental | Instituciones, sedes y responsables administrativos | institution-screen.tsx, institution-operations-panel.tsx, institutional-administration-screen.tsx | Implementado parcialmente | Alta (InstitutionOperationsPanel) | Desacoplar textos canónicos en perfil cristiano, persistir responsables operativos, filtro organizationId | Medio |
+| 5. Administración y gestión documental | Gestión documental y archivos | document-management-screen.tsx, documents-screen.tsx, data/system-demo.ts | Implementado parcialmente | Media-Alta | Carpetas/series configurables por perfil (ocultar archivo sacramental en cristiano), storage privado con ACL | Alto |
+| 5. Administración y gestión documental | Correspondencia, actas y tareas administrativas | institutional-administration-screen.tsx (mención), routes/index.tsx (checklist estático) | No implementado | Baja (patrones CRUD/formularios) | Desarrollar submódulos de Actas, Correspondencia y Tareas con responsables, fechas, estados y BD | Medio |
+| 5. Administración y gestión documental | Inventarios y activos | assets-screen.tsx, economy-demo.ts | Implementado parcialmente | Alta | KPIs dinámicos, edición/baja, sedes por org, limpiar semilla litúrgica | Medio |
+| 6. Acompañamiento pastoral | Visitas, seguimiento, consejería, acompañamiento familiar, oración y compromisos | apps/erp/src/components/modules/pastoral-care-screen.tsx, data/pastoral-care-demo.ts | Implementado parcialmente | Alta en diseño UI/modelo | Validar authorizedRoles por caso, enlazar personas/familias de Área 1, edición de compromisos, BD + RLS | Crítico |
+| 6. Acompañamiento pastoral | Permisos restringidos, bloqueo IA y auditoría | ao-cristiano-profile.ts, settings-center-screen.tsx, users-permissions-screen.tsx, audit-trail-screen.tsx | Demostración o datos ficticios | Media (catálogo de roles) | Auth real, RBAC server-side, quitar selector de rol en UI, bitácora append-only en servidor | Crítico |
+| A&O SaaS | Catálogo de productos, módulos (MOD-CRI-*), planes (PLN-CRI), contratos, licencias, entitlements y aprovisionamiento | apps/saas/src/data/saas-domain.ts, commercial-service.ts, provisioning-service.ts, routes/configuracion.tsx | Implementado parcialmente | Muy alta | Corregir dependencia MOD-FIN/DOC -> MOD-COM, alinear IDs en configuracion.tsx, persistencia PostgreSQL | Alto |
+| Conexión SaaS–ERP | Propagación de entitlements SaaS->ERP y control de acceso por suscripción | ao-cristiano-profile.ts, module-access-guard.tsx, app-shell.tsx | Solo interfaz visual | Media | API/token server-side SaaS->ERP, bloquear rutas católicas faltantes, adaptar Dashboard (routes/index.tsx) | Crítico |
+
+================================================================================
+7. PROPUESTA DE ARQUITECTURA E IMPLEMENTACIÓN (SIN IMPLEMENTAR)
+================================================================================
+7.1 Arquitectura funcional y modelo comercial
+- A&O Cristiano opera como paquete funcional comercializable dentro de APP-ERP (PROD-AO-ERP), gobernado desde A&O SaaS mediante planes, contratos, licencias y entitlements. No crea un segundo ERP ni un Dashboard alternativo.
+- Cadena de autorización: Plan (PLN-CRI / variantes) -> Contract (con planSnapshot inmutable) -> Subscription -> License (por organizationId/institutionId) -> Entitlements (moduleIds + featureIds) -> Resolución autoritativa en servidor ERP (deriva perfil efectivo catolico | cristiano | combinado, estado de suscripción y capacidades).
+- Corrección obligatoria en catálogo SaaS: desacoplar MOD-FIN y MOD-DOC de requiredModuleIds: ["MOD-COM"] (creando módulo base neutro MOD-CORE o dependencia vacía) para evitar activar MOD-COM en suscripciones exclusivamente cristianas.
+
+7.2 Matriz de módulos: Genéricos, Cristianos y Católicos
+- Genéricos reutilizables (habilitados y parametrizados en cristiano):
+  * Módulos SaaS: MOD-CORE (nuevo), MOD-FIN, MOD-DOC.
+  * Rutas ERP: /, /app/institucion, /app/administracion-institucional, /app/finanzas-tesoreria, /app/contabilidad, /app/presupuestos, /app/inventarios-patrimonio, /app/compras-obligaciones, /app/gestion-documental/*, /app/comunicaciones, /app/usuarios-permisos, /app/auditoria-trazabilidad, /app/configuracion, /app/inteligencia-artificial.
+- Exclusivos A&O Cristiano (habilitados por entitlements cristianos):
+  * Módulos SaaS: MOD-CRI-COM, MOD-CRI-GRP, MOD-CRI-CUL, MOD-CRI-ADM, MOD-CRI-PAS.
+  * Rutas ERP: /app/feligreses-familias (modo Miembros), /app/grupos-ministerios, /app/agenda-infraestructura (modo Cultos y asistencia), /app/acompanamiento-pastoral, más Actas/Correspondencia/Tareas.
+- Exclusivos A&O Católico / Diocesano (bloqueados en suscripción exclusivamente cristiana):
+  * Módulos SaaS: MOD-COM (católico), MOD-SAC, MOD-GOB (APP-DIO).
+  * Rutas ERP: /app/gestion-sacramental, /app/libros-sacramentales, /app/liturgia-celebraciones, /app/catequesis-formacion, /app/gestion-diocesana, /app/estructura-eclesiastica, /app/informe-anual-parroquial, /app/documentos-certificados, /app/portal-feligres (salvo parametrización futura).
+
+7.3 Reutilización, ampliación y desarrollo nuevo
+- Reutilizar: apps/erp/src/components/forms/* (conforme a docs/erp/estandar-formularios.md y docs/erp/auditorias/inventario-formularios-ao-erp.md), components/modules/*, InstitutionOperationsPanel, commercial-service.ts, provisioning-service.ts, packages/utilities.
+- Ampliar: routes/index.tsx (Dashboard dinámico por perfil/entitlements), ao-cristiano-profile.ts + module-access-guard.tsx, y las pantallas de las 6 áreas (aislamiento por organizationId/campusId, cálculos reales en finanzas, enlace miembros<->grupos<->asistencia<->pastoral, limpieza de datasets por perfil).
+- Desarrollar nuevo:
+  1. Contrato compartido y servicio server-side SaaS -> ERP de entitlements y contexto de tenant.
+  2. Submódulos operativos de Actas, Correspondencia y Tareas administrativas (Área 5).
+  3. Persistencia backend real (Supabase Auth + PostgreSQL + RLS + Storage privado, alineado con docs/arquitectura/backend/13-modelo-relacional-maestro.md y 15-especificacion-fisica-postgresql-saas.md).
+
+7.4 Archivos que probablemente requerirán modificación
+- SaaS: apps/saas/src/data/saas-domain.ts, commercial-service.ts, apps/saas/src/routes/configuracion.tsx, apps/saas/src/test/saas-consolidation.test.ts.
+- ERP: apps/erp/src/routes/index.tsx, routes/__root.tsx, lib/ao-cristiano-profile.ts, lib/use-ao-cristiano.ts, components/access/module-access-guard.tsx, components/layout/app-shell.tsx, data/navigation.ts, data/community-demo.ts, data/pastoral-demo.ts, data/economy-demo.ts, community-screen.tsx, groups-screen.tsx, institutional-agenda-screen.tsx, treasury-screen.tsx, accounting-screen.tsx, budget-screen.tsx, institution-screen.tsx, institutional-administration-screen.tsx, document-management-screen.tsx, assets-screen.tsx, pastoral-care-screen.tsx, settings-center-screen.tsx, users-permissions-screen.tsx, audit-trail-screen.tsx.
+
+7.5 Nuevas entidades y relaciones de datos propuestas (ERP operativo, separado de SaaS)
+- Área 1: campuses, persons, families, family_memberships, congregational_baptisms, participation_events (todas con organization_id y FK compuesta por tenant).
+- Área 2: ministries_groups, group_members, service_teams, service_assignments.
+- Área 3: worship_events, event_attendance.
+- Área 4 (compartida): financial_categories (parametrizable por profile_scope) conectada a treasury_accounts, treasury_movements, journal_entries y budget_lines.
+- Área 5: meeting_minutes (actas), correspondence_items (correspondencia), admin_tasks (tareas).
+- Área 6 (seguridad reforzada): pastoral_care_cases (allow_ai_analysis boolean default false), pastoral_care_confidential_notes (tabla aislada con RLS estricta), pastoral_care_commitments, sensitive_access_audit_logs (append-only, sin UPDATE/DELETE).
+
+7.6 Entitlements necesarios
+- Existentes: MOD-CRI-COM (+ MOD-CRI-COM-CORE), MOD-CRI-GRP (+ MOD-CRI-GRP-CORE), MOD-CRI-CUL (+ MOD-CRI-CUL-CORE), MOD-CRI-ADM (+ MOD-CRI-ADM-CORE), MOD-CRI-PAS (+ MOD-CRI-PAS-CORE), MOD-FIN (+ MOD-FIN-CORE), MOD-DOC (+ MOD-DOC-CORE).
+- Faltantes: MOD-CORE (base neutro para romper dependencia MOD-FIN/DOC -> MOD-COM), separación explícita de features genéricas vs católicas dentro de MOD-COM, feature granular FT-CRI-PAS-IA (desactivada por defecto) y features para Actas/Correspondencia/Tareas.
+
+7.7 Dependencias entre áreas y activación/desactivación sin pérdida de datos
+- Dependencias: Área 5 (Institución/Sedes) provee organizationId/campusId; Área 1 (Miembros) alimenta Área 2 (Grupos), Área 3 (Asistencia) y Área 6 (Pastoral); Área 2 alimenta Área 3 y centros de costo de Área 4; Área 6 permanece aislada unidireccionalmente (ningún informe general ni IA puede leer notas confidenciales).
+- Estrategia sin pérdida de datos: al desactivar un módulo o suspender/vencer una suscripción nunca se ejecutan borrados físicos (DELETE/DROP). Se deshabilitan entitlements.enabled, se bloquean rutas en UI y mutaciones/consultas en servidor/RLS, y se mantiene exportación controlada hasta la reactivación.
+
+7.8 Riesgos técnicos y de seguridad
+1. Controles solo en cliente (localStorage) fácilmente evadibles.
+2. Activación accidental de MOD-COM al licenciar PLN-CRI mientras persista la dependencia en saas-domain.ts.
+3. Fuga entre organizaciones en pantallas ERP sin filtro organizationId.
+4. Contaminación visual de datos cristianos en perfil católico sobre datasets compartidos.
+5. Desalineación con docs/erp/estandar-formularios.md en formularios nuevos si no se usan components/forms/*.
+
+7.9 Orden recomendado de implementación y pruebas
+- Fase 1 (Integridad base demo sin romper católico): corregir MOD-FIN/DOC -> MOD-COM en saas-domain.ts, unificar IDs en apps/saas/src/routes/configuracion.tsx, agregar org/contrato demo cristiano en SaaS; separar datasets demo por perfil en ERP, corregir mojibake y errores en treasury/accounting/budget, adaptar Dashboard y reforzar filtro organizationId/campusId + authorizedRoles por caso.
+- Fase 2 (Cierre funcional de las 6 áreas): enlazar Área 1->2->3, completar egresos/cuentas/informes en Área 4 y construir Actas, Correspondencia y Tareas en Área 5 siguiendo estandar-formularios.md.
+- Fase 3 (Backend real y puente SaaS–ERP): Supabase Auth, PostgreSQL + RLS (Docs 13 y 15), resolución server-side de entitlements, Storage privado y bitácora append-only.
+- Pruebas requeridas: tests Vitest en SaaS (PLN-CRI nunca habilita MOD-COM/SAC/GOB; transición Suspendido/Vencido conserva datos); tests en ERP (routing y ModuleAccessGuard para catolico/cristiano/combinado, aislamiento ORG-A vs ORG-B, bloqueo de notas pastorales e IA, cuadre contable y KPIs dinámicos); verificación completa de typecheck, tests y build en apps/erp, apps/saas y apps/diocesano.
+
+================================================================================
+8. ESTADO FINAL Y CONFIRMACIÓN
+================================================================================
+- Archivo creado únicamente por petición expresa del usuario: informe-auditoria-ao-cristiano-etapas-1-y-2.txt.
+- Ningún archivo de código, ruta, dato, configuración o respaldo previo fue modificado ni eliminado.
+- Quedo en espera de autorización expresa antes de iniciar la implementación.

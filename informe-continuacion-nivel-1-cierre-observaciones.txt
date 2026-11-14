@@ -1,0 +1,337 @@
+# INFORME — CONTINUACIÓN DEL NIVEL 1: REVISIÓN TÉCNICA Y CIERRE DE OBSERVACIONES
+
+Repositorio: D:\Proyectos\ao-erp
+Rama de trabajo autorizada: integracion-final-ao-erp
+Commit base (HEAD): 6f8b1dc ("docs: add implementation and audit reports")
+Base revisada: informe-nivel-1-cierre-arquitectura-modelo-datos.txt, docs/arquitectura/backend/01..15, docs/erp/definicion-funcional-y-arquitectonica.md, AGENTS.md, apps/saas y apps/erp (Fases 1 y 2)
+Fecha: 2026-11-13
+Alcance: cierre técnico documental de las observaciones 1 a 9 del Nivel 1. No se modificó código fuente, configuración, SQL ni migraciones; no se conectó Supabase; se conservaron intactos los cambios locales de Fase 1 y Fase 2.
+
+================================================================================
+1. INFORME DE OBSERVACIONES RESUELTAS
+================================================================================
+1.1 Organizaciones, Entidades Eclesiales, Instituciones y Sedes (Observación 2)
+- Ubicación definitiva: core.campuses se ubica en el esquema core (no en erp), vinculada a core.organizations (organization_id NOT NULL) y opcionalmente a un vínculo core.organization_entities mediante FK compuesta (organization_id, organization_entity_id).
+- Separación sin duplicación:
+  * core.organizations = tenant comercial contratante y clave primaria de aislamiento multi-tenant.
+  * core.ecclesial_entities = entidad eclesial o institución real (diócesis, parroquia, congregación, iglesia, fundación, etc.), desacoplada del tenant pagador (reemplaza el acoplamiento inicial de Institution en apps/saas/src/data/saas-domain.ts).
+  * core.organization_entities = vínculo N:M explícito entre tenant y entidad eclesial con clave candidata UNIQUE (organization_id, id). No hereda ni concede permisos operativos.
+  * core.campuses = sedes físicas u operativas (ej. SEDE-PRINCIPAL, SEDE-SECUNDARIA) con clave candidata UNIQUE (organization_id, id), referenciada mediante FKs compuestas desde erp.* y pastoral.* y desde core.membership_scopes.
+
+1.2 Identidad y Permisos Multi-organización y Multi-entidad (Observación 3)
+- Una única identidad auth.users / core.profiles puede pertenecer a múltiples organizaciones (core.memberships con UNIQUE (user_id, organization_id)).
+- Dentro de cada membresía puede tener 1..N alcances en core.membership_scopes (scope_type: 'tenant' | 'entity' | 'campus') y 1..N asignaciones de rol en core.membership_roles con vigencias (starts_at, ends_at, status).
+- Separación estricta de roles:
+  * Roles globales de plataforma (core.roles.organization_id IS NULL e is_platform_role = true): platform_admin, platform_commercial, platform_billing, platform_support, platform_auditor. Operan exclusivamente en core/saas/audit y NO otorgan acceso a datos operativos de erp, pastoral o sacramental.
+  * Roles institucionales/tenant (is_platform_role = false): plantillas sistema (organization_id IS NULL) o roles locales del tenant (organization_id = <tenant>): tenant_admin, pastor_principal, lider_pastoral, consejero_autorizado, tesorero, contador, secretaria, custodio_archivo, parroco, catequista, consulta.
+
+1.3 Seguridad Pastoral Relacional y Acceso de Emergencia (Observación 4)
+- Se reemplazan los arreglos sueltos authorized_roles text[] / authorized_user_ids uuid[] de la demo (apps/erp/src/data/pastoral-care-demo.ts) por ACL relacional verificable con FKs compuestas:
+  * pastoral.pastoral_care_cases: clasifica sensitivity_level ('standard' | 'restricted' | 'counseling_strict'), assigned_membership_id y allow_ai_analysis boolean NOT NULL DEFAULT false.
+  * pastoral.pastoral_care_case_role_acl (case_id, organization_id, role_id): roles autorizados para el caso.
+  * pastoral.pastoral_care_case_member_acl (case_id, organization_id, membership_id, access_level): membresías autorizadas ('read' | 'write' | 'owner').
+  * pastoral.pastoral_care_emergency_grants (break-glass): acceso temporal de solo lectura (expiración máxima 4 horas por CHECK, motivo obligatorio >= 10 caracteres, aprobador explícito) que registra obligatoriamente evento en audit.sensitive_access_events y audit.security_events.
+  * pastoral.pastoral_care_confidential_notes: tabla separada con RLS estricta. Prohibida su exposición en Dashboard (apps/erp/src/routes/index.tsx), reportes generales, diocesan.report_templates.erp_source o IA sin allow_ai_analysis = true y permiso expreso.
+
+1.4 Validación Anti-duplicación y Separación de Módulos (Observación 9)
+- Maestro único de personas: erp.persons (común para Comunidad, Grupos, Asistencia, Pastoral y Sacramental; separado de saas.parties que representa identidad comercial B2B).
+- Motor único financiero: erp.treasury_movements -> erp.journal_vouchers/journal_lines -> erp.budget_lines parametrizado por erp.financial_categories.profile_scope ('shared' | 'christian' | 'catholic').
+- Motor único documental: erp.document_file_metadata (Storage privado) + erp.erp_documents + puentes tipados, ocultando series sacramentales en PLN-CRI.
+- Dependencias SaaS verificadas: MOD-FIN y MOD-DOC dependen de MOD-CORE (nunca de MOD-COM), garantizando que PLN-CRI nunca habilite MOD-COM, MOD-SAC ni MOD-GOB.
+
+================================================================================
+2. DICCIONARIO COMPLETO DE DATOS ACTUALIZADO
+================================================================================
+(Regla transversal: ON UPDATE RESTRICT y ON DELETE RESTRICT por defecto; columnas created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now() en toda tabla mutable; importes numeric(19,4); moneda char(3) NOT NULL DEFAULT 'COP').
+
+--- ESQUEMA core ---
+1. core.profiles
+   - id uuid PK FK->auth.users(id) NOT NULL
+   - display_name text NOT NULL CHECK(length(trim(display_name)) >= 2)
+   - avatar_path text NULL
+   - locale text NOT NULL DEFAULT 'es-CO'
+
+2. core.organizations
+   - id uuid PK DEFAULT gen_random_uuid()
+   - name text NOT NULL
+   - slug text UNIQUE NOT NULL
+   - org_kind text NOT NULL CHECK(org_kind IN ('diocese','parish','congregation','foundation','religious_community','educational','other'))
+   - status text NOT NULL DEFAULT 'active' CHECK(status IN ('active','suspended','closed'))
+   - created_by uuid NULL FK->auth.users(id)
+   - Índices: (status)
+
+3. core.ecclesial_entities
+   - id uuid PK DEFAULT gen_random_uuid()
+   - entity_type text NOT NULL CHECK(entity_type IN ('archdiocese','diocese','parish','quasi_parish','sanctuary','congregation','church','foundation','seminary','pastoral_center','other'))
+   - legal_name text NOT NULL
+   - display_name text NOT NULL
+   - country_code char(2) NOT NULL DEFAULT 'CO'
+   - tax_identifier text NULL
+   - canonical_code text NULL
+   - status text NOT NULL DEFAULT 'active' CHECK(status IN ('active','inactive','archived'))
+   - Índices: (entity_type, status)
+
+4. core.organization_entities
+   - id uuid PK DEFAULT gen_random_uuid()
+   - organization_id uuid NOT NULL FK->core.organizations(id)
+   - ecclesial_entity_id uuid NOT NULL FK->core.ecclesial_entities(id)
+   - relation_type text NOT NULL CHECK(relation_type IN ('owner','beneficiary','affiliated','managed'))
+   - status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','active','suspended','revoked'))
+   - starts_at timestamptz NULL, ends_at timestamptz NULL CHECK(ends_at IS NULL OR ends_at >= starts_at)
+   - Unicidad: UNIQUE(organization_id, ecclesial_entity_id, relation_type), UNIQUE(organization_id, id)
+
+5. core.entity_relationships
+   - id uuid PK DEFAULT gen_random_uuid()
+   - source_entity_id uuid NOT NULL FK->core.ecclesial_entities(id)
+   - target_entity_id uuid NOT NULL FK->core.ecclesial_entities(id)
+   - relationship_type text NOT NULL CHECK(relationship_type IN ('jurisdictional','vicariate','network','subsidiary'))
+   - valid_from date NULL, valid_to date NULL CHECK(valid_to IS NULL OR valid_to >= valid_from)
+   - status text NOT NULL DEFAULT 'active' CHECK(status IN ('pending','active','ended','revoked'))
+   - Restricción: CHECK(source_entity_id <> target_entity_id)
+
+6. core.campuses
+   - id uuid PK DEFAULT gen_random_uuid()
+   - organization_id uuid NOT NULL FK->core.organizations(id)
+   - organization_entity_id uuid NULL FK compuesta (organization_id, organization_entity_id)->core.organization_entities
+   - code text NOT NULL
+   - name text NOT NULL
+   - address text NULL
+   - is_main boolean NOT NULL DEFAULT false
+   - status text NOT NULL DEFAULT 'active' CHECK(status IN ('active','inactive'))
+   - Unicidad/Índices: UNIQUE(organization_id, id), UNIQUE(organization_id, code), UNIQUE parcial (organization_id) WHERE is_main = true
+
+7. core.memberships
+   - id uuid PK DEFAULT gen_random_uuid()
+   - user_id uuid NOT NULL FK->auth.users(id)
+   - organization_id uuid NOT NULL FK->core.organizations(id)
+   - status text NOT NULL DEFAULT 'invited' CHECK(status IN ('invited','active','suspended','expired','revoked'))
+   - invited_at timestamptz NULL, joined_at timestamptz NULL, expires_at timestamptz NULL
+   - Unicidad: UNIQUE(user_id, organization_id), UNIQUE(organization_id, id)
+
+8. core.membership_scopes
+   - id uuid PK DEFAULT gen_random_uuid()
+   - organization_id uuid NOT NULL
+   - membership_id uuid NOT NULL FK compuesta (organization_id, membership_id)->core.memberships
+   - scope_type text NOT NULL CHECK(scope_type IN ('tenant','entity','campus'))
+   - organization_entity_id uuid NULL FK compuesta (organization_id, organization_entity_id)->core.organization_entities
+   - campus_id uuid NULL FK compuesta (organization_id, campus_id)->core.campuses
+   - Restricción: CHECK((scope_type='tenant' AND organization_entity_id IS NULL AND campus_id IS NULL) OR (scope_type='entity' AND organization_entity_id IS NOT NULL AND campus_id IS NULL) OR (scope_type='campus' AND campus_id IS NOT NULL))
+   - Unicidad: UNIQUE(membership_id, id)
+
+9. core.roles
+   - id uuid PK DEFAULT gen_random_uuid()
+   - organization_id uuid NULL FK->core.organizations(id)
+   - code text NOT NULL, name text NOT NULL
+   - is_system boolean NOT NULL DEFAULT false
+   - is_platform_role boolean NOT NULL DEFAULT false CHECK(NOT is_platform_role OR organization_id IS NULL)
+   - Unicidad: UNIQUE parcial (code) WHERE organization_id IS NULL; UNIQUE (organization_id, code) WHERE organization_id IS NOT NULL
+
+10. core.permissions & core.role_permissions
+    - permissions: id uuid PK, code text UNIQUE NOT NULL, name text NOT NULL, domain text NOT NULL
+    - role_permissions: PK(role_id, permission_id), FKs->core.roles, core.permissions
+
+11. core.membership_roles
+    - id uuid PK DEFAULT gen_random_uuid()
+    - organization_id uuid NOT NULL, membership_id uuid NOT NULL, role_id uuid NOT NULL FK->core.roles, scope_id uuid NULL
+    - FKs compuestas (organization_id, membership_id)->core.memberships y (membership_id, scope_id)->core.membership_scopes
+    - starts_at timestamptz NOT NULL DEFAULT now(), ends_at timestamptz NULL, status text NOT NULL DEFAULT 'active' CHECK(status IN ('active','suspended','expired','revoked'))
+
+12. core.institutional_access_grants
+    - id uuid PK, source_organization_id uuid NOT NULL, source_org_entity_id uuid NOT NULL, target_organization_id uuid NOT NULL, target_org_entity_id uuid NOT NULL
+    - FKs compuestas a core.organization_entities
+    - purpose text NOT NULL CHECK(purpose IN ('reports','communications')), allowed_actions text[] NOT NULL CHECK(cardinality(allowed_actions) > 0)
+    - starts_at timestamptz NOT NULL, ends_at timestamptz NULL, status text NOT NULL CHECK(status IN ('pending','active','suspended','expired','revoked')), granted_by uuid NOT NULL FK->auth.users(id), revoked_at timestamptz NULL
+
+--- ESQUEMA saas ---
+1. saas.parties (id uuid PK, party_type text CHECK(person|organization), display_name text NOT NULL, status text DEFAULT 'active' CHECK(active|inactive))
+2. saas.party_persons (party_id uuid PK FK->parties, given_names text NOT NULL, family_names text NOT NULL, document_type text NULL, document_number text NULL, email text NULL, phone text NULL)
+3. saas.party_organizations (party_id uuid PK FK->parties, legal_name text NOT NULL, trade_name text NULL, tax_identifier text NULL, country_code char(2) DEFAULT 'CO')
+4. saas.clients (id uuid PK, party_id uuid NOT NULL FK->parties, client_code text UNIQUE NOT NULL, status text DEFAULT 'active', owner_user_id uuid NULL FK->auth.users)
+5. saas.applications (id uuid PK, code text UNIQUE NOT NULL, name text NOT NULL, commercial_version text NULL, status text DEFAULT 'active' CHECK(active|inactive|retired))
+6. saas.modules (id uuid PK, application_id uuid NOT NULL FK->applications, code text NOT NULL, name text NOT NULL, category text NOT NULL, status text DEFAULT 'active', UNIQUE(application_id, code))
+7. saas.module_dependencies (module_id uuid, required_module_id uuid, PK(module_id, required_module_id), CHECK(module_id <> required_module_id))
+8. saas.features (id uuid PK, module_id uuid NOT NULL FK->modules, code text UNIQUE NOT NULL, name text NOT NULL, is_sensitive_ai boolean DEFAULT false, status text DEFAULT 'active')
+9. saas.plans & saas.plan_modules (plans: id PK, application_id FK, code, version int DEFAULT 1, name, billing_period, currency char(3) DEFAULT 'COP', base_price numeric(19,4) CHECK >= 0, user_limit int CHECK > 0, institution_limit int CHECK > 0, storage_limit_gb int CHECK > 0, status, UNIQUE(application_id, code, version); plan_modules: PK(plan_id, module_id))
+10. saas.contracts, saas.contract_entities, saas.contract_terms (contracts: id PK, client_id FK, organization_id FK NULL, contract_number UNIQUE, status CHECK(draft|pending|active|suspended|expired|canceled|terminated), billing_period, currency, contracted_amount numeric(19,4), discount_amount numeric(19,4), starts_at date, ends_at date CHECK(ends_at >= starts_at), auto_renew boolean DEFAULT true; contract_entities: PK, UNIQUE(contract_id, ecclesial_entity_id); contract_terms: PK, UNIQUE(contract_id, version_number), plan_snapshot jsonb NOT NULL, append-only)
+11. saas.subscriptions (id PK, contract_id FK, plan_id FK, organization_id FK, status CHECK(pending|active|suspended|expired|canceled|terminated), starts_at date, ends_at date, renewal_at date NULL, auto_renew boolean DEFAULT true, cancelled_at timestamptz NULL, UNIQUE(organization_id, id))
+12. saas.licenses & saas.license_assignments (licenses: id PK, subscription_id FK, organization_id, application_id FK, scope_type, status CHECK(pending|active|suspended|expired|canceled|terminated), starts_at date, expires_at date CHECK >= starts_at, user_limit int, institution_limit int, storage_limit_gb int, exception_extra_users int DEFAULT 0, exception_reason text NULL CHECK(exception_extra_users = 0 OR exception_reason IS NOT NULL), exception_approved_by uuid NULL, exception_expires_at date NULL; license_assignments: UNIQUE(license_id, ecclesial_entity_id))
+13. saas.entitlements & saas.usage_limits (entitlements: id PK, license_id FK, module_id FK, enabled boolean DEFAULT true, feature_ids uuid[] DEFAULT '{}', status, UNIQUE(license_id, module_id); usage_limits: id PK, license_id FK, resource_code CHECK(users|institutions|storage_gb|modules), maximum_value numeric(19,4), exception_extra numeric(19,4) DEFAULT 0, period DEFAULT 'cycle', status, UNIQUE(license_id, resource_code, period))
+14. Facturación SaaS (Doc 15 §4.3): saas.invoices, saas.invoice_items, saas.invoice_taxes, saas.invoice_discounts, saas.payments, saas.payment_allocations, saas.credit_notes, saas.credit_note_items, saas.receivable_adjustments (importes numeric(19,4) >= 0, currency char(3)).
+
+--- ESQUEMA erp ---
+1. erp.families (id PK, organization_id NOT NULL, campus_id NOT NULL FK compuesta->core.campuses, name text NOT NULL, address text NULL, sector text NULL, notes text NULL, deleted_at timestamptz NULL, UNIQUE(organization_id, id))
+2. erp.persons (id PK, organization_id NOT NULL, campus_id NOT NULL FK compuesta->core.campuses, person_code text NOT NULL, full_name text NOT NULL, email text NULL, phone text NULL, address text NULL, sector text NULL, person_type text DEFAULT 'member' CHECK(member|visitor|parishioner), membership_status text DEFAULT 'active_member' CHECK(active_member|in_process|visitor|inactive|transferred), member_since date NULL, first_visit_date date NULL, record_status text DEFAULT 'active' CHECK(active|pending|inactive), notes text NULL, deleted_at timestamptz NULL, UNIQUE(organization_id, person_code), UNIQUE(organization_id, id), índice(organization_id, campus_id, membership_status))
+3. erp.family_memberships (id PK, organization_id NOT NULL, family_id NOT NULL, person_id NOT NULL, relationship_type text NOT NULL, is_primary boolean DEFAULT false, FKs compuestas->families/persons, UNIQUE(family_id, person_id))
+4. erp.congregational_baptisms (id PK, organization_id NOT NULL, person_id NOT NULL FK compuesta->persons, practice text NOT NULL CHECK(immersion|sprinkling|faith_affirmation|other), baptized_at date NOT NULL, place text NOT NULL, officiant text NOT NULL, notes text NULL)
+5. erp.participation_events (id PK, organization_id NOT NULL, campus_id uuid NULL, person_id NOT NULL FK compuesta->persons, event_type text NOT NULL, occurred_at date NOT NULL, detail text NOT NULL, source_ref_id uuid NULL, índice(organization_id, person_id, occurred_at DESC))
+6. erp.ministries_groups (id PK, organization_id NOT NULL, campus_id NOT NULL FK compuesta->core.campuses, name text NOT NULL, kind text NOT NULL, department text NULL, leader_person_id uuid NULL FK compuesta->persons, leader_name text NULL, schedule_text text NULL, purpose text NULL, status text DEFAULT 'active', deleted_at timestamptz NULL, UNIQUE(organization_id, id), UNIQUE parcial (organization_id, campus_id, lower(name)) WHERE deleted_at IS NULL)
+7. erp.group_members (id PK, organization_id NOT NULL, group_id NOT NULL FK compuesta->ministries_groups, person_id NOT NULL FK compuesta->persons, role_name text DEFAULT 'Integrante', joined_at date DEFAULT CURRENT_DATE, status text DEFAULT 'active' CHECK(active|paused|retired), UNIQUE parcial (group_id, person_id) WHERE status <> 'retired')
+8. erp.service_teams & erp.service_assignments (FKs compuestas->ministries_groups, persons, campuses; status CHECK(active|completed|canceled))
+9. erp.facilities (id PK, organization_id NOT NULL, campus_id NOT NULL FK compuesta->core.campuses, name text NOT NULL, facility_type text NOT NULL, capacity int NULL, condition text DEFAULT 'good', responsible_name text NULL, next_maintenance date NULL, status text DEFAULT 'active', UNIQUE(organization_id, id))
+10. erp.worship_events (id PK, organization_id NOT NULL, campus_id NOT NULL FK compuesta->campuses, facility_id uuid NULL FK compuesta->facilities, title text NOT NULL, event_type text NOT NULL, event_date date NOT NULL, start_time time NOT NULL, end_time time NULL CHECK(end_time IS NULL OR end_time > start_time), place_text text NOT NULL, responsible_person_id uuid NULL FK compuesta->persons, responsible_name text NULL, recurrence text DEFAULT 'single', recurrence_group_id uuid NULL, status text DEFAULT 'scheduled' CHECK(scheduled|in_progress|completed|canceled), UNIQUE(organization_id, id), índice(organization_id, facility_id, event_date, start_time))
+11. erp.event_attendance (id PK, organization_id NOT NULL, campus_id NOT NULL FK compuesta->campuses, event_id NOT NULL FK compuesta->worship_events, scope text NOT NULL CHECK(person|group|activity), person_id uuid NULL FK compuesta->persons, group_id uuid NULL FK compuesta->ministries_groups, present boolean NOT NULL, note text NULL, recorded_by uuid NULL FK->auth.users, CHECK ámbito estricto, UNIQUE parcial (event_id, person_id) WHERE person_id IS NOT NULL)
+12. erp.accounting_entities (id PK, organization_id NOT NULL FK->core.organizations, name text NOT NULL, country_code char(2) DEFAULT 'CO', framework text NOT NULL, currency char(3) DEFAULT 'COP', status text DEFAULT 'active', UNIQUE(organization_id, id))
+13. erp.chart_of_accounts (id PK, organization_id NOT NULL, entity_id NOT NULL FK compuesta->accounting_entities, code text NOT NULL, name text NOT NULL, account_type text NOT NULL, parent_id uuid NULL, dimension text NULL, is_postable boolean DEFAULT true, status text DEFAULT 'active', UNIQUE(entity_id, code), UNIQUE(organization_id, id))
+14. erp.accounting_periods (id PK, organization_id NOT NULL, entity_id NOT NULL FK compuesta->accounting_entities, period_code text NOT NULL, starts_at date NOT NULL, ends_at date NOT NULL CHECK(ends_at >= starts_at), status text DEFAULT 'open' CHECK(open|closing|closed|reopened), UNIQUE(entity_id, period_code), UNIQUE(organization_id, id))
+15. erp.accounting_period_closures (id PK, organization_id NOT NULL, period_id NOT NULL FK compuesta->accounting_periods, closed_by uuid NOT NULL FK->auth.users, closed_at timestamptz DEFAULT now(), total_debits numeric(19,4) NOT NULL, total_credits numeric(19,4) NOT NULL CHECK(total_debits = total_credits), balances_snapshot jsonb NOT NULL, reopen_reason text NULL)
+16. erp.financial_categories (id PK, organization_id NOT NULL FK->core.organizations, profile_scope text NOT NULL CHECK(shared|christian|catholic), direction text NOT NULL CHECK(income|expense), code text NOT NULL, name text NOT NULL, default_account_id uuid NULL, UNIQUE(organization_id, code), UNIQUE(organization_id, id))
+17. erp.treasury_accounts (id PK, organization_id NOT NULL, entity_id NOT NULL FK compuesta->accounting_entities, campus_id NOT NULL FK compuesta->core.campuses, name text NOT NULL, kind text NOT NULL CHECK(cash|bank|fund), currency char(3) DEFAULT 'COP', initial_balance numeric(19,4) DEFAULT 0, status text DEFAULT 'active', UNIQUE(organization_id, id))
+18. erp.treasury_movements (id PK, organization_id NOT NULL, campus_id NOT NULL, entity_id NOT NULL, account_id NOT NULL, category_id NOT NULL, budget_line_id uuid NULL, idempotency_key text NOT NULL, direction text NOT NULL CHECK(income|expense), movement_date date NOT NULL, concept text NOT NULL, source_name text NOT NULL, responsible_name text NULL, amount numeric(19,4) NOT NULL CHECK(amount > 0), reference text NOT NULL, status text DEFAULT 'draft' CHECK(draft|pending_review|approved|posted|reversed|voided), UNIQUE(organization_id, idempotency_key), UNIQUE(organization_id, reference), UNIQUE(organization_id, id))
+19. erp.bank_reconciliations & erp.bank_reconciliation_lines (conciliación bancaria vinculada a treasury_accounts, accounting_periods y matched_movement_id FK->treasury_movements; status CHECK(open|reconciled|closed))
+20. erp.journal_vouchers & erp.journal_lines (vouchers: id PK, organization_id, entity_id, period_id, treasury_movement_id NULL, idempotency_key NOT NULL, voucher_number NOT NULL, voucher_date date, description, status DEFAULT 'draft' CHECK(draft|posted|reversed|voided), reversal_of_voucher_id uuid NULL, posted_by uuid NULL, posted_at timestamptz NULL, UNIQUE(organization_id, idempotency_key), UNIQUE(entity_id, voucher_number), UNIQUE(organization_id, id); lines: id PK, organization_id, voucher_id FK, account_id FK, campus_id NULL, dimension NULL, debit numeric(19,4) DEFAULT 0, credit numeric(19,4) DEFAULT 0, CHECK((debit > 0 AND credit = 0) OR (credit > 0 AND debit = 0)))
+21. erp.budget_lines (id PK, organization_id, campus_id NULL, entity_id, period_code, area, category_id NULL, category_name, line_type CHECK(income|expense), approved_amount numeric(19,4) CHECK >= 0, status DEFAULT 'active', UNIQUE(organization_id, id))
+22. erp.assets & erp.asset_movements (assets: id PK, organization_id, campus_id, code, name, kind, location, responsible, condition, acquisition_value numeric(19,4) DEFAULT 0, acquisition_date date, status CHECK(active|pending|decommissioned), decommissioned_at date NULL, decommission_reason text NULL, CHECK(status <> 'decommissioned' OR decommission_reason IS NOT NULL), UNIQUE(organization_id, id))
+23. erp.vendors, erp.procurement_requests, erp.payables (FKs compuestas por organization_id)
+24. erp.meeting_minutes (id PK, organization_id, campus_id, code, meeting_date date, meeting_type, title, attendees jsonb DEFAULT '[]', responsible_name, agreements jsonb DEFAULT '[]', commitments jsonb DEFAULT '[]', status DEFAULT 'draft' CHECK(draft|approved|archived), approved_by uuid NULL, approved_at timestamptz NULL, UNIQUE(organization_id, code), UNIQUE(organization_id, id))
+25. erp.correspondence_items (id PK, organization_id, campus_id, radicado, direction CHECK(inbound|outbound), correspondence_date date, sender, recipient, subject, responsible_name, status DEFAULT 'registered' CHECK(registered|in_followup|answered|archived), notes text NULL, UNIQUE(organization_id, radicado), UNIQUE(organization_id, id))
+26. erp.admin_tasks (id PK, organization_id, campus_id, title, responsible_name, responsible_membership_id NULL, due_date date, priority DEFAULT 'medium' CHECK(high|medium|low), status DEFAULT 'pending' CHECK(pending|in_progress|completed|canceled), related_ref text NULL)
+27. erp.document_file_metadata (id PK, organization_id NOT NULL FK->core.organizations, uploaded_by uuid NOT NULL FK->auth.users, storage_provider DEFAULT 'supabase', storage_bucket NOT NULL, storage_key NOT NULL, original_name NOT NULL, declared_mime_type NOT NULL, detected_mime_type NULL, size_bytes bigint CHECK >= 0, checksum_sha256 char(64) NOT NULL, malware_status DEFAULT 'pending_scan' CHECK(pending_scan|clean|rejected|quarantined|expired|deleted), retention_until date NULL, legal_hold boolean DEFAULT false, deleted_at timestamptz NULL, UNIQUE(storage_bucket, storage_key), UNIQUE(organization_id, id))
+28. erp.erp_documents & erp.erp_document_versions (erp_documents: id PK, organization_id, campus_id, folder, category, doc_type, title, owner, access_level CHECK(institutional|internal|restricted), profile_scope CHECK(shared|christian|catholic), status CHECK(active|in_review|archived), current_version_id uuid NULL, UNIQUE(organization_id, id); erp_document_versions: id PK, organization_id, document_id FK, version_label, file_id FK, author_name, note, UNIQUE(document_id, version_label))
+29. Puentes tipados documentales: erp.erp_document_files, erp.meeting_minute_files, erp.correspondence_files, erp.treasury_movement_files, erp.asset_files (PK(parent_id, file_id) con FKs compuestas a parent y document_file_metadata).
+
+--- ESQUEMA pastoral ---
+1. pastoral.pastoral_care_cases (id PK, organization_id NOT NULL, campus_id NOT NULL FK compuesta->core.campuses, care_type NOT NULL, sensitivity_level DEFAULT 'restricted' CHECK(standard|restricted|counseling_strict), person_id NULL FK compuesta->erp.persons, family_id NULL FK compuesta->erp.families, person_label NOT NULL, assigned_membership_id NULL FK compuesta->core.memberships, responsible_name NOT NULL, opened_at date NOT NULL, summary NOT NULL, allow_ai_analysis boolean NOT NULL DEFAULT false, status DEFAULT 'open' CHECK(open|in_followup|closed|archived), UNIQUE(organization_id, id))
+2. pastoral.pastoral_care_case_role_acl (case_id, organization_id, role_id, PK(case_id, role_id), FK compuesta->pastoral_care_cases, FK->core.roles)
+3. pastoral.pastoral_care_case_member_acl (case_id, organization_id, membership_id, access_level DEFAULT 'read' CHECK(read|write|owner), PK(case_id, membership_id), FKs compuestas->pastoral_care_cases, core.memberships)
+4. pastoral.pastoral_care_emergency_grants (id PK, organization_id, case_id, grantee_membership_id, approved_by_membership_id, reason CHECK(length(trim(reason)) >= 10), granted_at DEFAULT now(), expires_at NOT NULL CHECK(expires_at <= granted_at + interval '4 hours'), revoked_at NULL)
+5. pastoral.pastoral_care_confidential_notes (id PK, organization_id, case_id FK compuesta->pastoral_care_cases, note_body text NOT NULL, created_by uuid NOT NULL FK->auth.users)
+6. pastoral.pastoral_care_commitments & pastoral.pastoral_care_case_events (FKs compuestas->pastoral_care_cases; case_events append-only).
+
+--- ESQUEMAS sacramental, diocesan, audit ---
+- sacramental: sacramental_books, sacramental_entries (UNIQUE(book_id, entry_number)), marginal_notes (append-only), sacramental_requests, certificate_issuances (UNIQUE(verification_code)), catechesis_programs, catechesis_enrollments, liturgy_schedules, parish_annual_reports.
+- diocesan: 18 tablas de Doc 15 §4.5-4.6 + report_submission_files y communication_attachments apuntando a erp.document_file_metadata.
+- audit: security_events, commercial_audit_events, institutional_audit_events, sensitive_access_events (append-only; REVOKE UPDATE, DELETE).
+
+================================================================================
+3. ERD ACTUALIZADO POR DOMINIOS (MERMAID)
+================================================================================
+[Identidad, Organizaciones, Entidades, Sedes y RBAC]
+erDiagram
+  AUTH_USERS ||--o| PROFILES : tiene
+  AUTH_USERS ||--o{ MEMBERSHIPS : participa
+  ORGANIZATIONS ||--o{ MEMBERSHIPS : agrupa
+  ORGANIZATIONS ||--o{ ORGANIZATION_ENTITIES : vincula
+  ECCLESIAL_ENTITIES ||--o{ ORGANIZATION_ENTITIES : participa
+  ORGANIZATIONS ||--o{ CAMPUSES : opera_sedes
+  ORGANIZATION_ENTITIES ||--o{ CAMPUSES : adscribe_sede
+  MEMBERSHIPS ||--o{ MEMBERSHIP_SCOPES : delimita
+  CAMPUSES ||--o{ MEMBERSHIP_SCOPES : scope_sede
+  ORGANIZATION_ENTITIES ||--o{ MEMBERSHIP_SCOPES : scope_entidad
+  MEMBERSHIPS ||--o{ MEMBERSHIP_ROLES : asigna
+  ROLES ||--o{ MEMBERSHIP_ROLES : rol
+  ROLES ||--o{ ROLE_PERMISSIONS : agrupa
+  PERMISSIONS ||--o{ ROLE_PERMISSIONS : permiso
+
+[Contabilidad, Tesorería, Cierres, Conciliación y Documentos]
+erDiagram
+  ACCOUNTING_ENTITIES ||--o{ CHART_OF_ACCOUNTS : plan
+  ACCOUNTING_ENTITIES ||--o{ ACCOUNTING_PERIODS : periodos
+  ACCOUNTING_PERIODS ||--o| ACCOUNTING_PERIOD_CLOSURES : cierre
+  TREASURY_ACCOUNTS ||--o{ BANK_RECONCILIATIONS : concilia
+  BANK_RECONCILIATIONS ||--|{ BANK_RECONCILIATION_LINES : partidas
+  TREASURY_MOVEMENTS ||--o{ BANK_RECONCILIATION_LINES : coteja
+  TREASURY_MOVEMENTS ||--o| JOURNAL_VOUCHERS : origina
+  JOURNAL_VOUCHERS ||--|{ JOURNAL_LINES : detalle
+  JOURNAL_VOUCHERS ||--o| JOURNAL_VOUCHERS : revierte
+  DOCUMENT_FILE_METADATA ||--o{ ERP_DOCUMENT_VERSIONS : almacena
+  ERP_DOCUMENTS ||--|{ ERP_DOCUMENT_VERSIONS : versiona
+  DOCUMENT_FILE_METADATA ||--o{ MEETING_MINUTE_FILES : adjunta_acta
+  DOCUMENT_FILE_METADATA ||--o{ CORRESPONDENCE_FILES : adjunta_radicado
+  DOCUMENT_FILE_METADATA ||--o{ TREASURY_MOVEMENT_FILES : soporte
+
+[Seguridad Pastoral Relacional]
+erDiagram
+  PASTORAL_CARE_CASES ||--o{ PASTORAL_CARE_CASE_ROLE_ACL : acl_roles
+  ROLES ||--o{ PASTORAL_CARE_CASE_ROLE_ACL : autoriza
+  PASTORAL_CARE_CASES ||--o{ PASTORAL_CARE_CASE_MEMBER_ACL : acl_miembros
+  MEMBERSHIPS ||--o{ PASTORAL_CARE_CASE_MEMBER_ACL : autoriza
+  PASTORAL_CARE_CASES ||--o{ PASTORAL_CARE_EMERGENCY_GRANTS : emergencia
+  PASTORAL_CARE_CASES ||--o{ PASTORAL_CARE_CONFIDENTIAL_NOTES : notas_aisladas
+  PASTORAL_CARE_CASES ||--o{ PASTORAL_CARE_COMMITMENTS : compromisos
+  PASTORAL_CARE_CASES ||--o{ PASTORAL_CARE_CASE_EVENTS : historial
+
+================================================================================
+4. MATRIZ DE ROLES Y PERMISOS
+================================================================================
+- platform_admin / platform_commercial / platform_billing / platform_support (organization_id NULL, is_platform_role=true): total en saas/core plataforma; SIN acceso a erp, pastoral ni sacramental.
+- tenant_admin: total tenant en core/erp común (sedes, actas, correspondencia, tareas, usuarios tenant); consulta licencias propias; en pastoral solo metadatos agregados SIN notas confidenciales (salvo grant emergencia).
+- pastor_principal / parroco: dirección institucional, comunidad, grupos, cultos, aprobación actas/presupuestos; pastor_principal accede a pastoral según ACL; parroco accede a sacramental (MOD-SAC).
+- lider_pastoral: gestión de grupos/ministerios y cultos en su campus/scope; pastoral solo casos donde posea ACL explícita (excluido counseling_strict por defecto).
+- consejero_autorizado: lectura/escritura en casos de consejería donde posea ACL explícita.
+- tesorero: total en treasury_*, bank_reconciliations y budget_lines en su scope.
+- contador: total en chart_of_accounts, journal_vouchers, accounting_periods, cierres y estados financieros.
+- secretaria: alta/edición miembros/familias, asistencia, actas, correspondencia, tareas y solicitudes sacramentales (sin notas pastorales confidenciales).
+- custodio_archivo: repositorio erp_documents, retención y libros sacramentales (si MOD-SAC).
+- diocesan_reviewer (APP-DIO): solicitudes, revisión de presentaciones y circulares mediante institutional_access_grants vigentes.
+
+================================================================================
+5. MATRIZ RLS PROPUESTA POR TABLA
+================================================================================
+(Toda lectura/escritura verifica core.has_active_membership(org_id, campus_id, permission_code) + saas.has_active_entitlement(org_id, module_code)):
+- core.organizations, ecclesial_entities, campuses: SELECT miembros activos del org_id; INSERT/UPDATE solo tenant_admin o platform_admin; DELETE denegado.
+- core.memberships, membership_scopes, membership_roles: SELECT propio usuario o tenant_admin del org_id; INSERT/UPDATE solo tenant_admin/server-side; DELETE denegado.
+- saas.*: SELECT platform_* o lectura propia del tenant; INSERT/UPDATE solo platform_* server-side (contratos/facturas emitidas inmutables); DELETE denegado.
+- erp.persons, families, ministries_groups, worship_events, event_attendance: SELECT/INSERT/UPDATE por org_id + campus_id del scope + permiso + entitlement; WITH CHECK impide cambiar org_id; DELETE lógico (deleted_at).
+- erp.treasury_*, journal_*, accounting_*, budget_lines: SELECT/INSERT tesorero/contador con MOD-FIN; UPDATE bloqueado en journal_vouchers posted/reversed; DELETE denegado.
+- erp.document_file_metadata: SELECT si autorizado en registro padre puente y malware_status='clean' (sin exponer storage_key); INSERT/UPDATE rol documental; DELETE lógico.
+- pastoral.pastoral_care_cases: SELECT/INSERT/UPDATE solo con MOD-CRI-PAS + org_id/campus_id + (case_role_acl OR case_member_acl OR emergency_grant vigente); DELETE denegado.
+- pastoral.pastoral_care_confidential_notes: SELECT/INSERT únicamente bajo ACL explícito del caso; DELETE denegado.
+- sacramental.*: SELECT/INSERT rol sacramental + MOD-SAC activo; UPDATE prohibido en partidas asentadas (solo marginal_notes); DELETE denegado.
+- audit.*: SELECT platform_auditor o tenant_admin (solo su org_id, sin texto pastoral); INSERT solo rol técnico server-side; UPDATE/DELETE denegados.
+
+================================================================================
+6. MODELO CONTABLE COMPLETO
+================================================================================
+- Períodos y cierres: accounting_periods (open -> closing -> closed -> reopened). Al cerrar, postea snapshot inmutable en accounting_period_closures verificando total_debits = total_credits. Reabrir exige reopen_reason y evento auditado.
+- Garantía de partida doble e inmutabilidad:
+  * CHECK ((debit > 0 AND credit = 0) OR (credit > 0 AND debit = 0)) en journal_lines.
+  * Función transaccional post_journal_voucher(voucher_id) bloquea FOR UPDATE comprobante y período, valida SUM(debit)=SUM(credit) > 0 y período open/reopened, asigna voucher_number secuencial y fija status='posted'.
+  * Trigger BEFORE UPDATE OR DELETE impide alterar o borrar comprobantes posted o reversed.
+- Reversos y anulaciones: draft -> voided sin borrado; posted -> solo reverso mediante nuevo comprobante (reversal_of_voucher_id) con débitos y créditos invertidos.
+- Conciliación bancaria: bank_reconciliations + bank_reconciliation_lines cotejan extractos contra treasury_movements sin alterar saldos automáticamente.
+- Concurrencia e idempotencia: UNIQUE (organization_id, idempotency_key) en treasury_movements y journal_vouchers; bloqueo FOR UPDATE en treasury_accounts y accounting_periods.
+
+================================================================================
+7. CATÁLOGO DE ESTADOS Y TRANSICIONES (CIERRE D-12)
+================================================================================
+- saas.contracts: draft -> pending -> active; active <-> suspended; active -> expired | canceled | terminated.
+- saas.subscriptions / licenses: pending -> active; active <-> suspended; active -> expired | canceled | terminated.
+- core.memberships: invited -> active | revoked; active <-> suspended; active -> expired | revoked.
+- erp.document_file_metadata: pending_scan -> clean | rejected | quarantined; clean -> expired | deleted (bloqueado si legal_hold=true).
+- erp.erp_documents: in_review -> active -> archived.
+- erp.worship_events: scheduled -> in_progress -> completed; scheduled -> canceled.
+- erp.treasury_movements: draft -> pending_review -> approved -> posted -> reversed; draft/pending_review -> voided.
+- erp.journal_vouchers: draft -> posted -> reversed; draft -> voided.
+- erp.accounting_periods: open -> closing -> closed -> reopened -> closing.
+- erp.meeting_minutes: draft -> approved -> archived.
+- erp.correspondence_items: registered -> in_followup -> answered -> archived.
+- erp.admin_tasks: pending -> in_progress -> completed; pending/in_progress -> canceled.
+- pastoral.pastoral_care_cases: open -> in_followup -> closed -> archived.
+- sacramental.sacramental_requests: draft -> pending -> in_preparation -> approved -> celebrated | canceled.
+- diocesan.*: Solicitud (draft, published, open, closed, cancelled, archived); Entrega (draft, submitted, delivered, failed, withdrawn); Revisión (not_started, in_review, correction_requested, accepted, rejected, closed).
+
+================================================================================
+8. DECISIONES QUE SIGUEN REQUIRIENDO APROBACIÓN DEL PROPIETARIO
+================================================================================
+1. Bloqueantes inmediatos antes de Nivel 2 (DDL y migraciones SQL Fase 1):
+   - D-03: aprobación definitiva del catálogo inicial de roles sistema (plataforma vs tenant) y los 3 niveles de membership_scopes (tenant | entity | campus).
+   - D-12: aprobación del catálogo cerrado de estados y transiciones (sección 7).
+   - D-13: aprobación del esquema operativo ERP (erp, pastoral, sacramental) integrado con core.campuses.
+   - Infraestructura: proveedor/región de Supabase, política de retención y backups.
+2. Bloqueantes para dominios SaaS y Diocesano posteriores:
+   - D-01, D-02, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11.
+
+================================================================================
+9. EVIDENCIAS, RUTAS Y DICTAMEN DE PREPARACIÓN
+================================================================================
+Evidencias verificadas en repositorio:
+- docs/arquitectura/backend/01, 03, 04, 06, 08, 09, 11, 12, 13, 15.
+- AGENTS.md, docs/erp/definicion-funcional-y-arquitectonica.md, docs/erp/estandar-formularios.md.
+- apps/saas/src/data/saas-domain.ts, commercial-service.ts, provisioning-service.ts, routes/configuracion.tsx, test/saas-consolidation.test.ts (36/36 tests).
+- apps/erp/src/data/*-demo.ts, lib/ao-cristiano-profile.ts, start.ts, components/modules/*, test/ao-cristiano-integrity.test.tsx (19/19 tests).
+
+DICTAMEN DE PREPARACIÓN:
+NIVEL 1 COMPLETAMENTE CERRADO Y LISTO PARA APROBACIÓN DEL PROPIETARIO.
+Todas las observaciones técnicas (diccionario detallado con tipos/nulabilidad/defaults/FKs/índices, core.campuses, RBAC multi-organización, ACL pastoral relacional + break-glass, modelo contable transaccional, gestión documental/Storage privado, catálogo de estados D-12, ERD coherente y validación anti-duplicación) quedan resueltas sin haberse modificado código, SQL ni Supabase.
+
+Quedo detenido a la espera de autorización expresa antes de iniciar el Nivel 2.

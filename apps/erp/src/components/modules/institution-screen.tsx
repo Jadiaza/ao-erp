@@ -34,8 +34,13 @@ import {
 } from "@/data/institution-profile-demo";
 import { useEffect, useState as useReactState } from "react";
 import { parishDemo } from "@/data/parish-demo";
+import { useAoCristianoSettings } from "@/lib/use-ao-cristiano";
+import { isChristianProfile } from "@/lib/ao-cristiano-profile";
 
 export function InstitutionScreen() {
+  const { settings } = useAoCristianoSettings();
+  const christian = isChristianProfile(settings.profile);
+  const terms = settings.terminology;
   const [tab, setTab] = useState("identity");
   const [linked, setLinked] = useState(false);
   const [institution] = useReactState(() => {
@@ -49,26 +54,39 @@ export function InstitutionScreen() {
   useEffect(() => {
     window.localStorage.setItem("ao-erp:institution:profile", JSON.stringify(institution));
   }, [institution]);
+
+  const displayName = christian
+    ? `${terms.institutionLabel} · ${settings.organizationId}`
+    : institution.officialName;
+  const displayShort = christian ? settings.organizationId : institution.shortName;
+  const displayType = christian ? "Congregación / iglesia cristiana" : institution.entityType;
+
   return (
     <ModuleLayout
       breadcrumbs={[
         { label: "Dashboard", href: "/" },
         { label: "Gobierno e institución" },
-        { label: "Institución" },
+        { label: christian ? terms.institutionLabel : "Institución" },
       ]}
-      title="Institución"
-      description="Identidad, naturaleza y constitución de la entidad que utiliza A&O ERP. Este módulo describe quién es la institución."
+      title={christian ? `${terms.institutionLabel} y sedes` : "Institución"}
+      description={
+        christian
+          ? "Identidad congregacional, sedes, responsables y dependencias operativas asociadas a la organización."
+          : "Identidad, naturaleza y constitución de la entidad que utiliza A&O ERP. Este módulo describe quién es la institución."
+      }
       actions={
-        <Button variant="outline" className="gap-2" onClick={() => setLinked((value) => !value)}>
-          {linked ? <Unlink2 className="size-4" /> : <Link2 className="size-4" />}
-          {linked ? "Quitar vínculo de muestra" : "Vincular a jurisdicción"}
-        </Button>
+        !christian ? (
+          <Button variant="outline" className="gap-2" onClick={() => setLinked((value) => !value)}>
+            {linked ? <Unlink2 className="size-4" /> : <Link2 className="size-4" />}
+            {linked ? "Quitar vínculo de muestra" : "Vincular a jurisdicción"}
+          </Button>
+        ) : undefined
       }
     >
       <DemoNotice>
-        Perfil institucional ficticio y editable solo a modo de demostración. Identidad
-        institucional no equivale a administración operativa; contactos de servicio, actividades y
-        documentación administrativa se consultan en Administración institucional.
+        {christian
+          ? `Identidad institucional de demostración para ${settings.organizationId} (${settings.campusId}). Gestiona sedes, responsables y dependencias en el panel operativo.`
+          : "Perfil institucional ficticio y editable solo a modo de demostración. Identidad institucional no equivale a administración operativa; contactos de servicio, actividades y documentación administrativa se consultan en Administración institucional."}
       </DemoNotice>
       <InstitutionOperationsPanel />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
@@ -77,20 +95,22 @@ export function InstitutionScreen() {
           <CardContent className="flex flex-wrap items-center gap-5 p-5">
             <div className="flex size-20 shrink-0 flex-col items-center justify-center rounded-2xl border bg-[#12304A] text-white shadow-sm">
               <Church className="size-7" />
-              <span className="mt-1 text-[9px] font-semibold tracking-widest">SMC</span>
+              <span className="mt-1 text-[9px] font-semibold tracking-widest">
+                {christian ? "A&O" : "SMC"}
+              </span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[#B9934B]">
-                  Identidad institucional
+                  {christian ? "Identidad congregacional" : "Identidad institucional"}
                 </p>
                 <StatusBadge status="active" label={institution.status} />
               </div>
               <h2 className="mt-1 text-xl font-semibold text-[#12304A]">
-                {institution.officialName}
+                {displayName}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {institution.shortName} · {institution.entityType}
+                {displayShort} · {displayType}
               </p>
               <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <MapPin className="size-3.5" />
@@ -101,7 +121,9 @@ export function InstitutionScreen() {
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 Identificador institucional
               </p>
-              <p className="mt-1 font-mono text-sm font-semibold">{parishDemo.id}</p>
+              <p className="mt-1 font-mono text-sm font-semibold">
+                {christian ? settings.organizationId : parishDemo.id}
+              </p>
               <p className="mt-1 text-[10px] text-muted-foreground">
                 Conservado ante cambios de vínculo
               </p>
@@ -113,38 +135,50 @@ export function InstitutionScreen() {
         >
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              {linked ? (
+              {linked && !christian ? (
                 <Link2 className="size-4 text-emerald-700" />
               ) : (
                 <Network className="size-4 text-primary" />
               )}
-              {linked ? "Vinculación eclesiástica" : "Institución independiente"}
+              {christian
+                ? "Congregación autónoma / red"
+                : linked
+                  ? "Vinculación eclesiástica"
+                  : "Institución independiente"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm font-semibold">
-              {linked ? "Diócesis de San Gabriel" : "Configuración autónoma"}
+              {christian
+                ? `Sede activa: ${settings.campusId}`
+                : linked
+                  ? "Diócesis de San Gabriel"
+                  : "Configuración autónoma"}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              {linked
-                ? `Relación jurisdiccional ilustrativa. La identidad local y los registros de ${parishDemo.id} se conservan; no representa acceso.`
-                : "La parroquia puede configurar su identidad sin depender de una diócesis registrada en la plataforma."}
+              {christian
+                ? "Opera de forma independiente con sus propias sedes, responsables, ministerios y tesorería."
+                : linked
+                  ? `Relación jurisdiccional ilustrativa. La identidad local y los registros de ${parishDemo.id} se conservan; no representa acceso.`
+                  : "La parroquia puede configurar su identidad sin depender de una diócesis registrada en la plataforma."}
             </p>
-            <Button
-              variant="link"
-              size="sm"
-              className="mt-2 h-auto p-0 text-xs"
-              onClick={() => setLinked((value) => !value)}
-            >
-              {linked ? "Conservar entidad independiente" : "Vincular posteriormente"}
-            </Button>
+            {!christian && (
+              <Button
+                variant="link"
+                size="sm"
+                className="mt-2 h-auto p-0 text-xs"
+                onClick={() => setLinked((value) => !value)}
+              >
+                {linked ? "Conservar entidad independiente" : "Vincular posteriormente"}
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="identity">Identidad institucional</TabsTrigger>
-          <TabsTrigger value="canonical">Identidad canónica</TabsTrigger>
+          {!christian && <TabsTrigger value="canonical">Identidad canónica</TabsTrigger>}
           <TabsTrigger value="civil">Identidad jurídica civil</TabsTrigger>
           <TabsTrigger value="organization">Organización</TabsTrigger>
           <TabsTrigger value="configuration">Identificación y periodo</TabsTrigger>

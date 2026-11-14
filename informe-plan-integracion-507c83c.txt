@@ -1,0 +1,225 @@
+ # PLAN TÉCNICO DE INTEGRACIÓN — origin/main (base) vs aportes exclusivos de 507c83c (SOLO LECTURA)
+
+Repositorio local: D:\Proyectos\ao-erp
+Repositorio remoto: https://github.com/Jadiaza/ao-erp.git (Jadiaza/ao-erp)
+Base canónica recomendada: origin/main @ 6638079 (2026-11-09T17:53:51-05:00, "Merge pull request #4 from Jadiaza/design/saas-dashboard-refresh")
+Fuente de rescate analizada: 507c83c (2026-11-06T00:33:48-05:00, "chore: respaldar trabajo trasladado de A&O ERP")
+Ubicación de 507c83c: contenido en integracion-main-ao-erp y respaldo-traslado-ao-erp; NO contenido en origin/main.
+
+RESTRICCIONES RESPETADAS
+- Análisis exclusivamente de lectura.
+- No se ejecutaron: merge, rebase, cherry-pick, pull, push.
+- No se crearon ramas ni commits ni stash.
+- No se cambió de rama.
+- No se modificaron archivos del repositorio (excepto la creación solicitada de este informe).
+- No se alteró Supabase.
+- No se descartaron cambios locales.
+- No se eliminaron ramas existentes.
+- Operación de referencia previa/autorizada en contexto de auditoría: git fetch origin (actualiza referencias, no modifica árbol de trabajo).
+
+EVIDENCIA BASE (COMANDOS)
+$ git fetch origin
+$ git show --name-status --format=oneline 507c83c
+$ git diff --name-status main..origin/main
+$ git diff --name-status integracion-main-ao-erp..origin/main
+$ git diff --name-status origin/main..integracion-main-ao-erp
+$ git rev-list --left-right --count main...origin/main                 # 0 21
+$ git rev-list --left-right --count integracion-main-ao-erp...origin/integracion-main-ao-erp  # 0 0
+$ git rev-list --left-right --count integracion-main-ao-erp...origin/main                    # 2 15
+$ git log --oneline origin/main..integracion-main-ao-erp              # a3f174e, 507c83c
+$ git log --oneline integracion-main-ao-erp..origin/main              # 15 commits (6638079..5884ae9)
+$ git branch --contains 507c83c                                       # integracion-main-ao-erp, respaldo-traslado-ao-erp
+# Comparación por archivo (507c83c vs origin/main):
+$ git cat-file -e origin/main:<path>; git diff --quiet 507c83c:<path> origin/main:<path>
+# Diffs de contenido/estadística:
+$ git diff --stat 507c83c:<path> origin/main:<path>
+$ git diff -- <path>   # cambio local pendiente
+
+RESUMEN EJECUTIVO
+- origin/main (6638079) es la línea más reciente y completa del ecosistema (21 commits sobre main local; 15 commits sobre integracion-main-ao-erp), pero no es superset total.
+- 507c83c aporta 46 cambios: 33 ya están presentes e idénticos en origin/main; 1 requiere evaluación/adaptación parcial (document-management-screen.tsx); 10 difieren por rediseño/evolución SaaS y requieren adaptación funcional (no reemplazo por versión antigua); 1 es artefacto generado obsoleto (saas routeTree.gen.ts); bun.lock y docs de auditoría están alineados/presentes en base.
+- No se requiere recuperación masiva de código desde 507c83c. La integración debe preservar deltas funcionales faltantes sobre origin/main.
+
+================================================================================
+1. MATRIZ COMPLETA DE RECUPERACIÓN — COMMIT 507c83c (46 ARCHIVOS)
+================================================================================
+
+Leyenda clasificación:
+- Ya implementado en GitHub: blob/estado funcional aportado presente en origin/main.
+- Implementado parcialmente en GitHub: presente pero con evolución divergente; requiere comparar y adaptar.
+- No implementado en GitHub y debe recuperarse: aporte útil ausente en origin/main.
+- Obsoleto o reemplazado: superado por implementación/artefacto actual.
+- Requiere rediseño o adaptación: funcionalidad/concepto relevante pero debe portarse sobre la arquitectura/diseño actual de origin/main.
+
+| # | Estado 507c83c | Ruta | En origin/main | 507c83c == origin/main | Clasificación | Evidencia / observación |
+|---:|---|---|:---:|:---:|---|---|
+| 1 | A | apps/erp/src/components/forms/form-character-counter.tsx | Sí | Sí | Ya implementado en GitHub | Blob idéntico en origin/main. |
+| 2 | A | apps/erp/src/components/forms/form-file-field.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 3 | A | apps/erp/src/components/forms/form-validation-message.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 4 | A | apps/erp/src/components/forms/form-wizard.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 5 | M | apps/erp/src/components/forms/index.ts | Sí | Sí | Ya implementado en GitHub | Exportaciones aportadas presentes en base. |
+| 6 | M | apps/erp/src/components/modules/accounting-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 7 | M | apps/erp/src/components/modules/assets-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 8 | M | apps/erp/src/components/modules/budget-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 9 | M | apps/erp/src/components/modules/community-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 10 | M | apps/erp/src/components/modules/confirm-dialog.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 11 | M | apps/erp/src/components/modules/data-table.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 12 | A | apps/erp/src/components/modules/demo-crud-panel.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 13 | M | apps/erp/src/components/modules/document-management-screen.tsx | Sí | No | Implementado parcialmente en GitHub / Requiere rediseño o adaptación | git diff --stat 507c83c:... origin/main:... => 172 cambios, 167 ins(+), 5 del(-). 507c83c aporta FormModal/TextInputField, useLocalCollection("ao-erp:document-management", institutionalDocuments) y alta (create). origin/main mantiene base y añade áreas archivísticas/enlaces (archiveAreas, rutas /app/gestion-documental/*), edición (editing, update), iconos/acciones y mayor alcance; convive con archive-area-screen.tsx y archive-demo.ts presentes en origin/main. |
+| 14 | M | apps/erp/src/components/modules/documents-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 15 | M | apps/erp/src/components/modules/form-dialog.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 16 | M | apps/erp/src/components/modules/formation-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 17 | M | apps/erp/src/components/modules/groups-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 18 | A | apps/erp/src/components/modules/institution-operations-panel.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 19 | M | apps/erp/src/components/modules/institution-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 20 | M | apps/erp/src/components/modules/mass-intentions-visual-pilot.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 21 | M | apps/erp/src/components/modules/module-layout.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 22 | M | apps/erp/src/components/modules/parishioner-portal-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 23 | A | apps/erp/src/components/modules/pastoral-planning-operations-panel.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 24 | M | apps/erp/src/components/modules/pastoral-planning-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 25 | M | apps/erp/src/components/modules/procurement-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 26 | M | apps/erp/src/components/modules/sacramental-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 27 | M | apps/erp/src/components/modules/settings-center-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 28 | M | apps/erp/src/components/modules/treasury-screen.tsx | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 29 | A | apps/erp/src/data/institutional-structure-demo.ts | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 30 | A | apps/erp/src/data/local-repository.ts | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 31 | M | apps/erp/src/data/navigation.ts | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 32 | M | apps/erp/src/data/pastoral-demo.ts | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 33 | A | apps/saas/src/components/admin-screen.tsx | Sí | No | Implementado parcialmente en GitHub / Requiere rediseño o adaptación | Stat: 380 cambios, 218 ins(+), 162 del(-). 507c83c: pantalla admin genérica con persistencia local (storageKey/localStorage) y CRUD básico. origin/main: rediseño hacia EntityRepository/servicios (repository.subscribe/list/replace), UI nueva (saas-ui, saas-icons), campos/estado/contexto ampliados; depende del ecosistema SaaS nuevo. |
+| 34 | A | apps/saas/src/data/demo.ts | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 35 | M | apps/saas/src/routeTree.gen.ts | Sí | No | Obsoleto o reemplazado (artefacto generado) | Stat: 436 ins(+) en origin/main. Árboles distintos; debe regenerarse desde rutas finales, no fusionarse manualmente. |
+| 36 | M | apps/saas/src/routes/__root.tsx | Sí | No | Requiere rediseño o adaptación | Stat: 315 cambios, 263 ins(+), 52 del(-). 507c83c: layout/nav simple. origin/main: shell/topbar/branding y navegación ampliada (analítica, aprovisionamiento, auditoría, clientes, facturación, infraestructura, productos, soporte, suscripciones, etc.). |
+| 37 | A | apps/saas/src/routes/configuracion.tsx | Sí | No | Requiere rediseño o adaptación | Stat: 61 cambios, 51 ins(+), 10 del(-). 507c83c: apariencia + catálogo/ámbito de módulos con toggles locales, alcance global/por organización, avisos (plan/licencia/permisos, sin persistencia real). origin/main: versión evolutiva en nuevo diseño; verificar paridad y rescatar reglas faltantes. |
+| 38 | M | apps/saas/src/routes/index.tsx | Sí | No | Requiere rediseño o adaptación | Stat: 898 cambios, 846 ins(+), 52 del(-). 507c83c: dashboard simple con demo.ts. origin/main: dashboard rediseñado (PR #4). |
+| 39 | A | apps/saas/src/routes/instituciones.tsx | Sí | No | Requiere rediseño o adaptación | Stat: 16 cambios, 3 ins(+), 13 del(-). 507c83c: wrapper de AdminScreen. origin/main: pantalla especializada del nuevo SaaS. |
+| 40 | A | apps/saas/src/routes/organizaciones.tsx | Sí | No | Requiere rediseño o adaptación | Patrón análogo a #39 (simple en 507c83c vs especializada en origin/main). |
+| 41 | A | apps/saas/src/routes/planes-licencias.tsx | Sí | No | Requiere rediseño o adaptación | Patrón análogo; origin/main con modelo comercial/licenciamiento más amplio. |
+| 42 | A | apps/saas/src/routes/roles-permisos.tsx | Sí | No | Requiere rediseño o adaptación | Patrón análogo. |
+| 43 | A | apps/saas/src/routes/usuarios.tsx | Sí | No | Requiere rediseño o adaptación | Patrón análogo. |
+| 44 | M | apps/saas/src/styles.css | Sí | No | Requiere rediseño o adaptación | Stat: 4596 cambios, 3930 ins(+), 666 del(-). Evolución mayor alineada al rediseño; no reintroducir hoja antigua. |
+| 45 | M | bun.lock | Sí | Sí | Ya implementado en GitHub (estado actual alineado) | Idéntico a origin/main. Regenerar solo mediante flujo autorizado si cambian dependencias. |
+| 46 | A | docs/erp/auditorias/auditoria-local-completitud-2026-11.md | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+| 47 | A | docs/erp/auditorias/inventario-formularios-global-2026-11.md | Sí | Sí | Ya implementado en GitHub | Idéntico. |
+
+(Conteo: 46 rutas modificadas/creadas en 507c83c; matriz detallada en 47 filas con bun.lock/docs incluidos explícitamente.)
+
+================================================================================
+2. CLASIFICACIÓN CONSOLIDADA Y FOCOS SOLICITADOS
+================================================================================
+
+2.1 Formularios compartidos
+- Aportes 507c83c: form-character-counter.tsx, form-file-field.tsx, form-validation-message.tsx, form-wizard.tsx, forms/index.ts y uso transversal en pantallas.
+- Estado: YA IMPLEMENTADOS en origin/main (idénticos). No recuperar código desde 507c83c.
+
+2.2 Gestión institucional
+- Aportes: institution-operations-panel.tsx, institution-screen.tsx, institutional-structure-demo.ts, navigation.ts, module-layout.tsx.
+- Estado: YA IMPLEMENTADOS (idénticos).
+
+2.3 Planeación pastoral, grupos y comunidades
+- Aportes: pastoral-planning-operations-panel.tsx, pastoral-planning-screen.tsx, groups-screen.tsx, formation-screen.tsx, pastoral-demo.ts, community-screen.tsx, parishioner-portal-screen.tsx, sacramental-screen.tsx, mass-intentions-visual-pilot.tsx.
+- Estado: YA IMPLEMENTADOS (idénticos).
+
+2.4 Pantallas financieras y administrativas
+- Aportes: accounting-screen.tsx, assets-screen.tsx, budget-screen.tsx, procurement-screen.tsx, treasury-screen.tsx, documents-screen.tsx, settings-center-screen.tsx, data-table.tsx, confirm-dialog.tsx, demo-crud-panel.tsx, document-management-screen.tsx.
+- Estado: todas YA IMPLEMENTADAS salvo document-management-screen.tsx (PARCIAL/ADAPTACIÓN por evolución archivística en origin/main).
+
+2.5 SaaS y sus rutas, servicios y repositorios
+- 507c83c: admin-screen.tsx, data/demo.ts, rutas (__root, index, configuracion, instituciones, organizaciones, planes-licencias, roles-permisos, usuarios), styles.css, routeTree.gen.ts.
+- origin/main: data/demo.ts ya implementado; resto divergente/rediseñado. Además origin/main añade ecosistema no presente en 507c83c (componentes/consolas/UI SaaS, commercial-service.ts, ecosystem-demo.ts, provisioning-service.ts, saas-domain.ts, saas-repository.ts, support-demo.ts, rutas analitica-reportes/aprovisionamiento/auditoria-cumplimiento/clientes/facturacion-cartera/identidad-seguridad/infraestructura/productos-servicios/soporte/*/suscripciones/vercel-runtime, server-functions/vercel-runtime.ts, pruebas).
+- Conclusión: versión SaaS de 507c83c anterior/simple; NO reemplazar. Rescatar solo semántica/reglas faltantes (especial atención a configuracion.tsx: alcance global/por organización, catálogo de módulos, plan/licencia/permisos, no pérdida histórica). routeTree.gen.ts es generado y obsoleto para fusión manual.
+
+2.6 Navegación
+- apps/erp/src/data/navigation.ts: idéntico en origin/main. No recuperar.
+
+2.7 Estilos
+- apps/saas/src/styles.css: reemplazado/rediseñado en origin/main. No recuperar hoja antigua; solo ajustes puntuales si hay regresión.
+
+2.8 routeTree.gen.ts
+- apps/saas/src/routeTree.gen.ts: obsoleto/reemplazado (generado). Regenerar tras definir rutas finales.
+
+================================================================================
+3. OPORTUNIDADES PARA FUTURO A&O CRISTIANO (SIN DUPLICAR NI ALTERAR ERP/DIOCESANO)
+================================================================================
+
+Criterio: reutilizar como extracción selectiva a paquetes/workspace neutros o como referencia de patrones, solo con consumidor real y respetando separación de productos.
+
+| Área | Activos candidatos (base origin/main) | Valor | Condición para no duplicar/alterar |
+|---|---|---|---|
+| Formularios compartidos | apps/erp/src/components/forms/{form-character-counter,form-file-field,form-validation-message,form-wizard,index,actions,header,field,section,modal,page,drawer,use-form-submit} | Captura, validación, archivos, contadores, wizard estandarizados. | Extraer a paquete UI/forms neutro; no modificar ERP/Diocesano. |
+| CRUD/paneles y tablas | demo-crud-panel.tsx, data-table.tsx, confirm-dialog.tsx, detail-drawer.tsx, filter-bar.tsx, module-layout.tsx, page-header.tsx | Patrones de administración y listados. | Abstraer contratos/props; desacoplar de datasets parroquiales. |
+| Repositorio local/datos demo | apps/erp/src/data/local-repository.ts, demo-types.ts | Prototipado de colecciones y persistencia local temporal. | Ubicar en utilidad neutral; sustituible por servicios reales. |
+| Gestión institucional | institution-operations-panel.tsx, institutional-structure-demo.ts, pantallas institucionales | Modelado de entidades, sedes, dependencias. | Parametrizar terminología/dominio; no compartir datos sensibles/parroquiales. |
+| Planeación, grupos, comunidades | pastoral-planning-operations-panel.tsx, pastoral-planning-screen.tsx, groups-screen.tsx, pastoral-demo.ts | Objetivos, actividades, equipos, seguimiento. | Adaptar semántica en app/módulo propio de A&O Cristiano. |
+| Administración SaaS (patrones) | admin-screen.tsx (origin/main), saas-ui.tsx, saas-icons.tsx, saas-module-screen.tsx, saas-repository.ts, saas-domain.ts | Consola administrativa, repositorio frontend. | Reutilizar abstracciones; ownership/datos separados por producto. |
+| Navegación/configuración por módulos | Patrón de configuracion.tsx (catálogo, ámbito, habilitación) | Disponibilidad funcional por contexto/plan. | Implementar en configuración del producto destino con validación server-side futura. |
+
+Exclusiones: no reutilizar datos/identidades parroquiales, sacramentales o diocesanas ni reglas jurisdiccionales; respetar límites y privacidad (docs/arquitectura/monorepo.md, docs/erp/definicion-funcional-y-arquitectonica.md).
+
+================================================================================
+4. DETALLE DE ARCHIVOS A RECUPERAR / EVALUAR / ADAPTAR
+================================================================================
+
+(33 archivos de 507c83c ya idénticos en origin/main no requieren recuperación de código.)
+
+| Ruta | Qué aporta (507c83c) | Versión base a utilizar | Cambios que deben rescatarse | Dependencias | Pruebas necesarias (al implementar) |
+|---|---|---|---|---|---|
+| apps/erp/src/components/modules/document-management-screen.tsx | Alta documental local con FormModal/TextInputField y useLocalCollection("ao-erp:document-management", create). | origin/main (incluye archiveAreas, rutas /app/gestion-documental/*, edición/update, archive-area-screen.tsx, archive-demo.ts). | Verificar que creación local, validaciones y persistencia local no se pierdan; rescatar solo deltas funcionales ausentes. | @/components/forms, @/data/local-repository, @/data/system-demo, @/components/ui/*, TanStack Router Link, rutas ERP documentales en origin/main. | Render; alta/edición (si aplica); navegación a subrutas; búsqueda/filtros; estados vacío/restringido; regresión con archive-* y routeTree ERP. |
+| apps/saas/src/components/admin-screen.tsx | CRUD/demo genérico con localStorage (storageKey) y dialogs simples. | origin/main (EntityRepository, subscribe/list/replace, saas-ui, saas-icons). | No portar implementación antigua; rescatar solo reglas de negocio/UX no cubiertas tras comparación funcional. | ../data/saas-repository, ./saas-ui, ./saas-icons, tipos dominio/demo; ecosistema SaaS rediseñado. | saas-repository/component tests; creación/edición/eliminación; suscripción; filtros; estados vacíos. |
+| apps/saas/src/routes/__root.tsx | Shell/navegación simple (secciones base). | origin/main (shell/topbar/navegación ampliada). | Solo rescatar accesos/IA de navegación faltantes; no revertir layout. | Layout/componentes SaaS origin/main, TanStack Router, rutas registradas. | Render/navegación/ruta activa/responsive; sin rutas huérfanas. |
+| apps/saas/src/routes/configuracion.tsx | Configuración central: apariencia, catálogo de módulos por grupos, toggles, ámbito global/por organización, avisos de plan/licencia/permisos y no persistencia histórica. | origin/main (pantalla en diseño nuevo). | Alta prioridad: comparar paridad de grupos/módulos, conmutación, ámbitos, restauración y avisos; portar deltas faltantes al diseño origin/main. | createFileRoute, estado/UI; futura integración con servicio de configuración; catálogo alineado. | Interacción tabs/toggles/selects; conteos; vista previa; reglas de visibilidad por ámbito. |
+| apps/saas/src/routes/index.tsx | Dashboard simple con métricas demo.ts. | origin/main (dashboard rediseñado). | Rescatar solo indicadores/enlaces de negocio faltantes. | Datos/servicios/componentes dashboard origin/main. | Render KPIs/tarjetas/enlaces; coherencia de fuentes. |
+| apps/saas/src/routes/instituciones.tsx | Wrapper de AdminScreen. | origin/main (institutions-master-screen/especializada). | No portar estructura antigua; verificar campos/filtros/acciones necesarios. | Componentes/repositorio/dominio SaaS específicos. | CRUD/listado; ruta registrada; estados/columnas. |
+| apps/saas/src/routes/organizaciones.tsx | Wrapper de AdminScreen. | origin/main (organizations-master-screen). | Ídem: paridad funcional sobre pantalla especializada. | Dependencias SaaS especializadas. | CRUD/listado/ruta/estados. |
+| apps/saas/src/routes/planes-licencias.tsx | Wrapper de AdminScreen. | origin/main (plans-licensing-screen). | Ídem; validar modelo comercial/licenciamiento. | Dependencias SaaS especializadas. | CRUD/listado/ruta/estados. |
+| apps/saas/src/routes/roles-permisos.tsx | Wrapper de AdminScreen. | origin/main (pantalla especializada). | Ídem. | Dependencias SaaS especializadas. | CRUD/listado/ruta/estados. |
+| apps/saas/src/routes/usuarios.tsx | Wrapper de AdminScreen. | origin/main (pantalla especializada). | Ídem. | Dependencias SaaS especializadas. | CRUD/listado/ruta/estados. |
+| apps/saas/src/styles.css | Hoja de estilos SaaS previa. | origin/main (rediseñada). | Ninguna recuperación masiva; micro-ajustes solo ante regresión específica. | Sistema de estilos/componentes SaaS origin/main. | Revisión visual/regresión desktop-móvil en rutas SaaS. |
+| apps/saas/src/routeTree.gen.ts | Árbol generado de línea 507c83c. | Regenerado desde origin/main + rutas finales. | Ninguno (no fusionar). | TanStack Router file-based routing; archivos finales en apps/saas/src/routes. | Generación limpia; typecheck; arranque/build @ao/saas; navegación completa. |
+| bun.lock | Estado deps en 507c83c. | origin/main (idéntico). | Ninguno inmediato. | package.json raíz/apps; Bun. | Si cambian deps (autorizado): install, build/typecheck/test afectados. |
+
+Archivos sin acción de recuperación (ya en origin/main): #1-12, #14-32, #34, #45-47 de la matriz.
+
+================================================================================
+5. ORDEN DE INTEGRACIÓN (MINIMIZA CONFLICTOS Y REGRESIONES)
+================================================================================
+
+Principio: origin/main como base fija; integrar solo deltas faltantes de 507c83c; regenerar artefactos; validar por capas (ERP -> SaaS -> transversal).
+
+| Fase | Objetivo | Alcance / rutas | Dependencias | Riesgo | Criterio de salida |
+|---|---|---|---|---|---|
+| 0. Preparación | Congelar evidencia y preservar trabajo local | Confirmar bases 6638079 y 507c83c; preservar cambio local apps/erp/src/components/modules/diocesan-management-screen.tsx (diff con '|import'); mantener ramas integracion-main-ao-erp y respaldo-traslado-ao-erp. | Ninguna | Pérdida de trabajo local | Inventario aprobado y respaldo externo del diff local (cuando se autorice). |
+| 1. Línea base | Establecer entorno objetivo | Crear rama de integración desde origin/main (cuando se autorice). | Fase 0 | Bajo | Rama basada en 6638079. |
+| 2. Verificación ERP ya implementado | Evitar regresiones por omisión | Formularios, paneles, datos y pantallas ERP #1-12,14-32,34: paridad funcional; no reintroducir código de 507c83c. | Fase 1 | Bajo | Checklist de paridad ERP (formularios, institucional, pastoral/grupos/comunidades, finanzas/admin). |
+| 3. ERP documental (adaptación) | Conservar lo mejor de ambas líneas | document-management-screen.tsx sobre base origin/main con archive-area-screen.tsx, archive-demo.ts, rutas apps/erp/src/routes/app/gestion-documental/*, routeTree ERP. | Fase 2 | Medio | CRUD/búsqueda/filtros y navegación documental operativos sin perder submódulos de origin/main. |
+| 4. SaaS análisis funcional | Rescatar semántica, no estructura antigua | Comparar configuracion.tsx, index.tsx, __root.tsx, admin-screen.tsx y rutas de entidades vs origin/main; definir deltas funcionales. | Fase 1 | Medio-alto | Matriz de paridad SaaS cerrada. |
+| 5. SaaS integración controlada | Aplicar deltas aprobados | Usar estructura/componentes/servicios SaaS de origin/main; ajustes mínimos derivados de Fase 4. No usar styles/admin/routes antiguas como reemplazo. | Fase 4 | Medio | Pantallas/rutas SaaS coherentes con modelo origin/main. |
+| 6. Regeneración de artefactos | Consistencia técnica | Regenerar routeTree.gen.ts (saas/erp si aplica) y bun.lock solo si cambian manifiestos (flujo autorizado). | Fases 3,5 | Medio | Artefactos generados por tooling, sin merges manuales. |
+| 7. Cambio local pendiente | Decisión explícita | Resolver apps/erp/src/components/modules/diocesan-management-screen.tsx (|import). | Fase 1+ | Bajo-medio | Archivo válido y decisión documentada. |
+| 8. Validación y promoción | Cerrar reconciliación | typecheck/lint/test/build para @ao/erp, @ao/saas, @ao/diocesano; revisión manual; PR a main (autorizado). Mantener ramas de respaldo hasta confirmar incorporación. | Fases 3-7 | Medio | Sin regresiones y contenido útil de 507c83c preservado donde aplique. |
+
+Reglas:
+- Nunca fusionar manualmente routeTree.gen.ts ni bun.lock por copia ciega.
+- Priorizar comparación semántica en SaaS (evoluciones divergentes).
+- No eliminar integracion-main-ao-erp ni respaldo-traslado-ao-erp hasta verificar incorporación de 507c83c.
+- No alterar ERP/Diocesano fuera de lo requerido; reutilización para A&O Cristiano por extracción/patrones, no duplicación.
+
+================================================================================
+6. CAMBIO LOCAL PENDIENTE (CONTEXTO)
+================================================================================
+
+Archivo: apps/erp/src/components/modules/diocesan-management-screen.tsx
+Estado: modificado, no preparado (preservado, no descartado).
+Evidencia (git diff): inserción de carácter '|' al inicio de import ("+|import { useMemo, useState } from \"react\";"), 1 inserción / 1 eliminación. Probable error de sintaxis; requiere decisión explícita en fase autorizada.
+
+================================================================================
+7. CONCLUSIÓN OPERATIVA
+================================================================================
+
+- Recuperación masiva desde 507c83c: NO necesaria. La mayoría de aportes (formularios ERP, paneles institucional/pastoral, datos, navegación, pantallas ERP indicadas, docs de auditoría) ya están en origin/main.
+- Recuperación/adaptación real a evaluar: (1) delta funcional de document-management-screen.tsx frente a evolución documental de origin/main; (2) paridad funcional SaaS (configuración de módulos/ámbitos y reglas de administración) trasladada al diseño/arquitectura de origin/main; (3) regeneración de artefactos (routeTree.gen.ts; lock solo si aplica).
+- Reemplazado por origin/main: rediseño SaaS (estructura, rutas, estilos, componentes/servicios avanzados) y routeTree.gen.ts previo.
+- Riesgo inmediato: cambio local pendiente con '|import' en diocesan-management-screen.tsx.
+
+Este informe queda listo para autorizar la implementación por fases sobre origin/main sin pérdida de los desarrollos útiles identificados en 507c83c.
+
+FIN DEL INFORME
