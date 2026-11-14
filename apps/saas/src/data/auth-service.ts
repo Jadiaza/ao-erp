@@ -85,8 +85,19 @@ interface UserCredentialRecord {
   disabled?: boolean;
 }
 
+function isDemoAccountDisabled(): boolean {
+  const viteDisable =
+    typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env["VITE_DISABLE_DEMO_ACCOUNT"] === "true";
+  const processDisable =
+    typeof process !== "undefined" &&
+    process.env?.["VITE_DISABLE_DEMO_ACCOUNT"] === "true";
+  return Boolean(viteDisable || processDisable);
+}
+
 /**
- * Retorna las credenciales demostrativas sugeridas (únicamente en desarrollo).
+ * Retorna las credenciales demostrativas sugeridas.
  */
 export function getTemporaryDemoCredentials(): LoginCredentials {
   return {
@@ -136,6 +147,7 @@ export async function ensureDemoCredentialsSeeded(): Promise<void> {
     creds = [];
   }
 
+  const demoDisabled = isDemoAccountDisabled();
   const existingCred = creds.find((c) => c.email.toLowerCase() === DEMO_EMAIL.toLowerCase());
   if (!existingCred) {
     const salt = "ao-erp-auth-v1";
@@ -149,10 +161,17 @@ export async function ensureDemoCredentialsSeeded(): Promise<void> {
       isTemporaryDemo: true,
       mustChangePassword: true,
       createdAt: new Date().toISOString(),
-      // En producción debe estar deshabilitada
-      disabled: process.env["NODE_ENV"] === "production",
+      disabled: demoDisabled,
     });
 
+    try {
+      window.localStorage.setItem(AUTH_CREDENTIALS_KEY, JSON.stringify(creds));
+    } catch {
+      // Ignorar si el almacenamiento local está restringido
+    }
+  } else if (existingCred.isTemporaryDemo && existingCred.disabled !== demoDisabled) {
+    // Reconciliar estado en navegadores que guardaron disabled: true en builds previos
+    existingCred.disabled = demoDisabled;
     try {
       window.localStorage.setItem(AUTH_CREDENTIALS_KEY, JSON.stringify(creds));
     } catch {
