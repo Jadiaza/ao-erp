@@ -95,4 +95,32 @@ describe("Flujo de autenticación e inicio de sesión A&O ERP SaaS", () => {
     expect(res.success).toBe(true);
     expect(res.message).toContain("Se ha enviado");
   });
+
+  it("reconcilia una credencial demo marcada previamente como deshabilitada en localStorage", async () => {
+    const raw = localStorage.getItem("ao-saas:auth-credentials:v1");
+    expect(raw).toBeTruthy();
+    const creds = JSON.parse(raw!) as Array<Record<string, unknown>>;
+    creds[0]!["disabled"] = true;
+    localStorage.setItem("ao-saas:auth-credentials:v1", JSON.stringify(creds));
+
+    const res = await authenticateUser(getTemporaryDemoCredentials());
+    expect(res.success).toBe(true);
+    expect(res.session?.user.email).toBe("demo@aoerp.local");
+  });
+
+  it("deshabilita la cuenta demo únicamente cuando VITE_DISABLE_DEMO_ACCOUNT es true", async () => {
+    const previous = process.env["VITE_DISABLE_DEMO_ACCOUNT"];
+    process.env["VITE_DISABLE_DEMO_ACCOUNT"] = "true";
+    try {
+      const res = await authenticateUser(getTemporaryDemoCredentials());
+      expect(res.success).toBe(false);
+      expect(res.error).toContain("deshabilitada en este entorno");
+    } finally {
+      if (previous === undefined) {
+        delete process.env["VITE_DISABLE_DEMO_ACCOUNT"];
+      } else {
+        process.env["VITE_DISABLE_DEMO_ACCOUNT"] = previous;
+      }
+    }
+  });
 });
