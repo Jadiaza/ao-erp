@@ -1,0 +1,124 @@
+# INFORME DE SITUACIÓN Y VERIFICACIÓN PREVIA — NIVEL 2.2 Y ENTORNO POSTGRESQL LOCAL
+
+Proyecto: A&O ERP / A&O SaaS / A&O Diocesano
+Repositorio: D:\Proyectos\ao-erp
+Fecha: 2026-11-14
+Motivo de detención: La rama activa actual es main y no integracion-final-ao-erp (regla de detención obligatoria antes de crear o modificar archivos de implementación).
+
+================================================================================
+1. ESTADO DE GIT Y RAMAS
+================================================================================
+- Ruta del repositorio (git rev-parse --show-toplevel): D:/Proyectos/ao-erp
+- Rama actual (git branch --show-current): main (commit 96046bd)
+- Rama autorizada en las instrucciones: integracion-final-ao-erp (commit 0259e04)
+- ¿Coincide la rama actual con la autorizada?: NO.
+
+Ramas locales existentes (git branch -vv):
+* main                     96046bd [origin/main] feat(saas): implement responsive shell and module launcher for tablet and mobile
+  integracion-final-ao-erp 0259e04 [origin/integracion-final-ao-erp] fix(saas): enable demo account login unless VITE_DISABLE_DEMO_ACCOUNT=true
+  integracion-main-ao-erp  a3f174e [origin/integracion-main-ao-erp] Merge remote-tracking branch 'origin/main' into integracion-main-ao-erp
+  respaldo-traslado-ao-erp 507c83c [origin/respaldo-traslado-ao-erp] chore: respaldar trabajo trasladado de A&O ERP
+
+Sincronización con GitHub (origin):
+- main vs origin/main: 0 commits adelante / 0 commits atrás.
+- integracion-final-ao-erp vs origin/integracion-final-ao-erp: 0 commits adelante / 0 commits atrás.
+- Diferencia entre ramas: main (96046bd) está 2 commits por delante de integracion-final-ao-erp (0259e04):
+  * 8713a0f Merge branch 'integracion-final-ao-erp'
+  * 96046bd feat(saas): implement responsive shell and module launcher for tablet and mobile
+  Además, main contiene los cambios locales sin commit listados en la sección 2.
+
+================================================================================
+2. INVENTARIO DE CAMBIOS LOCALES SIN COMMIT (PRESERVADOS ÍNTEGROS)
+================================================================================
+- Archivos eliminados (D): 0
+- Archivos modificados sin commit (M — 19 archivos en apps/saas):
+  * apps/saas/src/components/admin-screen.tsx
+  * apps/saas/src/components/billing-portfolio-screen.tsx
+  * apps/saas/src/components/clients-master-screen.tsx
+  * apps/saas/src/components/contracts-subscriptions-screen.tsx
+  * apps/saas/src/components/infrastructure-console-screen.tsx
+  * apps/saas/src/components/institutions-master-screen.tsx
+  * apps/saas/src/components/module-launcher.tsx
+  * apps/saas/src/components/organizations-master-screen.tsx
+  * apps/saas/src/components/plans-licensing-screen.tsx
+  * apps/saas/src/components/products-catalog-screen.tsx
+  * apps/saas/src/components/provisioning-console-screen.tsx
+  * apps/saas/src/components/saas-module-screen.tsx
+  * apps/saas/src/components/saas-ui.tsx
+  * apps/saas/src/components/support-area-screen.tsx
+  * apps/saas/src/data/navigation.ts
+  * apps/saas/src/routes/__root.tsx
+  * apps/saas/src/routes/index.tsx
+  * apps/saas/src/styles.css
+  * apps/saas/src/test/module-launcher.test.ts
+
+- Archivos y carpetas nuevos sin seguimiento (??):
+  * PWA e iconos (apps/saas):
+    - apps/saas/public/manifest.webmanifest
+    - apps/saas/public/sw.js
+    - apps/saas/public/icons/ (icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png)
+  * Guard de rutas y pruebas (apps/saas):
+    - apps/saas/src/server-functions/module-access.ts
+    - apps/saas/src/test/table-actions.test.ts
+  * Documentación Nivel 2.1 (docs/arquitectura/backend/):
+    - docs/arquitectura/backend/informe-nivel-2-1-auditoria-infraestructura.md
+    - docs/arquitectura/backend/decision-d14-portabilidad-proveedor.md
+    - docs/arquitectura/backend/cierre-decisiones-bloqueantes-d03-d12-d13.md
+    - docs/arquitectura/backend/evaluacion-runtime-vercel-node.md
+    - docs/arquitectura/backend/plan-infraestructura-inicial-ao.md
+    - docs/arquitectura/backend/informe-cierre-nivel-2-1.md
+  * Informes .txt en raíz:
+    - informe-nivel-2-1-auditoria-infraestructura.txt
+    - informe-cierre-nivel-2-1.txt
+    - informe-situacion-nivel-2-2-postgresql-local.txt (este informe)
+
+- Respaldos e informes históricos previos en raíz (intactos):
+  * respaldo-cambios-locales.patch
+  * informe-auditoria-ao-cristiano-etapas-1-y-2.txt
+  * informe-auditoria-comparativa-github.txt
+  * informe-auditoria-integral-preparacion-desarrollo.txt
+  * informe-continuacion-nivel-1-cierre-observaciones.txt
+  * informe-continuacion-perfil-cristiano-ao-erp.txt
+  * informe-fase-1-correccion-integridad-ao-cristiano.txt
+  * informe-implementacion-integracion-final-ao-erp.txt
+  * informe-nivel-1-cierre-arquitectura-modelo-datos.txt
+  * informe-plan-integracion-507c83c.txt
+  * informe-preparacion-integracion-segura.txt
+  * informe-sincronizacion-github.txt
+
+================================================================================
+3. ESTADO DEL ENTORNO DE BASE DE DATOS E INFRAESTRUCTURA LOCAL
+================================================================================
+3.1 Archivos en el repositorio
+- .gitignore: existe y protege .env, .env.*, !.env.example, tmp/, .output, .wrangler/, pero aún no incluye reglas específicas para volcados de BD (*.dump, *.sql.bak, backups/) ni archivos de infraestructura Docker locales si aplicaran.
+- Archivos aún no creados (en espera de autorización de rama):
+  * docker-compose.yml y .env.example
+  * Directorio database/ (migrations/, seeds/, tests/, scripts/, README.md)
+  * Migraciones SQL versionadas, seeds sintéticos y scripts pg_dump / pg_restore
+
+3.2 Herramientas instaladas en este equipo Windows (bloqueo técnico detectado)
+Verificación ejecutada en este PC:
+- docker / docker compose: NO detectado en PATH ni en C:\Program Files\Docker\Docker\Docker Desktop.exe.
+- psql / pg_dump / pg_restore: NO detectado en PATH ni en C:\Program Files\PostgreSQL\.
+- supabase CLI: NO detectado en PATH.
+
+Nota operativa:
+Una vez autorizada la rama, se podrán generar los archivos SQL, docker-compose.yml, .env.example, seeds y scripts en el repositorio; sin embargo, para ejecutar las pruebas reales obligatorias (arranque de PostgreSQL 17, ejecución de migraciones, pruebas negativas RLS, pg_dump y pg_restore en base vacía) será indispensable contar con Docker Desktop o PostgreSQL 17 local instalado y activo en el equipo.
+
+================================================================================
+4. DECISIONES YA CONFIRMADAS PARA NIVEL 2.2
+================================================================================
+- D-03, D-12, D-13 y D-14: aprobadas por el propietario.
+- Motor y proveedor inicial: PostgreSQL 17 estándar (base local ao_erp_dev), Supabase PostgreSQL previsto para fases remotas, región objetivo us-east-1 (Virginia, EE. UU.), runtime objetivo Vercel + Node.js 24 (sujeto a validación posterior), entorno actual exclusivamente local.
+- Esquemas obligatorios: core, saas, erp, pastoral, sacramental, diocesan, audit, app_internal.
+
+================================================================================
+5. INSTRUCCIONES NECESARIAS PARA CONTINUAR
+================================================================================
+Quedo detenido sin modificar código ni cambiar de rama hasta recibir tu autorización expresa sobre:
+1. Rama y cambios locales actuales en main:
+   - Si deseas hacer primero commit y push en main de los cambios locales actuales (PWA, responsive, acciones de tablas y docs Nivel 2.1) y luego trabajar en la rama que indiques (main o integracion-final-ao-erp), O
+   - Si autorizas trabajar directamente sobre la rama actual main conservando los cambios locales sin commit.
+2. Herramientas locales (Docker Desktop / PostgreSQL 17):
+   - Confirmar si tienes Docker Desktop / PostgreSQL en otra ruta o si deseas generar los archivos de infraestructura/SQL/migraciones/scripts primero y ejecutar las pruebas en PostgreSQL cuando Docker/PostgreSQL esté instalado.
+================================================================================

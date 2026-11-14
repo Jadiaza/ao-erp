@@ -1,0 +1,244 @@
+# INFORME NIVEL 2.1 — AUDITORÍA Y PREPARACIÓN DE INFRAESTRUCTURA
+
+Proyecto: A&O ERP / A&O SaaS / A&O Diocesano
+Repositorio: D:\Proyectos\ao-erp
+Fecha: 2026-11-14
+Referencia equivalente Markdown: docs/arquitectura/backend/informe-nivel-2-1-auditoria-infraestructura.md
+Estado: Auditoría técnica y diseño arquitectónico (Nivel 2.1). Pendiente de revisión y aprobación del propietario.
+Restricción aplicada: Etapa exclusivamente documental. No se instalaron dependencias, no se modificó código de aplicación ni configuraciones, no se conectó ni creó ningún proyecto Supabase, no se ejecutó SQL ni migraciones y se preservaron íntegros todos los cambios locales previos.
+
+================================================================================
+1. RESUMEN EJECUTIVO
+================================================================================
+La auditoría técnica del repositorio D:\Proyectos\ao-erp confirma que las tres aplicaciones (apps/erp, apps/saas y apps/diocesano) operan actualmente como aplicaciones frontend con persistencia demostrativa local en window.localStorage y datos en memoria. No existe todavía conexión activa a PostgreSQL, Supabase Auth, Supabase Storage, Realtime, Edge Functions ni migraciones SQL ejecutables.
+
+Al mismo tiempo, el ecosistema cuenta con un diseño lógico y relacional avanzado (Documentos 01 a 15 en docs/arquitectura/backend/ y los informes de cierre de Nivel 1), una frontera inicial de server functions en apps/erp (src/start.ts, src/server.ts, CSRF middleware) y pruebas técnicas recientes en apps/saas (src/server-functions/vercel-runtime.ts, src/server-functions/module-access.ts).
+
+Esta auditoría concluye que Supabase administrado (PostgreSQL + Auth + Storage privado) es viable como plataforma inicial para acelerar la salida a producción, siempre que se adopte una arquitectura desacoplada del proveedor (Decisión D-14) que garantice:
+1. PostgreSQL estándar como único motor de verdad, sin lógica de negocio cautiva en Edge Functions ni consultas directas desde componentes React.
+2. Identificador interno propio de usuario desacoplado del proveedor de identidad (auth.users) y validación doble (servicios server-side propios + PostgreSQL RLS).
+3. Interfaz abstracta de almacenamiento (DocumentStoragePort) compatible con Supabase Storage, AWS S3 y MinIO autohospedado, con metadatos en PostgreSQL y sin binarios en la base de datos.
+4. Separación estricta de ambientes (Desarrollo, Pruebas/Staging y Producción) y verificación previa de compatibilidad del runtime de despliegue (hoy el preset @lovable.dev/vite-tanstack-config compila por defecto para cloudflare-module).
+
+Dictamen para Nivel 2.2: APTO CON OBSERVACIONES (requiere aprobación expresa del propietario sobre D-14, las decisiones bloqueantes de Fase 1 del Nivel 1 —D-03, D-12, D-13— y los parámetros de proveedor/región/runtime antes de escribir DDL o conectar servicios).
+
+================================================================================
+2. ESTADO REAL DE LA INFRAESTRUCTURA
+================================================================================
+2.1 Inventario por aplicación y paquete
+- apps/saas:
+  * Stack: React ^19.2.0, TanStack Router 1.170.41, TanStack Start 1.168.60, Vite 8.1.5, @lovable.dev/vite-tanstack-config 2.26.5.
+  * Frontera servidor actual: parcial incipiente (src/server-functions/vercel-runtime.ts y module-access.ts vía createServerFn); sin src/start.ts ni src/server.ts propios.
+  * Persistencia actual: LocalSaasStore en localStorage ("ao-saas:domain:v1") y sesión demo local ("ao-saas:auth-session:v1").
+  * Observación: no tiene middleware CSRF propio explícito ni cliente BD/Auth externo.
+
+- apps/erp:
+  * Stack: React ^19.2.0, TanStack Router 1.170.41, TanStack Start 1.168.60, Tailwind CSS ^4.2.1, Zod ^3.25.76, @tanstack/react-query ^5.101.1, nitro 3.0.260603-beta.
+  * Frontera servidor actual: base SSR y middleware (src/start.ts con createCsrfMiddleware y errorMiddleware; src/server.ts).
+  * Persistencia actual: useLocalCollection en localStorage ("ao-erp:*" con sufijos :cristiano/:combinado).
+  * Observación: consume API HTTP externa real solo en Liturgia (src/lib/ordo/client.ts); sin BD institucional.
+
+- apps/diocesano:
+  * Stack: React ^19.2.0, TanStack Router/Start 1.170.41 / 1.168.60, Vite 8.1.5.
+  * Frontera servidor actual: inexistente.
+  * Persistencia actual: scaffold mínimo sin módulos conectados.
+
+- packages/utilities (@ao/utilities):
+  * Exporta únicamente cn() (clsx + tailwind-merge); sin dominio ni persistencia.
+
+- supabase/, .env*, vercel.json:
+  * Inexistentes. No hay config.toml, migrations/, seed.sql, pruebas SQL, archivos .env ni manifiesto de despliegue Vercel.
+
+2.2 Evidencia de compilación y runtime observada
+- Preset @lovable.dev/vite-tanstack-config (2.26.5): los tres vite.config.ts delegan en defineConfig(...) del preset de Lovable, que incorpora tanstackStart, viteReact, tailwindcss, tsConfigPaths y nitro con destino por defecto cloudflare-module (.output/nitro.json, .output/server/wrangler.json).
+- Implicación operativa: desplegar en Vercel o en servidor Node/Docker propio requiere validar explícitamente el preset Nitro objetivo (vercel o node-server) antes de pasar a producción.
+- Gestor del workspace: Bun 1.2.22 (bun.lock en raíz).
+
+2.3 Estado de decisiones arquitectónicas previas (D-01 a D-13)
+- D-01 (Contratación y cardinalidad comercial): Pendiente de aprobación (bloquea comercial).
+- D-02 (Flujo de alta y aprobación de core.organization_entities): Pendiente de aprobación (flujo de vínculo).
+- D-03 (Catálogo de scopes tenant|entity|campus y roles globales vs. tenant): BLOQUEANTE INMEDIATO DE FASE 1 BD.
+- D-04 (Identidad comercial canónica saas.parties vs. erp.persons): Pendiente de aprobación (bloquea SaaS/CRM).
+- D-05 (Plantillas de informes diocesanos globales vs. por organización): Pendiente de aprobación (bloquea Diocesano).
+- D-06 (core.institutional_access_grants y comunicaciones cruzadas): Pendiente de aprobación (bloquea Diocesano).
+- D-07 (Metadatos documentales y almacenamiento privado): Pendiente de aprobación (política de retención).
+- D-08 (Acuses de lectura en comunicaciones): Pendiente de aprobación (bloquea Comunicaciones).
+- D-09 (Facturación SaaS interna vs. facturación electrónica DIAN): Pendiente de aprobación (emisor/país/impuestos).
+- D-10 (Medición de consumo usage_limits vs. usage_events): Pendiente de aprobación (antes de cobro por uso).
+- D-11 (Tablas puente documentales tipadas vs. FK polimórfica): Pendiente de aprobación (bloquea Documentos).
+- D-12 (Catálogo cerrado de estados CHECK vs. tablas catálogo): BLOQUEANTE INMEDIATO DE FASE 1 BD.
+- D-13 (Alcance del modelo operativo A&O ERP): BLOQUEANTE INMEDIATO DE NIVEL 2.
+
+================================================================================
+3. DEPENDENCIAS ENCONTRADAS
+================================================================================
+3.1 Dependencias de Supabase, PostgreSQL y almacenamiento en código y manifiestos
+- @supabase/supabase-js / @supabase/ssr: 0 coincidencias en package.json y en src/. No instalados ni importados.
+- Clientes PostgreSQL (pg, postgres, drizzle-orm, prisma, @prisma/client): 0 coincidencias.
+- Clientes S3 / MinIO (@aws-sdk/client-s3, minio): 0 coincidencias.
+- Supabase Auth / Storage / Realtime / Edge Functions: 0 usos activos en runtime (solo menciones en docs/arquitectura/backend/* y comentarios de diseño).
+- Variables de entorno (.env*, SUPABASE_*, DATABASE_URL, PAPERLESS_*): 0 archivos .env. Solo AO_SAAS_SPIKE_SECRET y VERCEL leídas en apps/saas/src/server-functions/vercel-runtime.ts, más VITE_DISABLE_DEMO_ACCOUNT en apps/saas/src/data/auth-service.ts.
+- Directorio supabase/ o archivos *.sql: 0 archivos.
+
+3.2 Dependencias indirectas y compatibilidad con TanStack Start + React 19
+- @lovable.dev/vite-tanstack-config (2.26.5): empaqueta Vite 8.1.5, @tanstack/react-start 1.168.60, @tanstack/react-router 1.170.41, Nitro y protección de imports server-only (las carpetas llamadas literalmente server/ pueden ser bloqueadas si se importan sin aislamiento de createServerFn; por ello en apps/saas se usó src/server-functions/).
+- React ^19.2.0 + TanStack Start 1.168.60: compatible con middleware SSR (createMiddleware), CSRF (createCsrfMiddleware) y createServerFn. En cloudflare-module no hay socket TCP directo sin Hyperdrive/pooler HTTP, mientras que en Node/Vercel Functions sí operan conexiones pg/postgres con pooler transaccional.
+- Dependencia ausente en apps/saas: apps/erp declara zod (^3.25.76), pero apps/saas/package.json no incluye zod ni nitro como dependencias directas.
+
+3.3 Variables de entorno necesarias (sin valores ni secretos)
+- DATABASE_URL (solo servidor): conexión PostgreSQL transaccional (puerto pooler 6543 o equivalente).
+- DIRECT_DATABASE_URL (solo CI/CD y CLI): migraciones DDL / pg_dump / pg_restore sin pooler transaccional.
+- AUTH_PROVIDER (solo servidor): selector de adaptador (supabase | local_dev | oidc_future).
+- SUPABASE_URL (solo servidor) y SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_URL (público controlado con RLS, solo si algún flujo browser autorizado lo requiere).
+- SUPABASE_SECRET_KEY / SERVICE_ROLE (solo servidor, NUNCA navegador ni VITE_*).
+- STORAGE_PROVIDER (supabase | s3 | minio), STORAGE_BUCKET_PRIVATE, STORAGE_ENDPOINT, STORAGE_REGION, STORAGE_ACCESS_KEY, STORAGE_SECRET_KEY (todos solo servidor).
+- APP_URL, SESSION_COOKIE_SECRET, SESSION_COOKIE_DOMAIN (solo servidor).
+- PAPERLESS_URL, PAPERLESS_TOKEN (solo servidor).
+
+================================================================================
+4. EVALUACIÓN DE SUPABASE
+================================================================================
+4.1 ¿Existe un proyecto Supabase adecuado o conviene crear uno nuevo?
+- Estado verificado: no existe ningún proyecto Supabase conectado, configurado ni referenciado en el repositorio.
+- Conclusión: cuando el propietario apruebe la Fase 0, conviene crear proyectos nuevos y completamente aislados por ambiente (Desarrollo local o proyecto dev aislado, Pruebas/Staging y Producción), con datos sintéticos en Desarrollo/Pruebas y sin compartir claves ni buckets.
+
+4.2 Evaluación por capacidad
+- PostgreSQL administrado: RECOMENDADO inicialmente. Motor estándar con pgcrypto, FKs compuestas, triggers contables y RLS. Bajo acoplamiento si se usa SQL estándar y servicios server-side de A&O (evitando PostgREST directo desde la UI).
+- Supabase Auth: RECOMENDADO como proveedor inicial (PKCE, recuperación, verificación, MFA). Requiere tabla interna core.users / core.user_identities y AuthProviderPort para no depender de auth.users ni de user_metadata editable.
+- Supabase Storage: RECOMENDADO como opción inicial para binarios privados detrás de DocumentStoragePort, sin exponer storage_key ni buckets públicos.
+- Supabase Realtime: NO requerido en Fase 1; opcional a futuro solo para avisos no sensibles.
+- Supabase Edge Functions (Deno): NO recomendadas para reglas de negocio por alto acoplamiento de runtime; toda lógica de negocio debe residir en los servicios server-side propios de A&O.
+
+================================================================================
+5. ARQUITECTURA PROPUESTA
+================================================================================
+Flujo desacoplado:
+Navegador (React 19 + TanStack Router)
+  -> createServerFn + CSRF + Cookie HttpOnly
+  -> Frontera Server-Side A&O (TanStack Start / Node)
+  -> Middleware Auth + RequestContext (org, entity, campus, entitlements)
+  -> Servicios de Dominio Propios (core, saas, erp, pastoral, sacramental, diocesan)
+  -> Puertos desacoplados:
+     * AuthProviderPort -> [Inicial: Supabase Auth | Futuro: Keycloak/BetterAuth/OIDC]
+     * Repositorio / SQL Pool -> [PostgreSQL 16/17 estándar + RLS: Supabase / Neon / DO / Autohospedado]
+     * DocumentStoragePort -> [Inicial: Supabase Storage privado | Futuro: AWS S3 / MinIO propio]
+     * Auditoría append-only -> [audit.*]
+
+Límites por producto:
+- packages/domain (futuro): contratos TypeScript, DTOs y esquemas Zod compartidos, sin dependencias de Supabase ni acceso a BD.
+- apps/saas/src/server* y apps/erp/src/server* y apps/diocesano/src/server*: servicios separados por bounded context.
+- Antes de Nivel 2.2 productivo: validar Nitro para Vercel o Node/Docker según destino aprobado (hoy compila a cloudflare-module).
+
+================================================================================
+6. ESTRATEGIA DE PORTABILIDAD DE BASE DE DATOS
+================================================================================
+- Motor único estándar: PostgreSQL 15/16/17 compatible con Supabase, Neon, DigitalOcean, AWS RDS o autohospedado.
+- Extensiones mínimas: únicamente pgcrypto (prohibido depender de extensiones propietarias de un único proveedor para lógica de negocio).
+- Esquemas lógicos: core, saas, erp, pastoral, sacramental, diocesan, audit y esquema interno no expuesto app_internal.
+- Funciones, triggers e índices portables: PL/pgSQL estándar (trigger partida doble SUM(debit)=SUM(credit), inmutabilidad de comprobantes posted/reversed), FKs compuestas (organization_id, id), índices parciales estándar y bloqueos SELECT ... FOR UPDATE.
+- Migraciones SQL versionadas en Git: secuencia ordenada M0..M12 ejecutables con psql estándar o Supabase CLI solo como runner de SQL puro.
+- Exportación/Importación y pruebas de restauración: pg_dump --format=custom --no-owner --no-acl por esquemas de aplicación (excluyendo esquemas auth/storage del proveedor) + restauración obligatoria con pg_restore en una instancia PostgreSQL independiente (Docker/servidor secundario) verificando integridad contable y pruebas negativas RLS.
+- Migración con interrupción mínima: aprovisionamiento de destino con migraciones Git -> replicación lógica nativa PostgreSQL (CREATE PUBLICATION / CREATE SUBSCRIPTION) o ventana breve controlada -> sincronización de objetos Storage verificando checksum_sha256 -> conmutación de DATABASE_URL / AUTH_PROVIDER / STORAGE_PROVIDER -> smoke tests.
+
+================================================================================
+7. SEGURIDAD Y AUTENTICACIÓN
+================================================================================
+7.1 Identificador interno independiente del proveedor
+- Brecha resuelta respecto a Doc 15 §4.1: evitar que core.profiles, core.memberships y auditoría tengan FK física directa a auth.users(id) de Supabase.
+- Diseño portable:
+  * core.users (id uuid PK, primary_email, status, mfa_enforced, timestamps).
+  * core.user_identities (id uuid PK, user_id FK -> core.users(id), provider, provider_subject, UNIQUE(provider, provider_subject)).
+  * Todas las tablas de negocio referencian a core.users(id). Al autenticar con Supabase Auth inicialmente, el servicio mapea el sub del JWT a core.users.id.
+
+7.2 Sesiones, RBAC, RLS portable, aislamiento pastoral y auditoría
+- Sesiones SSR: cookies HttpOnly, Secure, SameSite=Lax, Cache-Control: no-store, PKCE y protección CSRF (createCsrfMiddleware en src/start.ts).
+- Autorización doble: validación en servidor (membresía activa, scope, rol, entitlement) + PostgreSQL RLS en todas las tablas expuestas.
+- RLS portable: función app_internal.current_user_id() que resuelve SET LOCAL app.current_user_id (conexión directa server-side en cualquier PostgreSQL) y, cuando aplique JWT Supabase, mapea auth.uid() vía core.user_identities.
+- Separación plataforma vs. institución: is_platform_role = true opera solo en core/saas/audit plataforma y tiene bloqueado erp, pastoral y sacramental.
+- Aislamiento pastoral: pastoral.pastoral_care_cases + pastoral_care_confidential_notes en tabla separada con ACL relacional (case_role_acl, case_member_acl) y emergency_grants de máximo 4 horas auditados.
+- Auditoría: tablas append-only en audit.* con REVOKE UPDATE, DELETE.
+
+================================================================================
+8. ALMACENAMIENTO DOCUMENTAL
+================================================================================
+- Interfaz desacoplada DocumentStoragePort (adaptadores: SupabaseStorageAdapter inicial, S3CompatibleStorageAdapter para AWS S3 / R2 / MinIO propio).
+- Prohibido almacenar binarios en PostgreSQL (salvo justificación técnica documentada excepcional). PostgreSQL conserva únicamente metadatos en erp.document_file_metadata + tablas puente tipadas (D-11).
+- Buckets privados: storage_key nunca se entrega al cliente; descargas mediante autorización server-side y URLs firmadas de corta duración, registrando cada acceso en audit.sensitive_access_events.
+- Validación de MIME real (firma binaria), límite de tamaño, checksum_sha256 y estado malware_status (pending_scan -> clean | rejected | quarantined).
+- Retención, legal_hold y eliminación lógica controlada (sin borrado físico mientras existan referencias históricas o retención vigente).
+- Copias de seguridad independientes: versionado de bucket y replicación/sincronización cifrada del almacenamiento de objetos independiente de pg_dump, validada por checksum_sha256.
+
+================================================================================
+9. COMPARACIÓN DE ALTERNATIVAS DE INFRAESTRUCTURA Y COSTOS
+================================================================================
+(Tarifas oficiales consultadas el 2026-11-14; se distinguen tarifas confirmadas de estimaciones variables).
+
+A. Supabase Administrado (https://supabase.com/pricing)
+- Tarifas confirmadas:
+  * Free: $0/mes (500 MB BD, 1 GB Storage, 5 GB egress, 50k MAU; se pausa tras 1 semana de inactividad; no apto para producción/staging estable).
+  * Pro: desde $25/mes por organización (incluye $10/mes crédito de cómputo = 1 Micro 1 GB RAM; proyectos adicionales: Micro +$10, Small +$15, Medium +$60, Large +$110). Incluye 100k MAU, 8 GB disco/proyecto ($0.125/GB), 100 GB Storage ($0.0213/GB), 250 GB egress ($0.09/GB), backups diarios 7 días.
+  * PITR add-on: +$100/mes por proyecto (retención 7 días).
+  * Team: desde $599/mes (SOC2, ISO 27001, backups diarios 14 días, logs 28 días).
+- Estimación inicial A&O (3 ambientes): Dev local ($0) + Staging Micro ($10) + Prod Small/Medium + Pro base ≈ $40–$85/mes sin PITR (+$100/mes con PITR en Prod).
+
+B. PostgreSQL Administrado Externo
+- DigitalOcean Managed PostgreSQL (https://www.digitalocean.com/pricing/managed-databases):
+  * Standard 1 GiB / 1 vCPU (10–30 GB): $15.15/mes; 2 GiB / 1 vCPU: $30.45/mes; 4 GiB / 2 vCPU: $60.90/mes (nodos HA/standby multiplican el costo; $0.215/GiB/mes extra).
+- Neon (https://neon.com/pricing):
+  * Free: $0/mes (100 proyectos, 1 GB/proyecto, 100 CU-hours, scale-to-zero).
+  * Launch: pago por uso — cómputo $0.106/CU-hour, storage $0.35/GB-mes, Object Storage $0.023/GB-mes, Auth hasta 1M MAU. Referencia oficial carga baja siempre encendida: ~$22/mes; carga media: ~$80/mes.
+  * Scale: $0.222/CU-hour, historial 30 días, Private Networking, SOC2/ISO27001.
+- Nota operativa: en Alternativa B, A&O asume operar/integrar por separado Auth y Storage S3/R2.
+
+C. PostgreSQL Autohospedado (VPS / Servidor propio)
+- Hetzner Cloud (https://www.hetzner.com/cloud/):
+  * Servidores compartidos (Regular Performance): desde €5.49/mes (sin IVA).
+  * Servidores dedicados (General Purpose): desde €36.99/mes (sin IVA).
+- Nota operativa: exige que el equipo administre SO, parches, PgBouncer, WAL/PITR (pgBackRest/WAL-G), HA/failover, Auth, MinIO y soporte 24/7; el costo real depende del esfuerzo DevOps.
+
+Separación recomendada de ambientes:
+- Desarrollo: local (Docker / Supabase CLI local, datos sintéticos, $0).
+- Pruebas / Staging: proyecto/instancia aislada con datos sintéticos equivalentes y secretos propios.
+- Producción: proyecto/instancia dedicada, región aprobada, backups diarios + política PITR/retención y Spend Cap.
+
+================================================================================
+10. RIESGOS Y MITIGACIONES
+================================================================================
+1. Acoplamiento a auth.uid() y auth.users -> Usar core.users + core.user_identities y app_internal.current_user_id().
+2. Preset cloudflare-module de Lovable vs. Vercel/Node -> Ejecutar spike Nitro objetivo (Doc 14) antes de Nivel 2.2.
+3. @supabase/ssr beta con React 19/TanStack Start -> Encapsular tras AuthProviderPort y fijar versiones en bun.lock.
+4. Fuga de secretos al bundle navegador -> Prohibir prefijo VITE_ en secretos y auditar .output/public en CI.
+5. Exposición pastoral o cruce multi-tenant -> RLS inmediato en cada tabla, FKs compuestas y pruebas negativas org_a vs. org_b.
+6. Pérdida de archivos binarios -> Backups/replicación independientes del bucket privado + verificación checksum_sha256.
+7. Falta de zod en apps/saas -> Incorporar zod en apps/saas al iniciar Nivel 2.2.
+8. Sobrecostos variables (egress/logs/proyectos) -> Activar Spend Cap, usar dev local y URLs firmadas autorizadas.
+
+================================================================================
+11. DECISIÓN ARQUITECTÓNICA PROPUESTA: D-14
+================================================================================
+D-14 — Independencia del proveedor y portabilidad de infraestructura:
+- A&O ERP, A&O SaaS y A&O Diocesano utilizarán PostgreSQL estándar como motor único de persistencia y una arquitectura desacoplada del proveedor.
+- Supabase podrá usarse como infraestructura inicial, manteniendo bajo control exclusivo de A&O: reglas de negocio en servicios server-side propios, identificador interno core.users, migraciones SQL estándar versionadas en Git y puerto DocumentStoragePort compatible con Supabase Storage, S3 y MinIO.
+- La arquitectura debe permitir sustituir progresivamente proveedor de PostgreSQL, autenticación, almacenamiento y servicios auxiliares (Paperless-NGX) sin reconstruir módulos.
+- Estado: REQUIERE APROBACIÓN EXPRESA DEL PROPIETARIO.
+
+================================================================================
+12. DECISIONES PENDIENTES DEL PROPIETARIO
+================================================================================
+1. Aprobación expresa de D-14 (portabilidad e independencia del proveedor).
+2. Aprobación de bloqueantes heredados del Nivel 1: D-03 (roles/scopes), D-12 (estados cerrados) y D-13 (esquema operativo ERP).
+3. Aprobación de decisiones posteriores por dominio cuando correspondan: D-01, D-02, D-04..D-11.
+4. Selección operativa inicial: proveedor (Alternativa A/B/C), región geográfica, destino de despliegue Nitro/TanStack Start (Vercel vs. Cloudflare vs. Node/Docker), presupuesto mensual (con o sin PITR) y política de retención documental/backups.
+
+================================================================================
+13. DICTAMEN DE PREPARACIÓN PARA NIVEL 2.2
+================================================================================
+DICTAMEN: APTO CON OBSERVACIONES
+
+El repositorio está limpio de acoplamientos previos a Supabase (0 dependencias @supabase/*, 0 secretos expuestos, separación clara en el monorepo y diseño relacional cerrado en Nivel 1).
+
+No se debe iniciar Nivel 2.2 (DDL ejecutable, creación de supabase/, instalación de SDKs ni conexión a proyectos) hasta recibir aprobación expresa del propietario sobre D-14, D-03, D-12, D-13, proveedor/región y runtime de despliegue, además de validar el adaptador Nitro objetivo.
+
+================================================================================
+FIN DEL INFORME NIVEL 2.1
+================================================================================

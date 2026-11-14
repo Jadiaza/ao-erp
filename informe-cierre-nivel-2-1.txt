@@ -1,0 +1,140 @@
+# INFORME DE CIERRE — NIVEL 2.1 Y PREPARACIÓN DEL NIVEL 2.2
+
+Proyecto: A&O ERP / A&O SaaS / A&O Diocesano
+Repositorio: D:\Proyectos\ao-erp
+Rama observada en workspace: main (se preserva sin cambio de rama conforme a restricción; integracion-final-ao-erp existe localmente)
+Fecha: 2026-11-14
+Estado: Nivel 2.1 cerrado documentalmente. Detenido en espera de autorización expresa del propietario antes de iniciar Nivel 2.2.
+
+================================================================================
+1. DOCUMENTOS ENTREGABLES GENERADOS EN ESTE CIERRE
+================================================================================
+1. docs/arquitectura/backend/decision-d14-portabilidad-proveedor.md
+2. docs/arquitectura/backend/cierre-decisiones-bloqueantes-d03-d12-d13.md
+3. docs/arquitectura/backend/evaluacion-runtime-vercel-node.md
+4. docs/arquitectura/backend/plan-infraestructura-inicial-ao.md
+5. docs/arquitectura/backend/informe-cierre-nivel-2-1.md
+6. informe-cierre-nivel-2-1.txt (este informe en texto plano)
+
+(Se conservan íntegros los informes previos docs/arquitectura/backend/informe-nivel-2-1-auditoria-infraestructura.md e informe-nivel-2-1-auditoria-infraestructura.txt).
+
+================================================================================
+2. DECISIONES APROBADAS TÉCNICAMENTE (CIERRE NIVEL 2.1)
+================================================================================
+A. D-14 — Independencia del proveedor y portabilidad de infraestructura [APROBADA COMO ARQUITECTURA OBJETIVO]:
+- PostgreSQL estándar (15/16/17) como motor permanente, sin extensiones propietarias exclusivas de un proveedor.
+- Migraciones SQL puras versionadas en Git (ejecutables con psql estándar).
+- Identificador interno core.users + tabla core.user_identities desacoplada (prohibidas FKs físicas hacia auth.users).
+- RLS portable mediante función interna app_internal.current_user_id() (soportando SET LOCAL app.current_user_id y mapeo auth.uid()).
+- Puertos server-only desacoplados: AuthProviderPort, DocumentStoragePort y repositorios por dominio.
+- Servicios de negocio propios de A&O en servidor (TanStack Start / Node.js); prohibida lógica de negocio en Edge Functions o consultas directas desde componentes React.
+- Auditoría append-only (audit.* con REVOKE UPDATE, DELETE).
+- Respaldos lógicos verificables (pg_dump/pg_restore) + prueba obligatoria de restauración en instancia PostgreSQL independiente + backups independientes del almacenamiento binario.
+
+B. Infraestructura inicial adoptada:
+- Base de datos: Supabase PostgreSQL administrado.
+- Autenticación inicial: Supabase Auth mediante AuthProviderPort.
+- Almacenamiento inicial: Supabase Storage privado mediante DocumentStoragePort (compatible futuro con AWS S3 y MinIO; cero binarios en PostgreSQL).
+- Realtime: no implementar inicialmente.
+- Edge Functions: no utilizarlas para reglas de negocio.
+- Ambientes separados: Desarrollo (local Docker + Supabase CLI), Staging (infraestructura independiente) y Producción (proyecto independiente).
+
+C. Despliegue preferido (sujeto a validación Preview real en Nivel 2.2):
+- Vercel con runtime Node.js (nodejs24.x), verificado mediante prueba aislada fuera del proyecto.
+
+================================================================================
+3. RESOLUCIÓN DE DECISIONES BLOQUEANTES DEL NIVEL 1 (PENDIENTES DE APROBACIÓN EXPRESA)
+================================================================================
+3.1 D-03 — Scopes de membresía y separación de roles
+- Problema: roles simples en demo sin soporte multi-organización/multi-sede ni barrera física entre plataforma SaaS e institución.
+- Solución propuesta:
+  * 1 membresía por (user_id, organization_id) en core.memberships con user_id -> core.users(id).
+  * 3 niveles de alcance en core.membership_scopes: tenant | entity | campus con CHECK estricto y FKs compuestas por organization_id.
+  * Separación estricta en core.roles (is_platform_role):
+    - 5 roles de plataforma (organization_id NULL, is_platform_role = true): platform_admin, platform_commercial, platform_billing, platform_support, platform_auditor. Operan solo en core/saas/audit plataforma; tienen denegado todo acceso a erp, pastoral y sacramental.
+    - 11 roles institucionales sistema (is_platform_role = false): tenant_admin, pastor_principal, parroco, lider_pastoral, consejero_autorizado, tesorero, contador, secretaria, custodio_archivo, diocesan_reviewer, consulta.
+  * Notas pastorales confidenciales protegidas por ACL relacional explícito (no basta tenant_admin).
+
+3.2 D-12 — Catálogo controlado de estados y transiciones válidas
+- Problema: estados en cadenas libres sin bloqueo físico en BD.
+- Solución propuesta:
+  * text NOT NULL con CHECK en PostgreSQL para estados cerrados de negocio (core.users, organizations, ecclesial_entities, organization_entities, campuses, memberships, contracts, subscriptions, licenses, document_file_metadata, erp_documents, worship_events, treasury_movements, journal_vouchers, accounting_periods, meeting_minutes, correspondence_items, admin_tasks, pastoral_care_cases, sacramental_requests y diocesan.*).
+  * Validación de transiciones en servicios server-side y triggers de inmutabilidad en journal_vouchers posted/reversed, partidas sacramentales, presentaciones enviadas, legal_hold documental y audit.*.
+
+3.3 D-13 — Alcance del modelo operativo ERP
+- Solución propuesta:
+  * Integrar en el diseño físico PostgreSQL los esquemas separados erp, pastoral y sacramental junto a core, saas, diocesan, audit y app_internal.
+  * Conservar motores únicos compartidos sin duplicación:
+    - erp.persons (maestro único de personas, separado de saas.parties).
+    - Motor financiero único (treasury_movements -> journal_vouchers/lines -> budget_lines) parametrizado por financial_categories.profile_scope (shared | christian | catholic).
+    - Motor documental único (document_file_metadata + erp_documents).
+  * Garantizar aislamiento absoluto de pastoral y bloqueo de sacramental en PLN-CRI (MOD-FIN y MOD-DOC dependen de MOD-CORE, nunca de MOD-COM).
+
+================================================================================
+4. RESULTADO DE COMPATIBILIDAD DEL RUNTIME (PRUEBA TÉCNICA AISLADA)
+================================================================================
+Inspección de node_modules/@lovable.dev/vite-tanstack-config@2.26.5 + builds aislados fuera del repositorio (%TEMP%\opencode\nitro-vercel-spike*):
+- El preset de Lovable usa defaultPreset: "cloudflare-module", pero fuera del sandbox de Lovable la detección de Nitro (NITRO_PRESET=vercel / VERCEL=1) prevalece sin modificar vite.config.ts.
+- Build aislado de apps/saas y apps/erp con NITRO_PRESET=vercel: exitosos (código 0), generando .vercel/output con runtime nodejs24.x.
+- Ejecución real en Node.js 24.16.0:
+  * SSR (/): HTTP 200 text/html; secreto privado no expuesto (SSR_SECRET_LEAK: false).
+  * Server function (POST /_serverFn/... runVercelRuntimeProbe): HTTP 200, Cache-Control: no-store, X-Content-Type-Options: nosniff, Set-Cookie HttpOnly; Secure; SameSite=Lax, lectura correcta de cookie en segunda petición (cookieReceived: true) y lectura server-only de AO_SAAS_SPIKE_SECRET sin exponer su valor.
+  * Protección CSRF: petición POST con Origin cruzado rechazada con HTTP 403.
+- Conexiones PostgreSQL: Node.js 24 soporta TCP/TLS nativo compatible con pooler transaccional (puerto 6543, prepare: false, SET LOCAL dentro de transacción y pool acotado max 1..3 por instancia serverless; puerto 5432 directo para DDL).
+- Pendientes para Nivel 2.2 (código): declarar nitro y zod directamente en apps/saas y apps/diocesano, añadir src/start.ts y src/server.ts en SaaS y Diocesano, y validar un Preview Deployment real en Vercel (3 proyectos independientes en el monorepo).
+- Alternativas si hubiera incompatibilidad/sobrecosto: contenedor Node.js (NITRO_PRESET=node_server en Fly.io/Railway/Hetzner) o Cloudflare Workers + Hyperdrive.
+
+================================================================================
+5. REGIÓN RECOMENDADA Y ALTERNATIVAS (FUENTE: supabase.com/docs/guides/platform/regions)
+================================================================================
+Supabase no tiene región en Colombia. Opciones evaluadas:
+- Opción 1 (Prioridad Sudamérica): Supabase sa-east-1 (São Paulo, Brasil — única región Supabase en Sudamérica) + Vercel Functions fijadas en gru1 (São Paulo).
+  * Ventaja: datos residentes en Sudamérica.
+  * Consideración: RTT típico desde Colombia ~90-145 ms según enrutamiento ISP; es obligatorio co-ubicar Vercel en gru1 para evitar +110 ms por consulta SQL. Requiere prueba de latencia en Staging.
+- Opción 2 (EE. UU. Este): Supabase us-east-1 (Virginia del Norte) + Vercel iad1 (Washington D.C.), o us-east-2 (Ohio).
+  * Ventaja: RTT típico desde Colombia ~50-75 ms (cableado directo hacia Florida/Costa Este), < 2 ms entre Vercel iad1 y Supabase us-east-1, y máxima disponibilidad de servicios AWS.
+- Nota legal (Colombia Ley 1581 de 2012): ambas opciones implican transferencia internacional y requieren autorización de tratamiento y DPA con el proveedor.
+
+================================================================================
+6. COSTOS ESTIMADOS Y FUENTES OFICIALES (CONSULTADAS 2026-11-14)
+================================================================================
+Fuentes oficiales: https://supabase.com/pricing y https://vercel.com/pricing
+Meta presupuestaria de referencia: USD 50–100/mes (no es tarifa contractual fija).
+
+Desglose por ambiente (Escenario A — Arranque controlado):
+- Desarrollo: Local Docker + Supabase CLI -> $0/mes.
+- Staging: Supabase proyecto Micro adicional dentro de org Pro -> +$10/mes (+ Vercel Preview incluido).
+- Producción:
+  * Supabase Pro org base (incluye 1 Micro, 100k MAU, 8 GB BD, 100 GB Storage, 250 GB egress, backups diarios 7 días): $25/mes (tarifa oficial).
+  * Ajuste cómputo BD Producción a Small (2 GB RAM, 400 pooler): +$5/mes netos ($15 menos $10 crédito incluido).
+  * Hosting Web/SSR Vercel Pro (1 TB transfer, 10M CDN requests, Skew Protection): $20/mes (tarifa oficial).
+  * Auxiliares (respaldo binario externo frío + SMTP transaccional inicial): ~$3–$15/mes (estimación variable).
+- Total Escenario A: ~$63 – $78 / mes (dentro de la meta USD 50–100/mes).
+- Opcionales fuera de meta inicial: subir Producción a Medium (4 GB RAM) +$45/mes; activar PITR 7 días +$100/mes por proyecto (elevaría total a ~$163–$178/mes).
+
+================================================================================
+7. RIESGOS Y DEPENDENCIAS PENDIENTES
+================================================================================
+Riesgos:
+1. Latencia real desde Colombia hacia sa-east-1 o desalineación regional Vercel/Supabase.
+2. Ausencia de PITR en el escenario inicial USD 50-100/mes (RPO de 24 h hasta activar PITR; mitigado con pg_dump periódico).
+3. Falta de src/start.ts, src/server.ts, nitro y zod declarados directamente en apps/saas y apps/diocesano.
+4. Cambios en @supabase/ssr (beta) o Nitro v3 (mitigado por AuthProviderPort y lockfile fijo).
+
+Decisiones y autorizaciones pendientes del propietario antes de Nivel 2.2:
+1. Aprobación formal de D-03, D-12 y D-13.
+2. Selección definitiva de región (sa-east-1 + gru1 vs. us-east-1 + iad1).
+3. Confirmación del presupuesto inicial (con o sin PITR).
+4. Autorización independiente para iniciar Nivel 2.2 (DDL, migraciones versionadas, dependencias server-side y Preview en Vercel; D-01, D-02, D-04..D-11 para dominios posteriores).
+
+================================================================================
+8. VALIDACIÓN DE RESTRICCIONES Y DICTAMEN FINAL
+================================================================================
+- No se modificó código de aplicación, vite.config.ts, package.json, bun.lock ni variables de entorno.
+- No hubo conexiones remotas a Supabase ni ejecución de SQL.
+- No se alteró Git (rama main preservada, sin commit, push, merge ni rebase; cambios locales intactos).
+
+DICTAMEN PARA NIVEL 2.2: APTO CON OBSERVACIONES
+
+Quedo detenido a la espera de autorización expresa del propietario para iniciar el Nivel 2.2.
+================================================================================
